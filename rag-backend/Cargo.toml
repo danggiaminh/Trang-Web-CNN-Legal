@@ -1,0 +1,53 @@
+[package]
+name = "cnn_legal_rag"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.80"
+publish = false
+
+[lib]
+name = "cnn_legal_rag"
+path = "src/lib.rs"
+
+[[bin]]
+name = "serve"
+path = "src/main.rs"
+
+[[bin]]
+name = "ingest"
+path = "src/bin/ingest.rs"
+
+[dependencies]
+axum = "0.8"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace", "cors", "limit"] }
+tower_governor = { version = "0.7", features = ["axum"] }
+
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
+futures-util = "0.3"
+async-stream = "0.3"
+
+rusqlite = { version = "0.32", features = ["bundled"] }
+sqlite-vec = "0.1"
+zerocopy = "0.7"
+r2d2 = "0.8"
+r2d2_sqlite = "0.25"
+
+pulldown-cmark = "0.12"
+serde_yaml = "0.9"
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+thiserror = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dotenvy = "0.15"
+walkdir = "2"
+clap = { version = "4", features = ["derive"] }
+time = { version = "0.3", features = ["formatting", "parsing", "macros"] }
+
+[profile.release]
+opt-level = 3
+lto = "thin"

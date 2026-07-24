@@ -1,0 +1,184 @@
+---
+import { Image } from "astro:assets";
+import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getAllArticles } from "../../data/articles";
+import { notableCases } from "../../data/cases";
+import { site } from "../../data/site";
+import articleHero from "../../assets/images/article-hero.jpg";
+
+const articles = await getAllArticles();
+
+const allItems = [
+  ...articles.map((a) => ({
+    type: "article" as const,
+    slug: a.slug,
+    href: `/bai-viet/${a.slug}/`,
+    title: a.title,
+    category: a.category,
+    date: a.publishedAt,
+    excerpt: a.excerpt,
+    imageUrl: a.imageUrl,
+    imageAlt: a.imageAlt,
+    source: a.sourceName,
+  })),
+  ...notableCases.map((c) => ({
+    type: "case" as const,
+    slug: c.slug,
+    href: `/vu-an-tieu-bieu/${c.slug}/`,
+    title: c.title,
+    category: c.category,
+    date: c.date,
+    excerpt: c.summary,
+    imageUrl: "",
+    imageAlt: "",
+    source: c.court,
+  })),
+];
+
+const categoryOrder = ["Hình sự", "Dân sự", "Kinh doanh thương mại"];
+const usedCategories = new Set(allItems.map((i) => i.category));
+const categories = [
+  "Tất cả",
+  ...categoryOrder.filter((c) => usedCategories.has(c)),
+  ...Array.from(usedCategories).filter((c) => !categoryOrder.includes(c)).sort(),
+];
+
+const title = `Kinh nghiệm | ${site.name}`;
+const description = "Tổng hợp các bài viết chuyên môn và vụ án tiêu biểu trong quá trình hành nghề của Luật sư Đặng Kim Chinh.";
+const canonicalPath = "/bai-viet/";
+const pageUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: title,
+    description,
+    url: pageUrl,
+    inLanguage: "vi-VN",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang chủ", item: site.canonicalBaseUrl },
+      { "@type": "ListItem", position: 2, name: "Kinh nghiệm", item: pageUrl },
+    ],
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath={canonicalPath} structuredData={structuredData}>
+  <section class="relative overflow-hidden py-20 md:py-28 lg:py-32">
+    <div class="absolute inset-0 z-0 bg-ink-black">
+      <Image
+        class="h-full w-full object-cover object-center"
+        src={articleHero}
+        alt="Hình ảnh nền trang kinh nghiệm pháp lý CNN Legal"
+        widths={[320, 640, 768, 1024, 1280]}
+        sizes="100vw"
+        quality={80}
+        loading="eager"
+      />
+      <div class="absolute inset-0 bg-black/55"></div>
+    </div>
+
+    <div class="section-shell relative z-10">
+      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Kinh nghiệm" }]} />
+
+      <h1 class="mt-8 max-w-3xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+        Kinh nghiệm thực tiễn pháp lý.
+      </h1>
+
+      <p class="mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        Tổng hợp các bài viết chuyên môn và vụ án tiêu biểu trong quá trình hành nghề của Luật sư Đặng Kim Chinh.
+      </p>
+    </div>
+  </section>
+
+  <section class="bg-panel-taupe">
+    <div class="section-shell py-16 md:py-20">
+      <div class="flex flex-col gap-12 lg:flex-row lg:gap-20">
+
+        <aside class="shrink-0 lg:w-[260px]">
+          <div class="flex items-center gap-4 mb-6">
+            <span class="flex items-center gap-1.5 text-[0.8125rem] font-medium text-text-dark whitespace-nowrap">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M4 4h16v2.172a2 2 0 0 1 -.586 1.414l-4.414 4.414v7l-6 2v-8.5l-4.48 -4.928a2 2 0 0 1 -.52 -1.345v-2.227z"/>
+              </svg>
+              Bộ lọc
+            </span>
+            <div class="h-px flex-1 bg-text-dark/30"></div>
+          </div>
+          <div class="grid grid-cols-1 gap-2">
+            {categories.map((cat) => (
+              <button
+                class:list={[
+                  "filter-btn px-4 py-4 text-center text-[0.875rem] font-medium transition-all border border-text-dark/20 rounded-xl hover:scale-105",
+                  cat === "Tất cả"
+                    ? "bg-ink-black text-white"
+                    : "bg-surface-white text-text-dark",
+                ]}
+                data-category={cat}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <div class="flex-1">
+          <p class="mb-8 font-sans text-[2rem] font-semibold tracking-[-0.01em] text-text-dark">Bài viết & Vụ án</p>
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-5" id="items-grid">
+            {allItems.map((item) => (
+              <li class="experience-item" data-category={item.category}>
+                <a
+                  class="text-[1.0625rem] leading-snug text-[#1a4a9e] hover:text-[#0f2f6b] hover:underline underline-offset-2"
+                  href={item.href}
+                >
+                  {item.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          <div id="empty-state" class="hidden py-12 text-[0.9375rem] text-text-muted">
+            Không có kết quả cho chủ đề này.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>(".filter-btn");
+  const items = document.querySelectorAll<HTMLLIElement>(".experience-item");
+  const emptyState = document.getElementById("empty-state");
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const selected = btn.dataset.category!;
+
+      buttons.forEach((b) => {
+        const isActive = b.dataset.category === selected;
+        b.classList.toggle("bg-ink-black", isActive);
+        b.classList.toggle("text-white", isActive);
+        b.classList.toggle("bg-surface-white", !isActive);
+        b.classList.toggle("text-text-dark", !isActive);
+        b.classList.toggle("border-text-dark/20", true);
+      });
+
+      let visibleCount = 0;
+      items.forEach((item) => {
+        const match = selected === "Tất cả" || item.dataset.category === selected;
+        item.classList.toggle("hidden", !match);
+        if (match) visibleCount++;
+      });
+
+      emptyState?.classList.toggle("hidden", visibleCount > 0);
+    });
+  });
+</script>

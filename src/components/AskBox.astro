@@ -1,0 +1,467 @@
+---
+interface Props {
+  subject?: string;
+}
+
+const { subject = "bài viết" } = Astro.props;
+const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
+---
+
+<div
+  class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4"
+  data-ask-box
+>
+  <form
+    class="pointer-events-auto mx-auto w-full max-w-[25rem] rounded-[1rem] border-2 border-border-soft bg-surface-white pb-1 pl-3.5 pr-2.5 pt-3 shadow-[0_6px_20px_-6px_rgba(15,25,35,0.16)] transition-colors duration-150 focus-within:border-text-dark"
+    data-ask-form
+  >
+    <label class="sr-only" for="ask-input">Đặt câu hỏi về nội dung này</label>
+    <input
+      id="ask-input"
+      name="question"
+      type="text"
+      autocomplete="off"
+      class="block w-full bg-transparent text-[0.875rem] leading-4 text-text-dark placeholder:text-text-muted focus:outline-none"
+      placeholder={askPlaceholder}
+      data-ask-input
+    />
+
+    <div class="mt-0.5 flex items-center justify-end gap-2.5">
+      <kbd
+        class="hidden shrink-0 font-sans text-[0.75rem] font-normal text-text-muted sm:block"
+        data-ask-hint
+      >
+        Ctrl+I
+      </kbd>
+
+      <button
+        type="submit"
+        class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-border-soft text-text-muted transition-colors disabled:cursor-not-allowed"
+        aria-label="Gửi câu hỏi"
+        disabled
+        data-ask-submit
+      >
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M8 12.5V3.5M4.5 7L8 3.5L11.5 7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </div>
+  </form>
+</div>
+
+<aside
+  class="fixed inset-0 z-[60] flex w-full translate-x-[calc(100%+1.5rem)] flex-col border-border-soft bg-surface-white transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-y-3 sm:left-auto sm:right-3 sm:w-[23rem] sm:rounded-2xl sm:border sm:shadow-[0_8px_30px_-8px_rgba(15,25,35,0.25)]"
+  aria-label="Trợ lý hỏi đáp"
+  aria-hidden="true"
+  inert
+  data-ask-panel
+>
+  <header class="flex shrink-0 items-center justify-between border-b border-border-soft px-4 py-3.5">
+    <div class="flex items-center gap-2">
+      <svg class="h-4 w-4 text-text-dark" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+        <path d="M8 0.5l1.6 4.3 4.3 1.6-4.3 1.6L8 12.3 6.4 8 2.1 6.4l4.3-1.6L8 0.5zM13 10.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8z" />
+      </svg>
+      <span class="text-[0.9375rem] font-semibold text-text-dark">Trợ lý bài viết</span>
+    </div>
+
+    <div class="flex items-center gap-1">
+      <kbd
+        class="hidden font-sans text-[0.75rem] font-normal text-text-muted sm:block"
+        data-ask-panel-hint
+      >
+        Ctrl+I
+      </kbd>
+
+      <button
+        type="button"
+        class="inline-flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-dark sm:hidden"
+        aria-label="Đóng"
+        data-ask-close
+      >
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke-linecap="round" />
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div
+    class="flex-1 space-y-5 overflow-y-auto px-4 py-4"
+    role="log"
+    aria-live="polite"
+    data-ask-messages
+  >
+    <p
+      class="mx-auto mt-1 max-w-[17rem] text-center text-[0.8125rem] leading-[1.5] text-text-muted"
+      data-ask-disclaimer
+    >
+      Các phản hồi được tạo ra bằng AI và có thể chứa sai sót.
+    </p>
+  </div>
+
+  <div class="shrink-0 px-4 pb-4">
+    <form
+      class="rounded-[1.25rem] border-2 border-border-soft bg-surface-white px-3.5 pb-1.5 pt-3 transition-colors duration-150 focus-within:border-text-dark"
+      data-ask-panel-form
+    >
+      <label class="sr-only" for="ask-panel-input">Nhập câu hỏi</label>
+      <input
+        id="ask-panel-input"
+        name="question"
+        type="text"
+        autocomplete="off"
+        class="block w-full bg-transparent text-[0.875rem] leading-4 text-text-dark placeholder:text-text-muted focus:outline-none"
+        placeholder={askPlaceholder}
+        data-ask-panel-input
+      />
+
+      <div class="mt-1.5 flex items-center justify-end">
+        <button
+          type="submit"
+          class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-border-soft text-text-muted transition-colors disabled:cursor-not-allowed"
+          aria-label="Gửi câu hỏi"
+          disabled
+          data-ask-panel-submit
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+            <path d="M8 12.5V3.5M4.5 7L8 3.5L11.5 7" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+      </div>
+    </form>
+  </div>
+</aside>
+
+<style>
+  [data-has-text] [data-ask-hint] {
+    display: none;
+  }
+  [data-ask-box][data-hidden] {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  [data-ask-box] {
+    transition:
+      transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 180ms ease,
+      visibility 0s;
+  }
+
+  [data-ask-box][data-at-top] {
+    transform: translateY(calc(100% + 1.5rem));
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 180ms ease,
+      visibility 0s 220ms;
+  }
+
+  :global([data-app-shell]) {
+    transition:
+      margin 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-radius 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @media (min-width: 640px) {
+    :global(body[data-ask-panel-open] [data-app-shell]) {
+      position: fixed;
+      top: 0.75rem;
+      bottom: 0.75rem;
+      left: 0.75rem;
+      right: 24.5rem;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border: 1px solid var(--color-border-soft);
+      border-radius: 1rem;
+      background: var(--color-surface-white);
+    }
+    :global(body[data-ask-panel-open]) {
+      overflow: hidden;
+    }
+  }
+
+  :global(.ask-answer p) {
+    margin-bottom: 0.5rem;
+  }
+  :global(.ask-answer p:last-child) {
+    margin-bottom: 0;
+  }
+  :global(.ask-answer p.ask-h) {
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+  :global(.ask-answer ul),
+  :global(.ask-answer ol) {
+    margin: 0.25rem 0 0.5rem;
+    padding-left: 1.1rem;
+  }
+  :global(.ask-answer ul) {
+    list-style: disc;
+  }
+  :global(.ask-answer ol) {
+    list-style: decimal;
+  }
+  :global(.ask-answer li) {
+    margin-bottom: 0.15rem;
+  }
+  :global(.ask-answer strong) {
+    font-weight: 600;
+  }
+  :global(.ask-answer code) {
+    background: var(--color-surface-subtle);
+    padding: 0 0.25rem;
+    border-radius: 0.25rem;
+    font-size: 0.85em;
+  }
+</style>
+
+<script>
+  function currentSlug(): string | null {
+    const m = location.pathname.match(/^\/(?:bai-viet|vu-an-tieu-bieu)\/([^/]+)\/?$/);
+    return m ? m[1] : null;
+  }
+
+  const box = document.querySelector<HTMLElement>("[data-ask-box]");
+  const form = document.querySelector<HTMLFormElement>("[data-ask-form]");
+  const input = document.querySelector<HTMLInputElement>("[data-ask-input]");
+  const submit = document.querySelector<HTMLButtonElement>("[data-ask-submit]");
+  const hint = document.querySelector<HTMLElement>("[data-ask-hint]");
+
+  const panel = document.querySelector<HTMLElement>("[data-ask-panel]");
+  const panelForm = document.querySelector<HTMLFormElement>("[data-ask-panel-form]");
+  const panelInput = document.querySelector<HTMLInputElement>("[data-ask-panel-input]");
+  const panelSubmit = document.querySelector<HTMLButtonElement>("[data-ask-panel-submit]");
+  const messages = document.querySelector<HTMLElement>("[data-ask-messages]");
+  const closeBtn = document.querySelector<HTMLButtonElement>("[data-ask-close]");
+  const panelHint = document.querySelector<HTMLElement>("[data-ask-panel-hint]");
+
+  if (form && input && submit && panel && panelForm && panelInput && panelSubmit && messages) {
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+    if (isMac) {
+      if (hint) hint.textContent = "⌘I";
+      if (panelHint) panelHint.textContent = "⌘I";
+    }
+
+    const syncBoxOnScroll = () => {
+      box?.toggleAttribute("data-at-top", window.scrollY <= 8);
+    };
+    window.addEventListener("scroll", syncBoxOnScroll, { passive: true });
+    syncBoxOnScroll();
+
+    const shell = document.querySelector<HTMLElement>("[data-app-shell]");
+
+    const openPanel = () => {
+      const scrolled = window.scrollY;
+      panel.classList.remove("translate-x-[calc(100%+1.5rem)]");
+      panel.setAttribute("data-open", "");
+      panel.setAttribute("aria-hidden", "false");
+      panel.removeAttribute("inert");
+      document.body.setAttribute("data-ask-panel-open", "");
+      if (box) box.setAttribute("data-hidden", "");
+      if (shell) shell.scrollTop = scrolled;
+      panelInput.focus({ preventScroll: true });
+    };
+
+    const closePanel = () => {
+      const scrolled = shell ? shell.scrollTop : 0;
+      panel.classList.add("translate-x-[calc(100%+1.5rem)]");
+      panel.removeAttribute("data-open");
+      panel.setAttribute("aria-hidden", "true");
+      panel.setAttribute("inert", "");
+      document.body.removeAttribute("data-ask-panel-open");
+      if (box) box.removeAttribute("data-hidden");
+      window.scrollTo({ top: scrolled, left: 0, behavior: "instant" as ScrollBehavior });
+      input.focus({ preventScroll: true });
+    };
+
+    const addUserMessage = (text: string) => {
+      const row = document.createElement("div");
+      row.className = "flex justify-end";
+      const bubble = document.createElement("div");
+      bubble.className =
+        "max-w-[85%] rounded-2xl bg-surface-subtle px-3 py-1.5 text-[0.875rem] leading-[1.6] text-text-dark";
+      bubble.textContent = text;
+      row.appendChild(bubble);
+      messages.appendChild(row);
+    };
+
+    const escapeHtml = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    const inline = (s: string) =>
+      s
+        .replace(/`([^`]+)`/g, "<code>$1</code>")
+        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+
+    const renderMarkdown = (raw: string) => {
+      const lines = escapeHtml(raw).split("\n");
+      const bullet = /^\s*[-*]\s+/;
+      const ordered = /^\s*\d+\.\s+/;
+      const heading = /^\s*#{1,3}\s+(.*)$/;
+      let html = "";
+      let i = 0;
+      while (i < lines.length) {
+        const line = lines[i];
+        if (bullet.test(line)) {
+          const items: string[] = [];
+          while (i < lines.length && bullet.test(lines[i]))
+            items.push("<li>" + inline(lines[i++].replace(bullet, "")) + "</li>");
+          html += "<ul>" + items.join("") + "</ul>";
+        } else if (ordered.test(line)) {
+          const items: string[] = [];
+          while (i < lines.length && ordered.test(lines[i]))
+            items.push("<li>" + inline(lines[i++].replace(ordered, "")) + "</li>");
+          html += "<ol>" + items.join("") + "</ol>";
+        } else if (heading.test(line)) {
+          html += '<p class="ask-h">' + inline(line.replace(heading, "$1")) + "</p>";
+          i++;
+        } else if (line.trim() === "") {
+          i++;
+        } else {
+          const para: string[] = [];
+          while (
+            i < lines.length &&
+            lines[i].trim() !== "" &&
+            !bullet.test(lines[i]) &&
+            !ordered.test(lines[i]) &&
+            !heading.test(lines[i])
+          )
+            para.push(inline(lines[i++]));
+          html += "<p>" + para.join("<br>") + "</p>";
+        }
+      }
+      return html;
+    };
+
+    const addAssistantMessage = () => {
+      const answer = document.createElement("div");
+      answer.className = "ask-answer text-[0.875rem] leading-[1.7] text-text-dark";
+      messages.appendChild(answer);
+      return answer;
+    };
+
+    const askQuestion = async (question: string) => {
+      openPanel();
+      messages.querySelector("[data-ask-disclaimer]")?.remove();
+      addUserMessage(question);
+      const answer = addAssistantMessage();
+      messages.scrollTop = messages.scrollHeight;
+
+      let dots = 1;
+      answer.textContent = "Đang suy nghĩ.";
+      const thinking = window.setInterval(() => {
+        dots = (dots % 3) + 1;
+        answer.textContent = "Đang suy nghĩ" + ".".repeat(dots);
+      }, 500);
+      let thinkingStopped = false;
+      const stopThinking = () => {
+        if (thinkingStopped) return;
+        thinkingStopped = true;
+        clearInterval(thinking);
+        answer.textContent = "";
+      };
+
+      let raw = "";
+      let finalShown = false;
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: question, slug: currentSlug() }),
+        });
+        if (!res.ok || !res.body) {
+          stopThinking();
+          answer.textContent = "Hệ thống đang bận, thử lại sau nhé.";
+          return;
+        }
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = "";
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          let nl;
+          while ((nl = buf.indexOf("\n")) >= 0) {
+            const line = buf.slice(0, nl).trimEnd();
+            buf = buf.slice(nl + 1);
+            if (!line.startsWith("data:")) continue;
+            let obj: { t?: string; r?: number; m?: number; e?: string };
+            try {
+              obj = JSON.parse(line.slice(5).replace(/^ /, ""));
+            } catch {
+              continue;
+            }
+            stopThinking();
+            if (typeof obj.t === "string") {
+              raw += obj.t;
+              answer.innerHTML = renderMarkdown(raw);
+            } else if (typeof obj.r === "number") {
+              answer.textContent = `Đang thử lại (${obj.r}/${obj.m ?? 5})`;
+            } else if (typeof obj.e === "string") {
+              answer.textContent = obj.e;
+              finalShown = true;
+            }
+            messages.scrollTop = messages.scrollHeight;
+          }
+        }
+        stopThinking();
+        if (!raw && !finalShown) answer.textContent = "Hệ thống đang bận, thử lại sau nhé.";
+      } catch {
+        stopThinking();
+        answer.textContent = "Không kết nối được máy chủ, thử lại sau nhé.";
+      }
+    };
+
+    const syncButton = (el: HTMLInputElement, btn: HTMLButtonElement, owner: HTMLElement) => {
+      const empty = el.value.trim().length === 0;
+      owner.toggleAttribute("data-has-text", !empty);
+      btn.disabled = empty;
+      btn.classList.toggle("bg-border-soft", empty);
+      btn.classList.toggle("text-text-muted", empty);
+      btn.classList.toggle("bg-ink-black", !empty);
+      btn.classList.toggle("text-white", !empty);
+    };
+
+    const syncBox = () => syncButton(input, submit, form);
+    const syncPanel = () => syncButton(panelInput, panelSubmit, panelForm);
+
+    input.addEventListener("input", syncBox);
+    panelInput.addEventListener("input", syncPanel);
+    syncBox();
+    syncPanel();
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+      input.value = "";
+      syncBox();
+      askQuestion(question);
+    });
+
+    panelForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const question = panelInput.value.trim();
+      if (!question) return;
+      panelInput.value = "";
+      syncPanel();
+      askQuestion(question);
+    });
+
+    closeBtn?.addEventListener("click", closePanel);
+
+    document.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "i") {
+        event.preventDefault();
+        panel.hasAttribute("data-open") ? closePanel() : openPanel();
+      } else if (event.key === "Escape") {
+        if (panel.hasAttribute("data-open")) closePanel();
+        else if (document.activeElement === input) input.blur();
+      }
+    });
+  }
+</script>

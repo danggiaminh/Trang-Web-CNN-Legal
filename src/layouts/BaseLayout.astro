@@ -1,0 +1,101 @@
+---
+import Header from "../components/Header.astro";
+import { site } from "../data/site";
+import "../styles/global.css";
+
+type JsonLd = Record<string, unknown>;
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalPath?: string;
+  ogType?: string;
+  ogImage?: string;
+  structuredData?: JsonLd | JsonLd[];
+  noindex?: boolean;
+}
+
+const {
+  title = `${site.name} | ${site.slogan}`,
+  description = site.description,
+  canonicalPath = Astro.url.pathname,
+  ogType = "website",
+  ogImage = "/images/og-default.png",
+  structuredData = [],
+  noindex = false,
+} = Astro.props;
+
+const canonicalUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
+const ogImageUrl = new URL(ogImage, site.canonicalBaseUrl).toString();
+const jsonLdItems = Array.isArray(structuredData) ? structuredData : [structuredData];
+const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\\u003c");
+---
+
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    
+    {noindex
+      ? <meta name="robots" content="noindex, nofollow" />
+      : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    }
+
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/svg+xml" href="/cnn-mark.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/cnn-icon-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/cnn-touch-180.png" />
+
+    
+    <meta name="theme-color" content="#0f1923" />
+    <meta name="color-scheme" content="light" />
+    
+    
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content={site.name} />
+
+    
+    <meta name="author" content={site.name} />
+    <meta name="geo.region" content="VN-SG" />
+    <meta name="geo.placename" content="Thành phố Hồ Chí Minh" />
+    <meta name="geo.position" content={`${site.geo.latitude};${site.geo.longitude}`} />
+    <meta name="ICBM" content={`${site.geo.latitude}, ${site.geo.longitude}`} />
+
+    
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${site.name} – ${site.slogan}`} />
+
+    
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    
+    {jsonLdItems.map((item) => <script is:inline type="application/ld+json" set:html={jsonLdToString(item)} />)}
+  </head>
+  <body class="bg-warm-ivory text-text-dark antialiased">
+    <div data-app-shell>
+      <Header />
+      <main>
+        <slot />
+      </main>
+    </div>
+    <script src="../scripts/image-preload.ts"></script>
+  </body>
+</html>

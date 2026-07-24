@@ -1,0 +1,140 @@
+---
+import { navigationItems, type NavigationItem } from "../data/navigation";
+
+const currentPath = Astro.url.pathname;
+const matchesPrefix = (href: string) =>
+  href === "/" ? currentPath === "/" : currentPath.startsWith(href);
+
+const isActive = (item: NavigationItem) =>
+  [item.href, ...(item.activePrefixes ?? [])].some(matchesPrefix);
+
+---
+
+<header
+  class="sticky top-0 z-50 border-b border-border-soft bg-surface-white"
+>
+  <div class="section-shell flex h-[3.75rem] items-center gap-6">
+
+    <a href="/" class="shrink-0" aria-label="CNN Legal trang chủ">
+      <span class="font-sans text-[1.25rem] font-bold tracking-tight text-text-dark">
+        CNN Legal
+      </span>
+    </a>
+
+    <nav
+      class="hidden flex-1 items-center gap-0.5 lg:flex"
+      aria-label="Điều hướng chính"
+    >
+      {navigationItems.map((item) => (
+        <a
+          class:list={[
+            "rounded-md px-3 py-2 text-[0.9375rem] font-medium leading-none transition-all",
+            isActive(item) ? "text-text-dark" : "text-text-muted hover:text-text-dark",
+          ]}
+          href={item.href}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="ml-auto flex shrink-0 items-center gap-3">
+      <a
+        href="/lien-he/"
+        class="hidden rounded-full bg-ink-black px-5 py-2 text-[0.9375rem] font-medium text-white shadow-sm transition-colors hover:bg-ink-hover active:scale-[0.97] lg:inline-flex"
+      >
+        Liên hệ
+      </a>
+      <button
+        class="inline-flex h-9 w-9 items-center justify-center rounded text-text-dark hover:bg-surface-subtle lg:hidden"
+        type="button"
+        aria-controls="mobile-menu"
+        aria-expanded="false"
+        aria-label="Mở menu"
+        data-menu-button
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6l16 0" />
+          <path d="M4 12l16 0" />
+          <path d="M4 18l16 0" />
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+  
+  
+  <aside
+    id="mobile-menu"
+    class="fixed inset-0 z-50 h-dvh w-full translate-x-full overflow-y-auto bg-surface-white px-5 py-5 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden"
+    aria-label="Điều hướng di động"
+    data-mobile-drawer
+  >
+    <div class="mb-6 flex items-center justify-between">
+      <a href="/" class="shrink-0" aria-label="CNN Legal trang chủ">
+        <span class="font-sans text-[1.25rem] font-bold tracking-tight text-text-dark">
+          CNN Legal
+        </span>
+      </a>
+      <button
+        class="inline-flex h-8 w-8 items-center justify-center rounded text-text-muted hover:bg-surface-subtle"
+        type="button"
+        aria-label="Đóng menu"
+        data-menu-close
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6l-12 12" />
+          <path d="M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <nav class="flex flex-col gap-0.5" aria-label="Điều hướng di động">
+      {navigationItems.map((item) => (
+        <a
+          class:list={[
+            "rounded px-3 py-2.5 text-[0.9375rem] font-medium hover:text-text-dark",
+            isActive(item) ? "text-text-dark" : "text-text-muted",
+          ]}
+          href={item.href}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="mt-6 border-t border-border-soft pt-5">
+      <a
+        href="/lien-he/"
+        class="flex items-center justify-center rounded-full bg-ink-black py-2.5 text-[0.9375rem] font-medium text-white transition-all duration-150 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-ink-hover active:scale-[0.97]"
+      >
+        Liên hệ
+      </a>
+    </div>
+  </aside>
+</header>
+
+<script src="../scripts/navigation.ts"></script>

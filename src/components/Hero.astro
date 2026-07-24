@@ -1,0 +1,236 @@
+---
+import { Image } from "astro:assets";
+import { site } from "../data/site";
+import heroRadialLines from "../assets/images/hero-radial-lines.jpg";
+import carousel1 from "../assets/images/carousel-1.jpg";
+import carousel3 from "../assets/images/carousel-3.jpg";
+---
+
+<section class="relative h-[calc(100vh-3.75rem)] overflow-hidden">
+  
+  <div class="grid h-full lg:grid-cols-[2fr_3fr]">
+    
+    
+    <div class="relative order-1 lg:order-1">
+      <div class="relative h-full bg-[#0a1929] overflow-hidden">
+        
+        <div class="hero-bg-image active absolute inset-0 transition-opacity duration-700 ease-in-out">
+          <Image
+            class="absolute inset-0 h-full w-full object-cover"
+            src={heroRadialLines}
+            alt="CNN Legal – Tư vấn pháp lý chuyên nghiệp"
+            widths={[320, 640, 768, 1024]}
+            sizes="(min-width: 1024px) 40vw, 100vw"
+            quality={80}
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+        
+        
+        <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
+          <Image
+            class="absolute inset-0 h-full w-full object-cover"
+            src={carousel1}
+            alt="CNN Legal – Dịch vụ pháp lý"
+            widths={[320, 640, 768, 1024, 1280, 1536]}
+            sizes="(min-width: 1024px) 40vw, 100vw"
+            quality={80}
+            loading="lazy"
+          />
+        </div>
+        
+        
+        <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
+          <Image
+            class="absolute inset-0 h-full w-full object-cover"
+            src={carousel3}
+            alt="CNN Legal – Tư vấn chuyên nghiệp"
+            widths={[320, 640, 768, 1024, 1280, 1536]}
+            sizes="(min-width: 1024px) 40vw, 100vw"
+            quality={80}
+            loading="lazy"
+          />
+        </div>
+        
+        
+        <div class="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-[#0a1929]/30 to-transparent pointer-events-none z-10"></div>
+        
+        
+        <div class="absolute bottom-8 left-8 flex gap-2 z-30">
+          <button 
+            type="button" 
+            class="progress-indicator active h-1 w-16 bg-white/30 rounded-full overflow-hidden focus:outline-none cursor-pointer border-0 p-0" 
+            data-index="0"
+            aria-label="Go to slide 1"
+          >
+            <div class="progress-fill h-full bg-white rounded-full w-0"></div>
+          </button>
+          <button 
+            type="button" 
+            class="progress-indicator h-1 w-16 bg-white/30 rounded-full overflow-hidden focus:outline-none cursor-pointer border-0 p-0" 
+            data-index="1"
+            aria-label="Go to slide 2"
+          >
+            <div class="progress-fill h-full bg-white rounded-full w-0"></div>
+          </button>
+          <button 
+            type="button" 
+            class="progress-indicator h-1 w-16 bg-white/30 rounded-full overflow-hidden focus:outline-none cursor-pointer border-0 p-0" 
+            data-index="2"
+            aria-label="Go to slide 3"
+          >
+            <div class="progress-fill h-full bg-white rounded-full w-0"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="relative order-2 bg-ink-black lg:order-2 z-10">
+      <div class="flex h-full flex-col justify-start px-6 pt-20 pb-12 sm:px-10 sm:pt-24 md:px-16 md:pt-28 lg:pt-32 xl:px-20 xl:pt-36">
+        
+        
+        <h1 class="max-w-xl font-sans text-[2rem] font-semibold leading-[1.2] tracking-[-0.02em] text-white sm:text-[2.5rem] md:text-[3rem] lg:text-[3.25rem] xl:text-[3.5rem]">
+          {site.slogan}
+        </h1>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero-bg-image {
+    opacity: 0;
+    transition: opacity 700ms ease-in-out;
+  }
+
+  .hero-bg-image.active {
+    opacity: 1;
+  }
+
+  
+  .hero-bg-image img {
+    
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
+    image-rendering: high-quality;
+    
+    
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    
+    
+    filter: blur(0);
+    
+    
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    
+    
+    will-change: opacity;
+  }
+
+  
+  .progress-indicator.active .progress-fill {
+    animation: fillProgress 3s linear forwards;
+  }
+
+  @keyframes fillProgress {
+    from {
+      width: 0%;
+    }
+    to {
+      width: 100%;
+    }
+  }
+
+  
+  .progress-indicator:not(.active) .progress-fill {
+    width: 0%;
+    animation: none;
+  }
+</style>
+
+<script is:inline>
+  
+  (function() {
+    
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+
+    function initSlider() {
+      if (window.heroRotationInterval) {
+        clearInterval(window.heroRotationInterval);
+      }
+
+      const bgImages = document.querySelectorAll('.hero-bg-image');
+      const indicators = document.querySelectorAll('.progress-indicator');
+      
+      if (bgImages.length === 0 || indicators.length === 0) {
+        return;
+      }
+
+      let currentIndex = 0;
+      const totalSlides = Math.min(bgImages.length, indicators.length);
+      const rotationInterval = 3000;
+
+      function showSlide(index) {
+        
+        bgImages.forEach(function(img) { img.classList.remove('active'); });
+        indicators.forEach(function(ind) { 
+          ind.classList.remove('active');
+          const fill = ind.querySelector('.progress-fill');
+          if (fill) {
+            
+            void fill.offsetWidth;
+          }
+        });
+
+        
+        bgImages[index].classList.add('active');
+        indicators[index].classList.add('active');
+      }
+
+      function nextSlide() {
+        currentIndex = (currentIndex + 1) % totalSlides;
+        showSlide(currentIndex);
+      }
+
+      function resetRotation() {
+        if (window.heroRotationInterval) {
+          clearInterval(window.heroRotationInterval);
+        }
+        window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
+      }
+
+      
+      indicators.forEach(function(ind, idx) {
+        ind.onclick = function() {
+          currentIndex = idx;
+          showSlide(currentIndex);
+          resetRotation();
+        };
+      });
+
+      
+      showSlide(0);
+
+      
+      window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
+    }
+
+    
+    window.addEventListener('pageshow', function(event) {
+
+      if (!event.persisted) {
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      }
+
+      initSlider();
+    });
+  })();
+</script>

@@ -1,0 +1,197 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import AskBox from "../../components/AskBox.astro";
+import { notableCases } from "../../data/cases";
+import { site } from "../../data/site";
+
+export function getStaticPaths() {
+  return notableCases.map((c) => ({
+    params: { slug: c.slug },
+    props: { caseItem: c },
+  }));
+}
+
+const { caseItem } = Astro.props;
+
+const title = `${caseItem.title} | ${site.name}`;
+const canonicalPath = `/vu-an-tieu-bieu/${caseItem.slug}/`;
+const pageUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: caseItem.title,
+    description: caseItem.summary,
+    url: pageUrl,
+    inLanguage: "vi-VN",
+    author: {
+      "@type": "Organization",
+      name: site.name,
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang chủ", item: site.canonicalBaseUrl },
+      { "@type": "ListItem", position: 2, name: "Kinh nghiệm", item: new URL("/bai-viet/", site.canonicalBaseUrl).toString() },
+      { "@type": "ListItem", position: 3, name: caseItem.title, item: pageUrl },
+    ],
+  },
+];
+---
+
+<BaseLayout title={title} description={caseItem.summary} canonicalPath={canonicalPath} structuredData={structuredData}>
+
+  <div class="bg-surface-white">
+    <div class="section-shell py-12 md:py-16">
+      <div class="mx-auto max-w-3xl">
+
+        
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-[0.75rem] font-semibold text-text-dark">
+            {caseItem.year}
+          </span>
+          <span class="text-[0.8125rem] font-medium text-text-muted">
+            {caseItem.court}
+          </span>
+        </div>
+
+        <h1 class="mt-5 text-[1.75rem] font-bold leading-[1.25] text-text-dark md:text-[2rem] lg:text-[2.25rem]">
+          {caseItem.title}
+        </h1>
+
+        
+        {(caseItem.role || caseItem.defendant || caseItem.charge || caseItem.date) && (
+          <div class="mt-8 grid gap-4 rounded-xl border border-border-soft bg-surface-subtle p-5 sm:grid-cols-2 lg:grid-cols-4">
+            {caseItem.role && <div>
+              <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Vai trò</p>
+              <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.role}</p>
+            </div>}
+            {caseItem.defendant && <div>
+              <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Bị cáo</p>
+              <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.defendant}</p>
+            </div>}
+            {caseItem.charge && <div>
+              <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Tội danh</p>
+              <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.charge}</p>
+            </div>}
+            {caseItem.date && <div>
+              <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Thời gian</p>
+              <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.date}</p>
+            </div>}
+          </div>
+        )}
+
+        
+        <div class="prose-legal mt-10 text-[0.9375rem] leading-[1.85] text-text-dark" set:html={caseItem.body} />
+
+        
+        {caseItem.keyArguments.length > 0 && (
+          <div class="mt-10">
+            <h2 class="text-[1rem] font-bold text-text-dark">Luận điểm bào chữa chính</h2>
+            <ul class="mt-4 space-y-3">
+              {caseItem.keyArguments.map((arg) => (
+                <li class="flex gap-3 text-[0.875rem] leading-[1.75] text-text-dark">
+                  <span class="shrink-0 font-medium text-text-dark" aria-hidden="true">–</span>
+                  <span>{arg}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        
+        {caseItem.result && (
+          <div class="mt-10 flex items-center gap-3 rounded-xl border border-green-100 bg-green-50 px-6 py-4">
+            <svg class="h-5 w-5 shrink-0 text-green-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+            </svg>
+            <div>
+              <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.06em] text-green-700">Kết quả</p>
+              <p class="text-[0.875rem] font-medium text-green-800">{caseItem.result}</p>
+            </div>
+          </div>
+        )}
+
+        
+        {caseItem.sources.length > 0 && (
+          <div class="mt-10 border-t border-border-soft pt-8">
+            <h2 class="text-[1rem] font-bold text-text-dark">Nguồn tham khảo</h2>
+            <div class="mt-4 space-y-2">
+              {caseItem.sources.map((source) => (
+                <a
+                  class="flex items-center gap-3 rounded-lg border border-border-soft bg-surface-white px-4 py-3 text-[0.875rem] font-medium text-deep-blue-navy transition-all hover:border-deep-blue-navy/30 hover:shadow-md"
+                  href={source.url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path d="M6.5 3.5H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V9.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path d="M9.5 2h4.5v4.5M14 2L7 9" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                  <span>{source.name}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        
+        <div class="mt-10 border-t border-border-soft pt-8">
+          <a
+            href="/bai-viet/"
+            class="inline-flex items-center gap-2 text-[0.875rem] font-medium text-deep-blue-navy hover:text-professional-blue"
+          >
+            <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M13 8H3M7 4L3 8l4 4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span>Quay lại Kinh nghiệm</span>
+          </a>
+        </div>
+
+        <div class="h-24" aria-hidden="true"></div>
+      </div>
+    </div>
+  </div>
+
+  <AskBox subject="vụ án" />
+</BaseLayout>
+
+<style>
+  .prose-legal :global(p) {
+    margin-bottom: 1.25rem;
+  }
+  .prose-legal :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  .prose-legal :global(strong) {
+    color: var(--color-text-dark);
+    font-weight: 600;
+  }
+  .prose-legal :global(h2) {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+  }
+  .prose-legal :global(h3) {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+  }
+  .prose-legal :global(ul) {
+    margin-bottom: 1.25rem;
+    padding-left: 1.125rem;
+    list-style: disc;
+  }
+  .prose-legal :global(li) {
+    margin-bottom: 0.5rem;
+  }
+  .prose-legal :global(li:last-child) {
+    margin-bottom: 0;
+  }
+</style>
