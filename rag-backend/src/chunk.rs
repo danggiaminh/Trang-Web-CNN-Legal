@@ -54,9 +54,16 @@ pub fn parse_file(path: &Path) -> Result<ParsedArticle> {
         bail!("frontmatter thiếu slug ở {}", path.display());
     }
 
-    let sections = extract_sections(body);
-    let chunks = build_chunks(sections);
-    Ok(ParsedArticle { front, chunks })
+    Ok(ParsedArticle {
+        front,
+        chunks: chunks_from_markdown(body),
+    })
+}
+
+/// Cắt một đoạn Markdown thành các chunk (theo heading + kích thước mục tiêu).
+/// Dùng chung cho: file `.md`, và nội dung HTML từ CMS (sau khi đổi HTML → Markdown).
+pub fn chunks_from_markdown(markdown: &str) -> Vec<Chunk> {
+    build_chunks(extract_sections(markdown))
 }
 
 struct RawSection {

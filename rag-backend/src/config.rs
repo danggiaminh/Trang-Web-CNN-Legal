@@ -25,6 +25,10 @@ pub struct Config {
     pub top_k: usize,
     pub rate_limit_per_second: u64,
     pub rate_limit_burst: u32,
+
+    /// Bí mật chia sẻ để xác thực endpoint ingest (CMS push). Không đặt =>
+    /// endpoint ingest bị tắt (trả 404) để tránh mở cửa nạp liệu vô danh.
+    pub ingest_secret: Option<String>,
 }
 
 impl Config {
@@ -61,6 +65,8 @@ impl Config {
             top_k: with("RAG_TOP_K", "4").parse().unwrap_or(4),
             rate_limit_per_second: with("RATE_LIMIT_PER_SECOND", "1").parse().unwrap_or(1),
             rate_limit_burst: with("RATE_LIMIT_BURST", "6").parse().unwrap_or(6),
+
+            ingest_secret: opt("INGEST_SECRET"),
         })
     }
 }
@@ -79,6 +85,10 @@ impl std::fmt::Debug for Config {
             .field("content_dir", &self.content_dir)
             .field("bind_addr", &self.bind_addr)
             .field("top_k", &self.top_k)
+            .field(
+                "ingest_secret",
+                &self.ingest_secret.as_ref().map(|_| "***redacted***"),
+            )
             .finish()
     }
 }

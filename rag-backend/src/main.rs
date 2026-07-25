@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
+    extract::DefaultBodyLimit,
     routing::{get, post},
     Router,
 };
@@ -8,7 +9,7 @@ use cnn_legal_rag::{
     config::Config,
     db::{build_pool, init_schema},
     embed::Embedder,
-    routes::{chat, health},
+    routes::{chat, health, ingest, ingest_delete},
     state::{AppState, Inner},
 };
 use tower_governor::{
@@ -53,6 +54,7 @@ async fn main() -> anyhow::Result<()> {
         http,
         pool,
         embedder,
+        ingest_lock: tokio::sync::Mutex::new(()),
     }));
 
     let governor = Arc::new(
@@ -64,11 +66,22 @@ async fn main() -> anyhow::Result<()> {
             .expect("cấu hình governor không hợp lệ"),
     );
 
+    // /api/chat: công khai -> rate-limit theo IP.
+    let chat_routes = Router::new()
+        .route("/api/chat", post(chat))
+        .layer(GovernorLayer { config: governor });
+
+    // /api/ingest*: máy-với-máy (CMS push), xác thực bằng INGEST_SECRET nên
+    // KHÔNG áp rate-limit công khai; cho phép body lớn hơn (bài dài).
+    let ingest_routes = Router::new()
+        .route("/api/ingest", post(ingest))
+        .route("/api/ingest/delete", post(ingest_delete))
+        .layer(DefaultBodyLimit::max(8 * 1024 * 1024));
+
     let app = Router::new()
         .route("/api/health", get(health))
-        .route("/api/chat", post(chat))
-
-        .layer(GovernorLayer { config: governor })
+        .merge(chat_routes)
+        .merge(ingest_routes)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())
         .with_state(state);

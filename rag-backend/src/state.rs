@@ -9,6 +9,9 @@ pub struct Inner {
     pub http: reqwest::Client,
     pub pool: Pool,
     pub embedder: Embedder,
+    /// Nối tiếp hoá các lần ingest (push) để hai webhook đến cùng lúc không
+    /// dẫm nhau khi ghi cùng một tài liệu.
+    pub ingest_lock: tokio::sync::Mutex<()>,
 }
 
 impl AppState {
@@ -23,5 +26,8 @@ impl AppState {
     }
     pub fn embedder(&self) -> &Embedder {
         &self.0.embedder
+    }
+    pub fn ingest_lock(&self) -> &tokio::sync::Mutex<()> {
+        &self.0.ingest_lock
     }
 }

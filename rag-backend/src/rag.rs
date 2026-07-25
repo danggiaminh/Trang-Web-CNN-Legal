@@ -70,10 +70,17 @@ fn render_chunks(chunks: &[Retrieved]) -> String {
     }
     let mut s = String::new();
     for (i, c) in chunks.iter().enumerate() {
-        let src = if c.section.is_empty() {
-            format!("{} (/bai-viet/{})", c.title, c.article_slug)
+        // Dùng URL thật của bài nếu có (WordPress/Ghost gửi lên); nếu không thì
+        // suy ra đường dẫn cũ /bai-viet/{slug} cho dữ liệu file cục bộ.
+        let link = if c.url.trim().is_empty() {
+            format!("/bai-viet/{}", c.article_slug)
         } else {
-            format!("{} — {} (/bai-viet/{})", c.title, c.section, c.article_slug)
+            c.url.clone()
+        };
+        let src = if c.section.is_empty() {
+            format!("{} ({link})", c.title)
+        } else {
+            format!("{} — {} ({link})", c.title, c.section)
         };
         s.push_str(&format!("[{}] Nguồn: {src}\n{}\n\n", i + 1, c.content.trim()));
     }

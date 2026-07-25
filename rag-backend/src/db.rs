@@ -56,22 +56,37 @@ pub fn init_schema(conn: &Connection, embed_dim: usize) -> Result<()> {
         r#"
         CREATE TABLE IF NOT EXISTS chunks (
           id            INTEGER PRIMARY KEY AUTOINCREMENT,
+          source        TEXT NOT NULL DEFAULT '',
           article_slug  TEXT NOT NULL,
           title         TEXT NOT NULL,
           section       TEXT NOT NULL DEFAULT '',
           content       TEXT NOT NULL,
+          url           TEXT NOT NULL DEFAULT '',
           updated_at    TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_chunks_slug ON chunks(article_slug);
+        CREATE INDEX IF NOT EXISTS idx_chunks_doc  ON chunks(source, article_slug);
 
         CREATE TABLE IF NOT EXISTS ingest_state (
-          article_slug      TEXT PRIMARY KEY,
+          source            TEXT NOT NULL DEFAULT '',
+          article_slug      TEXT NOT NULL,
           source_updated_at TEXT NOT NULL,
           ingested_at       TEXT NOT NULL,
-          chunk_count       INTEGER NOT NULL DEFAULT 0
+          chunk_count       INTEGER NOT NULL DEFAULT 0,
+          PRIMARY KEY (source, article_slug)
         );
         "#,
     )?;
+
+    // Di trú nhẹ cho DB tạo trước khi thêm cột source/url. Bỏ qua lỗi
+    // "duplicate column name" nếu cột đã tồn tại (DB mới đã có sẵn ở CREATE).
+    for stmt in [
+        "ALTER TABLE chunks ADD COLUMN source TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE chunks ADD COLUMN url TEXT NOT NULL DEFAULT ''",
+        "ALTER TABLE ingest_state ADD COLUMN source TEXT NOT NULL DEFAULT ''",
+    ] {
+        let _ = conn.execute(stmt, []);
+    }
 
     conn.execute_batch(&format!(
         "CREATE VIRTUAL TABLE IF NOT EXISTS vec_chunks USING vec0(
@@ -83,29 +98,77 @@ pub fn init_schema(conn: &Connection, embed_dim: usize) -> Result<()> {
 }
 
 pub struct ChunkRow<'a> {
+    pub source: &'a str,
     pub article_slug: &'a str,
     pub title: &'a str,
     pub section: &'a str,
     pub content: &'a str,
+    pub url: &'a str,
     pub updated_at: &'a str,
     pub embedding: &'a [f32],
 }
 
-pub fn delete_article(conn: &Connection, slug: &str) -> Result<()> {
-    conn.execute(
-        "DELETE FROM vec_chunks WHERE chunk_id IN (SELECT id FROM chunks WHERE article_slug = ?1)",
-        [slug],
-    )?;
-    conn.execute("DELETE FROM chunks WHERE article_slug = ?1", [slug])?;
+/// Xoá một tài liệu khỏi kho. Nếu có `source` thì chỉ xoá bản của nguồn đó
+/// (dùng khi re-ingest 1 nguồn); nếu `None` thì xoá theo slug bất kể nguồn
+/// (dùng khi CMS báo gỡ bài mà không kèm nguồn).
+pub fn delete_doc(conn: &Connection, source: Option<&str>, slug: &str) -> Result<()> {
+    match source {
+        Some(src) => {
+            conn.execute(
+                "DELETE FROM vec_chunks WHERE chunk_id IN
+                   (SELECT id FROM chunks WHERE source = ?1 AND article_slug = ?2)",
+                rusqlite::params![src, slug],
+            )?;
+            conn.execute(
+                "DELETE FROM chunks WHERE source = ?1 AND article_slug = ?2",
+                rusqlite::params![src, slug],
+            )?;
+            conn.execute(
+                "DELETE FROM ingest_state WHERE source = ?1 AND article_slug = ?2",
+                rusqlite::params![src, slug],
+            )?;
+        }
+        None => {
+            conn.execute(
+                "DELETE FROM vec_chunks WHERE chunk_id IN
+                   (SELECT id FROM chunks WHERE article_slug = ?1)",
+                [slug],
+            )?;
+            conn.execute("DELETE FROM chunks WHERE article_slug = ?1", [slug])?;
+            conn.execute("DELETE FROM ingest_state WHERE article_slug = ?1", [slug])?;
+        }
+    }
     Ok(())
 }
 
-pub fn insert_chunks(conn: &mut Connection, rows: &[ChunkRow<'_>], embed_dim: usize) -> Result<()> {
+/// Ghi đè một tài liệu trong MỘT transaction (nguyên tử): xoá bản cũ của đúng
+/// (source, slug), chèn chunk + vector mới, cập nhật `ingest_state`. Nếu có lỗi
+/// giữa chừng thì rollback toàn bộ — kho không bao giờ rơi vào trạng thái "đã
+/// xoá bài cũ nhưng chưa kịp chèn bài mới".
+pub fn replace_doc(
+    conn: &mut Connection,
+    source: &str,
+    slug: &str,
+    source_updated_at: &str,
+    ingested_at: &str,
+    rows: &[ChunkRow<'_>],
+    embed_dim: usize,
+) -> Result<()> {
     let tx = conn.transaction()?;
     {
+        tx.execute(
+            "DELETE FROM vec_chunks WHERE chunk_id IN
+               (SELECT id FROM chunks WHERE source = ?1 AND article_slug = ?2)",
+            rusqlite::params![source, slug],
+        )?;
+        tx.execute(
+            "DELETE FROM chunks WHERE source = ?1 AND article_slug = ?2",
+            rusqlite::params![source, slug],
+        )?;
+
         let mut ins_meta = tx.prepare(
-            "INSERT INTO chunks(article_slug, title, section, content, updated_at)
-             VALUES (?1, ?2, ?3, ?4, ?5)",
+            "INSERT INTO chunks(source, article_slug, title, section, content, url, updated_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         )?;
         let mut ins_vec =
             tx.prepare("INSERT INTO vec_chunks(chunk_id, embedding) VALUES (?1, ?2)")?;
@@ -118,49 +181,53 @@ pub fn insert_chunks(conn: &mut Connection, rows: &[ChunkRow<'_>], embed_dim: us
                 embed_dim
             );
             ins_meta.execute(rusqlite::params![
+                r.source,
                 r.article_slug,
                 r.title,
                 r.section,
                 r.content,
+                r.url,
                 r.updated_at
             ])?;
             let id = tx.last_insert_rowid();
-
             ins_vec.execute(rusqlite::params![id, r.embedding.as_bytes()])?;
         }
+
+        // INSERT OR REPLACE thay cho ON CONFLICT: hợp với cả DB mới (PK
+        // source+slug) lẫn DB cũ (PK chỉ slug), không cần nêu đích danh khoá.
+        tx.execute(
+            "INSERT OR REPLACE INTO
+               ingest_state(source, article_slug, source_updated_at, ingested_at, chunk_count)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![source, slug, source_updated_at, ingested_at, rows.len() as i64],
+        )?;
     }
     tx.commit()?;
     Ok(())
 }
 
-pub fn upsert_ingest_state(
+pub fn last_source_updated_at(
     conn: &Connection,
+    source: &str,
     slug: &str,
-    source_updated_at: &str,
-    ingested_at: &str,
-    chunk_count: usize,
-) -> Result<()> {
-    conn.execute(
-        "INSERT INTO ingest_state(article_slug, source_updated_at, ingested_at, chunk_count)
-         VALUES (?1, ?2, ?3, ?4)
-         ON CONFLICT(article_slug) DO UPDATE SET
-           source_updated_at = excluded.source_updated_at,
-           ingested_at       = excluded.ingested_at,
-           chunk_count       = excluded.chunk_count",
-        rusqlite::params![slug, source_updated_at, ingested_at, chunk_count as i64],
-    )?;
-    Ok(())
-}
-
-pub fn last_source_updated_at(conn: &Connection, slug: &str) -> Result<Option<String>> {
+) -> Result<Option<String>> {
     let v = conn
         .query_row(
-            "SELECT source_updated_at FROM ingest_state WHERE article_slug = ?1",
-            [slug],
+            "SELECT source_updated_at FROM ingest_state WHERE source = ?1 AND article_slug = ?2",
+            rusqlite::params![source, slug],
             |row| row.get::<_, String>(0),
         )
         .ok();
     Ok(v)
+}
+
+/// Danh sách (source, slug) đã ingest — dùng để prune bài không còn nữa.
+pub fn all_ingested(conn: &Connection) -> Result<Vec<(String, String)>> {
+    let mut stmt = conn.prepare("SELECT source, article_slug FROM ingest_state")?;
+    let it = stmt.query_map([], |r| {
+        Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+    })?;
+    Ok(it.filter_map(|r| r.ok()).collect())
 }
 
 #[derive(Debug, Clone)]
@@ -170,17 +237,13 @@ pub struct Retrieved {
     pub section: String,
     pub content: String,
     pub article_slug: String,
+    pub url: String,
     pub distance: f32,
 }
 
-pub fn search_knn(
-    conn: &Connection,
-    query_embedding: &[f32],
-    k: usize,
-) -> Result<Vec<Retrieved>> {
-
+pub fn search_knn(conn: &Connection, query_embedding: &[f32], k: usize) -> Result<Vec<Retrieved>> {
     let mut stmt = conn.prepare(
-        "SELECT c.id, c.title, c.section, c.content, c.article_slug, v.distance
+        "SELECT c.id, c.title, c.section, c.content, c.article_slug, c.url, v.distance
          FROM vec_chunks v
          JOIN chunks c ON c.id = v.chunk_id
          WHERE v.embedding MATCH ?1 AND k = ?2
@@ -195,7 +258,8 @@ pub fn search_knn(
                 section: row.get(2)?,
                 content: row.get(3)?,
                 article_slug: row.get(4)?,
-                distance: row.get::<_, f64>(5)? as f32,
+                url: row.get(5)?,
+                distance: row.get::<_, f64>(6)? as f32,
             })
         },
     )?;
@@ -208,7 +272,7 @@ pub fn search_knn(
 
 pub fn fetch_doc_chunks(conn: &Connection, slug: &str, max_chars: usize) -> Result<Vec<Retrieved>> {
     let mut stmt = conn.prepare(
-        "SELECT id, title, section, content, article_slug
+        "SELECT id, title, section, content, article_slug, url
          FROM chunks
          WHERE article_slug = ?1
          ORDER BY id",
@@ -220,6 +284,7 @@ pub fn fetch_doc_chunks(conn: &Connection, slug: &str, max_chars: usize) -> Resu
             section: row.get(2)?,
             content: row.get(3)?,
             article_slug: row.get(4)?,
+            url: row.get(5)?,
             distance: 0.0,
         })
     })?;

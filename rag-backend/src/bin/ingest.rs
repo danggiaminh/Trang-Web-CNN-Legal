@@ -1,23 +1,21 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Parser;
 use cnn_legal_rag::{
     chunk::parse_file,
     config::Config,
-    db::{
-        delete_article, init_schema, insert_chunks, last_source_updated_at, open_single,
-        upsert_ingest_state, ChunkRow,
-    },
+    db::{all_ingested, build_pool, delete_doc, init_schema},
     embed::Embedder,
+    pipeline::{store_doc, IngestDoc, StoreOutcome},
 };
 use std::collections::HashSet;
 use walkdir::WalkDir;
 
-const EMBED_BATCH: usize = 64;
+/// Nguồn cho tài liệu nạp từ file .md cục bộ (phân biệt với nội dung do CMS push).
+const SOURCE: &str = "file";
 
 #[derive(Parser)]
-#[command(about = "Ingest bài viết CNN Legal vào vector store")]
+#[command(about = "Ingest bài viết CNN Legal (.md cục bộ) vào vector store")]
 struct Args {
-
     #[arg(long)]
     force: bool,
 
@@ -55,14 +53,13 @@ async fn main() -> Result<()> {
         cfg.embed_dim,
     );
 
-    let mut conn = open_single(&db_path)?;
-    init_schema(&conn, cfg.embed_dim)?;
+    let pool = build_pool(&db_path)?;
+    {
+        let conn = pool.get()?;
+        init_schema(&conn, cfg.embed_dim)?;
+    }
 
-    let now = time::OffsetDateTime::now_utc()
-        .format(&time::format_description::well_known::Rfc3339)
-        .unwrap_or_default();
-
-    let mut seen_slugs: HashSet<String> = HashSet::new();
+    let mut seen: HashSet<String> = HashSet::new();
     let (mut n_ingested, mut n_skipped, mut n_chunks) = (0usize, 0usize, 0usize);
 
     for entry in WalkDir::new(&content_dir)
@@ -86,75 +83,49 @@ async fn main() -> Result<()> {
                 continue;
             }
         };
-        let slug = parsed.front.slug.clone();
-        seen_slugs.insert(slug.clone());
 
-        let new_ts = parsed.front.updated_at.trim();
-        if !args.force && !new_ts.is_empty() {
-            if let Some(old_ts) = last_source_updated_at(&conn, &slug)? {
+        let doc = IngestDoc {
+            source: SOURCE.to_string(),
+            slug: parsed.front.slug.clone(),
+            title: parsed.front.title.clone(),
+            category: parsed.front.category.clone(),
+            url: String::new(), // file: rag.rs suy ra đường dẫn /bai-viet/{slug}
+            updated_at: parsed.front.updated_at.trim().to_string(),
+            chunks: parsed.chunks,
+        };
+        seen.insert(doc.slug.clone());
 
-                if old_ts.as_str() >= new_ts {
-                    n_skipped += 1;
-                    tracing::debug!("skip {slug} (không mới hơn)");
-                    continue;
-                }
+        match store_doc(&pool, &embedder, cfg.embed_dim, &doc, args.force).await {
+            Ok(StoreOutcome::Ingested { chunks }) => {
+                n_ingested += 1;
+                n_chunks += chunks;
+                tracing::info!("ingested {}: {} chunk", doc.slug, chunks);
+            }
+            Ok(StoreOutcome::Skipped) => {
+                n_skipped += 1;
+                tracing::debug!("skip {} (không mới hơn)", doc.slug);
+            }
+            Ok(StoreOutcome::Empty) => {
+                tracing::warn!("{}: không có chunk nào, bỏ qua", doc.slug);
+            }
+            Err(e) => {
+                tracing::error!("lỗi ingest {}: {e:#}", doc.slug);
+                return Err(e);
             }
         }
-
-        if parsed.chunks.is_empty() {
-            tracing::warn!("{slug}: không có chunk nào, bỏ qua");
-            continue;
-        }
-
-        let contents: Vec<String> = parsed.chunks.iter().map(|c| c.content.clone()).collect();
-        let mut embeddings: Vec<Vec<f32>> = Vec::with_capacity(contents.len());
-        for batch in contents.chunks(EMBED_BATCH) {
-            let embs = embedder
-                .embed_batch(batch)
-                .await
-                .with_context(|| format!("embed lỗi ở bài {slug}"))?;
-            embeddings.extend(embs);
-        }
-
-        delete_article(&conn, &slug)?;
-        let rows: Vec<ChunkRow> = parsed
-            .chunks
-            .iter()
-            .zip(embeddings.iter())
-            .map(|(c, emb)| ChunkRow {
-                article_slug: &slug,
-                title: &parsed.front.title,
-                section: &c.section,
-                content: &c.content,
-                updated_at: new_ts,
-                embedding: emb,
-            })
-            .collect();
-        insert_chunks(&mut conn, &rows, cfg.embed_dim)?;
-        upsert_ingest_state(&conn, &slug, new_ts, &now, rows.len())?;
-
-        n_ingested += 1;
-        n_chunks += rows.len();
-        tracing::info!("ingested {slug}: {} chunk", rows.len());
     }
 
     if args.prune {
-        let db_slugs: Vec<String> = {
-            let mut stmt = conn.prepare("SELECT article_slug FROM ingest_state")?;
-            let it = stmt.query_map([], |r| r.get::<_, String>(0))?;
-            it.filter_map(|r| r.ok()).collect()
-        };
-        for slug in db_slugs {
-            if !seen_slugs.contains(&slug) {
-                delete_article(&conn, &slug)?;
-                conn.execute("DELETE FROM ingest_state WHERE article_slug = ?1", [&slug])?;
+        let conn = pool.get()?;
+        for (src, slug) in all_ingested(&conn)? {
+            // Chỉ prune tài liệu đến từ file; KHÔNG đụng nội dung CMS đã push.
+            if src == SOURCE && !seen.contains(&slug) {
+                delete_doc(&conn, Some(&src), &slug)?;
                 tracing::info!("prune {slug} (không còn file)");
             }
         }
     }
 
-    tracing::info!(
-        "xong: {n_ingested} bài ingest ({n_chunks} chunk), {n_skipped} bỏ qua"
-    );
+    tracing::info!("xong: {n_ingested} bài ingest ({n_chunks} chunk), {n_skipped} bỏ qua");
     Ok(())
 }
