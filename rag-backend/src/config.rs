@@ -14,6 +14,9 @@ pub struct Config {
 
     pub openrouter_reasoning: String,
 
+
+    pub openrouter_max_tokens: u32,
+
     pub embed_base_url: String,
     pub embed_api_key: Option<String>,
     pub embed_model: String,
@@ -26,9 +29,11 @@ pub struct Config {
     pub rate_limit_per_second: u64,
     pub rate_limit_burst: u32,
 
-    /// Bí mật chia sẻ để xác thực endpoint ingest (CMS push). Không đặt =>
-    /// endpoint ingest bị tắt (trả 404) để tránh mở cửa nạp liệu vô danh.
+
     pub ingest_secret: Option<String>,
+
+
+    pub allowed_origins: Vec<String>,
 }
 
 impl Config {
@@ -51,6 +56,9 @@ impl Config {
             openrouter_referer: opt("OPENROUTER_REFERER"),
             openrouter_title: opt("OPENROUTER_TITLE"),
             openrouter_reasoning: with("OPENROUTER_REASONING", "off"),
+            openrouter_max_tokens: with("OPENROUTER_MAX_TOKENS", "1200")
+                .parse()
+                .context("OPENROUTER_MAX_TOKENS không phải số")?,
 
             embed_base_url: with("EMBED_BASE_URL", "http://127.0.0.1:8080/v1"),
             embed_api_key: opt("EMBED_API_KEY"),
@@ -67,6 +75,14 @@ impl Config {
             rate_limit_burst: with("RATE_LIMIT_BURST", "6").parse().unwrap_or(6),
 
             ingest_secret: opt("INGEST_SECRET"),
+            allowed_origins: with(
+                "ALLOWED_ORIGINS",
+                "https://cnnlegal.vn,https://www.cnnlegal.vn,http://localhost:4321",
+            )
+            .split(',')
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect(),
         })
     }
 }

@@ -2,7 +2,8 @@
 title: "Đại án Vạn Thịnh Phát — Giai đoạn 1 (Phúc thẩm)"
 slug: "dai-an-van-thinh-phat-giai-doan-1"
 category: "Hình sự"
-updatedAt: "2026-07-23"
+url: "/vu-an-tieu-bieu/dai-an-van-thinh-phat-giai-doan-1/"
+updatedAt: "sha256:9f7eaef9778fc91a"
 ---
 Luật sư Đặng Kim Chinh là người bào chữa cho bị cáo Lê Khánh Hiền — nguyên Tổng Giám đốc Ngân hàng TMCP Sài Gòn (SCB) — tại cấp phúc thẩm. Ngày 03/12/2024, Hội đồng xét xử phúc thẩm tuyên phạt bị cáo 3 năm tù, giảm 2 năm so với bản án sơ thẩm.
 

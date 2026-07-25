@@ -2,6 +2,7 @@
 title: "Bình luận Án lệ số 13/2017/AL về hiệu lực thanh toán của thư tín dụng (L/C)"
 slug: "an-le-13-2017-al-hieu-luc-thanh-toan-thu-tin-dung"
 category: "Kinh doanh thương mại"
+url: "/bai-viet/an-le-13-2017-al-hieu-luc-thanh-toan-thu-tin-dung/"
 updatedAt: "2025-08-05"
 ---
 (LSVN) – Án lệ số 13/2017/AL khẳng định việc áp dụng UCP 600 trong trường hợp các bên có thỏa thuận thanh toán bằng thư tín dụng (L/C) theo quy tắc này, theo đó L/C không bị mất hiệu lực thanh toán ngay cả khi hợp đồng mua bán hàng hóa quốc tế – vốn là cơ sở của L/C – bị hủy bỏ. Mặc dù thỏa thuận này đã trở nên phổ biến và được công nhận rộng rãi trong thực tiễn giao dịch thương mại quốc tế, nhưng vẫn có thể gây lúng túng trong thực tiễn xét xử tại Việt Nam. Bài viết này bình luận Án lệ số 13/2017/AL dưới ba góc độ: viện dẫn quy định pháp luật, nội dung và ý nghĩa. Đồng thời, tác giả cũng phân tích tác động của những thay đổi pháp luật gần đây đến tính phù hợp của án lệ này và đưa ra một số kiến nghị.

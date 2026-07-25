@@ -2,7 +2,8 @@
 title: "Vụ án cựu Hiệu trưởng bị cáo buộc tham ô tài sản ở Cà Mau"
 slug: "cuu-hieu-truong-tham-o-tai-san-ca-mau"
 category: "Hình sự"
-updatedAt: "2026-07-23"
+url: "/vu-an-tieu-bieu/cuu-hieu-truong-tham-o-tai-san-ca-mau/"
+updatedAt: "sha256:5d67dac81813a0c5"
 ---
 Luật sư Đặng Kim Chinh nêu ý kiến pháp lý trên báo chí về vụ ông Trần Văn Tâm — nguyên Hiệu trưởng Trường Trung học cơ sở Tam Giang Tây, tỉnh Cà Mau — bị cáo buộc tham ô 10,7 triệu đồng và bị tuyên 7 năm tù ở cấp sơ thẩm. Bản án sơ thẩm sau đó bị hủy để điều tra lại; ngày 28/5/2026, Cơ quan Cảnh sát điều tra đình chỉ điều tra bị can.
 

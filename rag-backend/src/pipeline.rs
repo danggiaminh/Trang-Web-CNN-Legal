@@ -1,7 +1,4 @@
-//! Lõi ingest DÙNG CHUNG cho mọi nguồn (file .md, WordPress, Ghost, ...).
-//! Một `IngestDoc` chuẩn hoá đi vào; incremental theo `updated_at`; embed; ghi
-//! đè bản cũ của đúng (source, slug). Idempotent: gọi lại nhiều lần cho cùng
-//! nội dung sẽ thay thế sạch chứ không nhân đôi.
+
 
 use crate::{
     chunk::{chunks_from_markdown, Chunk},
@@ -13,17 +10,17 @@ use anyhow::{bail, Result};
 
 const EMBED_BATCH: usize = 64;
 
-/// Tài liệu chuẩn hoá để nạp vào kho, bất kể đến từ file hay CMS.
+
 pub struct IngestDoc {
-    /// "file" | "wordpress" | "ghost" | ... — để namespacing & xoá đúng nguồn.
+
     pub source: String,
-    /// = slug trang trên website (AskBox truyền lên khi hỏi "bài này").
+
     pub slug: String,
     pub title: String,
     pub category: String,
-    /// URL công khai của bài, dùng để trích dẫn nguồn cho người đọc.
+
     pub url: String,
-    /// RFC3339 (hoặc chuỗi so sánh từ điển được). Rỗng = luôn ingest.
+
     pub updated_at: String,
     pub chunks: Vec<Chunk>,
 }
@@ -50,7 +47,7 @@ impl IngestDoc {
         }
     }
 
-    /// Dựng doc từ HTML (nội dung bài do CMS gửi sang): HTML → Markdown → chunk.
+
     #[allow(clippy::too_many_arguments)]
     pub fn from_html(
         source: impl Into<String>,
@@ -69,10 +66,32 @@ impl IngestDoc {
 #[derive(Debug, PartialEq)]
 pub enum StoreOutcome {
     Ingested { chunks: usize },
-    /// Bỏ qua vì bản trong kho đã mới bằng/hơn `updated_at` gửi lên.
+
     Skipped,
-    /// Không tách được chunk nào (nội dung rỗng sau khi làm sạch).
+
     Empty,
+}
+
+
+fn should_skip(stored: &str, incoming: &str) -> bool {
+    if is_timestamp(stored) && is_timestamp(incoming) {
+        stored >= incoming
+    } else {
+        stored == incoming
+    }
+}
+
+
+fn is_timestamp(s: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() >= 10
+        && b[..10].iter().enumerate().all(|(i, c)| {
+            if i == 4 || i == 7 {
+                *c == b'-'
+            } else {
+                c.is_ascii_digit()
+            }
+        })
 }
 
 fn rfc3339_now() -> String {
@@ -81,9 +100,7 @@ fn rfc3339_now() -> String {
         .unwrap_or_default()
 }
 
-/// Ingest một tài liệu. `force=true` bỏ qua kiểm tra incremental (ingest lại dù
-/// không mới hơn). Không giữ kết nối DB nào xuyên qua `.await` (embed) để tránh
-/// giữ pooled-connection khi chờ mạng.
+
 pub async fn store_doc(
     pool: &Pool,
     embedder: &Embedder,
@@ -95,11 +112,18 @@ pub async fn store_doc(
         bail!("IngestDoc thiếu slug");
     }
 
-    // 1) Incremental: nếu bản trong kho không cũ hơn -> bỏ qua.
+
     if !force && !doc.updated_at.trim().is_empty() {
-        let conn = pool.get()?;
-        if let Some(old) = last_source_updated_at(&conn, &doc.source, &doc.slug)? {
-            if old.as_str() >= doc.updated_at.as_str() {
+        let pool = pool.clone();
+        let source = doc.source.clone();
+        let slug = doc.slug.clone();
+        let last = tokio::task::spawn_blocking(move || -> Result<Option<String>> {
+            let conn = pool.get()?;
+            last_source_updated_at(&conn, &source, &slug)
+        })
+        .await??;
+        if let Some(old) = last {
+            if should_skip(&old, &doc.updated_at) {
                 return Ok(StoreOutcome::Skipped);
             }
         }
@@ -109,41 +133,89 @@ pub async fn store_doc(
         return Ok(StoreOutcome::Empty);
     }
 
-    // 2) Embed (async, không giữ conn).
+
     let contents: Vec<String> = doc.chunks.iter().map(|c| c.content.clone()).collect();
     let mut embeddings: Vec<Vec<f32>> = Vec::with_capacity(contents.len());
     for batch in contents.chunks(EMBED_BATCH) {
         embeddings.extend(embedder.embed_batch(batch).await?);
     }
 
-    // 3) Ghi (sync, MỘT transaction): xoá bản cũ + chèn mới + cập nhật state.
+
     let now = rfc3339_now();
-    let rows: Vec<ChunkRow> = doc
-        .chunks
-        .iter()
-        .zip(embeddings.iter())
-        .map(|(c, emb)| ChunkRow {
-            source: &doc.source,
-            article_slug: &doc.slug,
-            title: &doc.title,
-            section: &c.section,
-            content: &c.content,
-            url: &doc.url,
-            updated_at: &doc.updated_at,
-            embedding: emb,
-        })
-        .collect();
-    let n = rows.len();
-    let mut conn = pool.get()?;
-    replace_doc(
-        &mut conn,
-        &doc.source,
-        &doc.slug,
-        &doc.updated_at,
-        &now,
-        &rows,
-        embed_dim,
-    )?;
+    let n = doc.chunks.len();
+
+    let pool = pool.clone();
+    let source = doc.source.clone();
+    let slug = doc.slug.clone();
+    let title = doc.title.clone();
+    let url = doc.url.clone();
+    let updated_at = doc.updated_at.clone();
+    let sections: Vec<String> = doc.chunks.iter().map(|c| c.section.clone()).collect();
+
+    tokio::task::spawn_blocking(move || -> Result<()> {
+        let rows: Vec<ChunkRow> = sections
+            .iter()
+            .zip(contents.iter())
+            .zip(embeddings.iter())
+            .map(|((section, content), embedding)| ChunkRow {
+                source: &source,
+                article_slug: &slug,
+                title: &title,
+                section,
+                content,
+                url: &url,
+                updated_at: &updated_at,
+                embedding,
+            })
+            .collect();
+        let mut conn = pool.get()?;
+        replace_doc(
+            &mut conn,
+            &source,
+            &slug,
+            &updated_at,
+            &now,
+            &rows,
+            embed_dim,
+        )
+    })
+    .await??;
 
     Ok(StoreOutcome::Ingested { chunks: n })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn moc_thoi_gian_bo_qua_ban_khong_moi_hon() {
+        assert!(should_skip("2025-09-28T10:00:00Z", "2025-09-28T10:00:00Z"));
+        assert!(should_skip("2025-09-28", "2025-01-01"), "webhook đến trễ");
+        assert!(!should_skip("2025-01-01", "2025-09-28"), "bản mới phải vào");
+    }
+
+
+    #[test]
+    fn van_tay_chi_bo_qua_khi_trung_khop() {
+        assert!(should_skip("sha256:aaaa1111", "sha256:aaaa1111"));
+
+        assert!(!should_skip("sha256:bbbb2222", "sha256:aaaa1111"));
+        assert!(!should_skip("sha256:aaaa1111", "sha256:bbbb2222"));
+    }
+
+    #[test]
+    fn doi_giua_hai_dang_thi_luon_nap_lai() {
+        assert!(!should_skip("2025-09-28", "sha256:aaaa1111"));
+        assert!(!should_skip("sha256:aaaa1111", "2025-09-28"));
+    }
+
+    #[test]
+    fn nhan_dang_moc_thoi_gian() {
+        assert!(is_timestamp("2025-09-28"));
+        assert!(is_timestamp("2025-09-28T10:00:00Z"));
+        assert!(!is_timestamp("sha256:aaaa1111"));
+        assert!(!is_timestamp("2025-09"));
+        assert!(!is_timestamp(""));
+    }
 }

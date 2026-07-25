@@ -314,7 +314,7 @@ const structuredData = [
       return;
     }
 
-    // Bản tĩnh không có backend: soạn sẵn nội dung và mở ứng dụng email của người dùng.
+
     const to = form.dataset.email || '';
     const subject = `[CNN Legal] ${data.field}${data.subject ? ' – ' + data.subject : ''} – ${data.name}`;
     const bodyLines = [

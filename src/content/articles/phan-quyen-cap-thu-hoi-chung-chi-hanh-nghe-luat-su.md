@@ -2,6 +2,7 @@
 title: "Bàn về phân quyền cấp, thu hồi Chứng chỉ hành nghề luật sư theo Nghị định 121/2025/NĐ-CP"
 slug: "phan-quyen-cap-thu-hoi-chung-chi-hanh-nghe-luat-su"
 category: "Dân sự"
+url: "/bai-viet/phan-quyen-cap-thu-hoi-chung-chi-hanh-nghe-luat-su/"
 updatedAt: "2025-06-18"
 ---
 (LSVN) - Bài viết này phân tích các quy định của Nghị định số 121/2025/NĐ-CP liên quan đến việc phân quyền cấp và thu hồi Chứng chỉ hành nghề luật sư, trong mối tương quan với Luật Luật sư hiện hành và các văn bản pháp luật có liên quan đến tổ chức bộ máy nhà nước, đặc biệt là trong bối cảnh thực hiện Nghị quyết số 190/2025/QH15 của Quốc hội. Trên cơ sở đó, bài viết nhận diện một số hệ quả có thể phát sinh từ việc phân quyền này, đồng thời đề xuất các hướng điều chỉnh nhằm bảo đảm tính đồng bộ, thống nhất và phù hợp trong quản lý luật sư và hành nghề luật sư.

@@ -2,6 +2,7 @@
 title: "Hình phạt tử hình đối với tội \"Tham ô tài sản\" và tội \"Nhận hối lộ\": Nhìn từ góc độ hợp tác quốc tế về dẫn độ"
 slug: "hinh-phat-tu-hinh-toi-tham-o-nhan-hoi-lo-va-dan-do"
 category: "Hình sự"
+url: "/bai-viet/hinh-phat-tu-hinh-toi-tham-o-nhan-hoi-lo-va-dan-do/"
 updatedAt: "2025-06-09"
 ---
 (LSVN) – Trong hợp tác quốc tế về dẫn độ, hình phạt tử hình trở thành một rào cản pháp lý khiến quá trình dẫn độ gặp bế tắc. Từ thực tiễn này, bài viết phân tích việc duy trì hình phạt tử hình đối với tội tham ô tài sản và tội nhận hối lộ như một lực cản đáng kể trong hợp tác quốc tế về dẫn độ; đồng thời làm rõ ý nghĩa của việc bỏ hình phạt tử hình đối với hai tội danh này trong bối cảnh hội nhập và cải cách tư pháp.

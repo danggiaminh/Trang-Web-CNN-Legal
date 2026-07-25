@@ -13,6 +13,10 @@ pub struct Frontmatter {
     #[serde(default)]
     pub category: String,
 
+
+    #[serde(default)]
+    pub url: String,
+
     #[serde(alias = "updated_at", alias = "updatedAt", default)]
     pub updated_at: String,
 }
@@ -60,8 +64,7 @@ pub fn parse_file(path: &Path) -> Result<ParsedArticle> {
     })
 }
 
-/// Cắt một đoạn Markdown thành các chunk (theo heading + kích thước mục tiêu).
-/// Dùng chung cho: file `.md`, và nội dung HTML từ CMS (sau khi đổi HTML → Markdown).
+
 pub fn chunks_from_markdown(markdown: &str) -> Vec<Chunk> {
     build_chunks(extract_sections(markdown))
 }

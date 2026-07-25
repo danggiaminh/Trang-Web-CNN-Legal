@@ -15,7 +15,10 @@ use cnn_legal_rag::{
 use tower_governor::{
     governor::GovernorConfigBuilder, key_extractor::SmartIpKeyExtractor, GovernorLayer,
 };
-use tower_http::{cors::CorsLayer, trace::TraceLayer};
+use tower_http::{
+    cors::{AllowOrigin, CorsLayer},
+    trace::TraceLayer,
+};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -29,9 +32,11 @@ async fn main() -> anyhow::Result<()> {
     let cfg = Config::from_env()?;
     tracing::info!(config = ?cfg, "khởi động CNN Legal RAG");
 
+
     let http = reqwest::Client::builder()
         .pool_max_idle_per_host(16)
-        .timeout(std::time::Duration::from_secs(60))
+        .connect_timeout(std::time::Duration::from_secs(10))
+        .read_timeout(std::time::Duration::from_secs(60))
         .build()?;
 
     let pool = build_pool(&cfg.db_path)?;
@@ -66,23 +71,34 @@ async fn main() -> anyhow::Result<()> {
             .expect("cấu hình governor không hợp lệ"),
     );
 
-    // /api/chat: công khai -> rate-limit theo IP.
+
     let chat_routes = Router::new()
         .route("/api/chat", post(chat))
         .layer(GovernorLayer { config: governor });
 
-    // /api/ingest*: máy-với-máy (CMS push), xác thực bằng INGEST_SECRET nên
-    // KHÔNG áp rate-limit công khai; cho phép body lớn hơn (bài dài).
+
     let ingest_routes = Router::new()
         .route("/api/ingest", post(ingest))
         .route("/api/ingest/delete", post(ingest_delete))
         .layer(DefaultBodyLimit::max(8 * 1024 * 1024));
 
+
+    let origins: Vec<_> = cfg
+        .allowed_origins
+        .iter()
+        .filter_map(|o| o.parse::<axum::http::HeaderValue>().ok())
+        .collect();
+    tracing::info!(origins = ?cfg.allowed_origins, "CORS allowlist");
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::list(origins))
+        .allow_methods([axum::http::Method::POST, axum::http::Method::GET])
+        .allow_headers([axum::http::header::CONTENT_TYPE]);
+
     let app = Router::new()
         .route("/api/health", get(health))
         .merge(chat_routes)
         .merge(ingest_routes)
-        .layer(CorsLayer::permissive())
+        .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state);
 

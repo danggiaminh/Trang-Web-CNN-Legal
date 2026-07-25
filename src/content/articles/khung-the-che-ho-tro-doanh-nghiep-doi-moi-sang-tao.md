@@ -2,6 +2,7 @@
 title: "Bàn về khung thể chế hỗ trợ doanh nghiệp đổi mới sáng tạo theo Nghị quyết 226/2025/QH15"
 slug: "khung-the-che-ho-tro-doanh-nghiep-doi-moi-sang-tao"
 category: "Kinh doanh thương mại"
+url: "/bai-viet/khung-the-che-ho-tro-doanh-nghiep-doi-moi-sang-tao/"
 updatedAt: "2025-09-19"
 ---
 (LSVN) - Khái niệm “doanh nghiệp đổi mới sáng tạo” lần đầu tiên được ghi nhận trong văn bản quy phạm pháp luật – Nghị quyết số 226/2025/QH15 – thể hiện bước tiến quan trọng trong việc thể chế hóa các định hướng chính sách lớn của Đảng về khoa học, công nghệ và đổi mới sáng tạo. Nghị quyết số 226/2025/QH15 của Quốc hội tạo ra khung thể chế vượt trội để thúc đẩy doanh nghiệp đổi mới sáng tạo, làm cơ sở vật chất và thực tiễn vững chắc phục vụ công cuộc bảo vệ nền tảng tư tưởng của Đảng. Bài viết phân tích Nghị quyết này dưới góc độ vai trò của thể chế trong việc hỗ trợ doanh nghiệp đổi mới sáng tạo hiện nay.

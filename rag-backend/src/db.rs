@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::ffi::sqlite3_auto_extension;
-use rusqlite::Connection;
+use rusqlite::{Connection, OptionalExtension};
 use sqlite_vec::sqlite3_vec_init;
 use std::sync::Once;
 use zerocopy::AsBytes;
@@ -78,8 +78,7 @@ pub fn init_schema(conn: &Connection, embed_dim: usize) -> Result<()> {
         "#,
     )?;
 
-    // Di trú nhẹ cho DB tạo trước khi thêm cột source/url. Bỏ qua lỗi
-    // "duplicate column name" nếu cột đã tồn tại (DB mới đã có sẵn ở CREATE).
+
     for stmt in [
         "ALTER TABLE chunks ADD COLUMN source TEXT NOT NULL DEFAULT ''",
         "ALTER TABLE chunks ADD COLUMN url TEXT NOT NULL DEFAULT ''",
@@ -108,9 +107,7 @@ pub struct ChunkRow<'a> {
     pub embedding: &'a [f32],
 }
 
-/// Xoá một tài liệu khỏi kho. Nếu có `source` thì chỉ xoá bản của nguồn đó
-/// (dùng khi re-ingest 1 nguồn); nếu `None` thì xoá theo slug bất kể nguồn
-/// (dùng khi CMS báo gỡ bài mà không kèm nguồn).
+
 pub fn delete_doc(conn: &Connection, source: Option<&str>, slug: &str) -> Result<()> {
     match source {
         Some(src) => {
@@ -141,10 +138,7 @@ pub fn delete_doc(conn: &Connection, source: Option<&str>, slug: &str) -> Result
     Ok(())
 }
 
-/// Ghi đè một tài liệu trong MỘT transaction (nguyên tử): xoá bản cũ của đúng
-/// (source, slug), chèn chunk + vector mới, cập nhật `ingest_state`. Nếu có lỗi
-/// giữa chừng thì rollback toàn bộ — kho không bao giờ rơi vào trạng thái "đã
-/// xoá bài cũ nhưng chưa kịp chèn bài mới".
+
 pub fn replace_doc(
     conn: &mut Connection,
     source: &str,
@@ -193,8 +187,7 @@ pub fn replace_doc(
             ins_vec.execute(rusqlite::params![id, r.embedding.as_bytes()])?;
         }
 
-        // INSERT OR REPLACE thay cho ON CONFLICT: hợp với cả DB mới (PK
-        // source+slug) lẫn DB cũ (PK chỉ slug), không cần nêu đích danh khoá.
+
         tx.execute(
             "INSERT OR REPLACE INTO
                ingest_state(source, article_slug, source_updated_at, ingested_at, chunk_count)
@@ -221,7 +214,7 @@ pub fn last_source_updated_at(
     Ok(v)
 }
 
-/// Danh sách (source, slug) đã ingest — dùng để prune bài không còn nữa.
+
 pub fn all_ingested(conn: &Connection) -> Result<Vec<(String, String)>> {
     let mut stmt = conn.prepare("SELECT source, article_slug FROM ingest_state")?;
     let it = stmt.query_map([], |r| {
@@ -233,6 +226,7 @@ pub fn all_ingested(conn: &Connection) -> Result<Vec<(String, String)>> {
 #[derive(Debug, Clone)]
 pub struct Retrieved {
     pub id: i64,
+    pub source: String,
     pub title: String,
     pub section: String,
     pub content: String,
@@ -241,9 +235,21 @@ pub struct Retrieved {
     pub distance: f32,
 }
 
+
+#[derive(Debug, Default)]
+pub struct DocChunks {
+    pub chunks: Vec<Retrieved>,
+
+
+    pub truncated: bool,
+}
+
+
+const KNN_OVERFETCH: usize = 6;
+
 pub fn search_knn(conn: &Connection, query_embedding: &[f32], k: usize) -> Result<Vec<Retrieved>> {
     let mut stmt = conn.prepare(
-        "SELECT c.id, c.title, c.section, c.content, c.article_slug, c.url, v.distance
+        "SELECT c.id, c.source, c.title, c.section, c.content, c.article_slug, c.url, v.distance
          FROM vec_chunks v
          JOIN chunks c ON c.id = v.chunk_id
          WHERE v.embedding MATCH ?1 AND k = ?2
@@ -254,12 +260,13 @@ pub fn search_knn(conn: &Connection, query_embedding: &[f32], k: usize) -> Resul
         |row| {
             Ok(Retrieved {
                 id: row.get(0)?,
-                title: row.get(1)?,
-                section: row.get(2)?,
-                content: row.get(3)?,
-                article_slug: row.get(4)?,
-                url: row.get(5)?,
-                distance: row.get::<_, f64>(6)? as f32,
+                source: row.get(1)?,
+                title: row.get(2)?,
+                section: row.get(3)?,
+                content: row.get(4)?,
+                article_slug: row.get(5)?,
+                url: row.get(6)?,
+                distance: row.get::<_, f64>(7)? as f32,
             })
         },
     )?;
@@ -270,34 +277,150 @@ pub fn search_knn(conn: &Connection, query_embedding: &[f32], k: usize) -> Resul
     Ok(out)
 }
 
-pub fn fetch_doc_chunks(conn: &Connection, slug: &str, max_chars: usize) -> Result<Vec<Retrieved>> {
+
+pub fn search_knn_in_doc(
+    conn: &Connection,
+    query_embedding: &[f32],
+    k: usize,
+    slug: &str,
+    source: &str,
+) -> Result<Vec<Retrieved>> {
+    let hits = search_knn(conn, query_embedding, k * KNN_OVERFETCH)?;
+    Ok(hits
+        .into_iter()
+        .filter(|h| h.article_slug == slug && h.source == source)
+        .take(k)
+        .collect())
+}
+
+
+pub fn preferred_source(conn: &Connection, slug: &str) -> Result<Option<String>> {
+    let v = conn
+        .query_row(
+            "SELECT source FROM chunks WHERE article_slug = ?1
+             ORDER BY updated_at DESC, id DESC LIMIT 1",
+            [slug],
+            |r| r.get::<_, String>(0),
+        )
+        .optional()?;
+    Ok(v)
+}
+
+pub fn fetch_doc_chunks(conn: &Connection, slug: &str, max_chars: usize) -> Result<DocChunks> {
+    let Some(source) = preferred_source(conn, slug)? else {
+        return Ok(DocChunks::default());
+    };
+
     let mut stmt = conn.prepare(
-        "SELECT id, title, section, content, article_slug, url
+        "SELECT id, source, title, section, content, article_slug, url
          FROM chunks
-         WHERE article_slug = ?1
+         WHERE article_slug = ?1 AND source = ?2
          ORDER BY id",
     )?;
-    let rows = stmt.query_map(rusqlite::params![slug], |row| {
+    let rows = stmt.query_map(rusqlite::params![slug, source], |row| {
         Ok(Retrieved {
             id: row.get(0)?,
-            title: row.get(1)?,
-            section: row.get(2)?,
-            content: row.get(3)?,
-            article_slug: row.get(4)?,
-            url: row.get(5)?,
+            source: row.get(1)?,
+            title: row.get(2)?,
+            section: row.get(3)?,
+            content: row.get(4)?,
+            article_slug: row.get(5)?,
+            url: row.get(6)?,
             distance: 0.0,
         })
     })?;
+
     let mut out = Vec::new();
     let mut used = 0usize;
+    let mut truncated = false;
     for r in rows {
         let r = r?;
         let cost = r.content.chars().count();
         if used + cost > max_chars && !out.is_empty() {
+            truncated = true;
             break;
         }
         used += cost;
         out.push(r);
     }
-    Ok(out)
+    Ok(DocChunks {
+        chunks: out,
+        truncated,
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn mem_db() -> Connection {
+        register_sqlite_vec();
+        let conn = Connection::open_in_memory().unwrap();
+        init_schema(&conn, 4).unwrap();
+        conn
+    }
+
+    fn add_chunk(conn: &Connection, source: &str, slug: &str, content: &str, updated_at: &str) {
+        conn.execute(
+            "INSERT INTO chunks(source, article_slug, title, section, content, url, updated_at)
+             VALUES (?1, ?2, 'Bài thử', '', ?3, '', ?4)",
+            rusqlite::params![source, slug, content, updated_at],
+        )
+        .unwrap();
+    }
+
+
+    #[test]
+    fn slug_trung_nhieu_nguon_chi_lay_ban_moi_nhat() {
+        let conn = mem_db();
+        let slug = "dai-an-van-thinh-phat-giai-doan-1";
+        for i in 0..3 {
+            add_chunk(&conn, "file", slug, &format!("bản .md đoạn {i}"), "2025-01-01");
+        }
+        for i in 0..3 {
+            add_chunk(
+                &conn,
+                "wordpress",
+                slug,
+                &format!("bản WP đoạn {i}"),
+                "2025-06-01T10:00:00Z",
+            );
+        }
+
+        assert_eq!(
+            preferred_source(&conn, slug).unwrap().as_deref(),
+            Some("wordpress")
+        );
+
+        let doc = fetch_doc_chunks(&conn, slug, 100_000).unwrap();
+        assert_eq!(doc.chunks.len(), 3, "chỉ được lấy chunk của một nguồn");
+        assert!(doc.chunks.iter().all(|c| c.source == "wordpress"));
+        assert!(!doc.truncated);
+    }
+
+
+    #[test]
+    fn bao_truncated_dung_theo_ngan_sach() {
+        let conn = mem_db();
+        let slug = "bai-dai";
+        for i in 0..5 {
+            add_chunk(&conn, "file", slug, &"x".repeat(100), &format!("2025-01-0{}", i + 1));
+        }
+
+        let cat = fetch_doc_chunks(&conn, slug, 250).unwrap();
+        assert_eq!(cat.chunks.len(), 2);
+        assert!(cat.truncated, "bài bị cắt thì phải báo để còn chạy KNN bù");
+
+        let du = fetch_doc_chunks(&conn, slug, 100_000).unwrap();
+        assert_eq!(du.chunks.len(), 5);
+        assert!(!du.truncated, "vừa ngân sách thì phải bỏ qua được KNN");
+    }
+
+    #[test]
+    fn slug_la_tra_ve_rong() {
+        let conn = mem_db();
+        let doc = fetch_doc_chunks(&conn, "khong-ton-tai", 8000).unwrap();
+        assert!(doc.chunks.is_empty());
+        assert!(!doc.truncated);
+    }
 }

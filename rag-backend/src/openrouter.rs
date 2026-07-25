@@ -30,6 +30,8 @@ struct ChatRequest<'a> {
     provider: ProviderCfg<'a>,
     stream: bool,
     reasoning: Reasoning<'a>,
+
+    max_tokens: u32,
     messages: &'a [ChatMessage],
 }
 
@@ -58,6 +60,7 @@ pub async fn call_openrouter(
         },
         stream: true,
         reasoning,
+        max_tokens: cfg.openrouter_max_tokens,
         messages,
     };
 
@@ -83,45 +86,140 @@ pub fn retry_after_ms(resp: &reqwest::Response, attempt: u32) -> u64 {
         .unwrap_or_else(|| 400 + (attempt as u64) * 200)
 }
 
-pub fn stream_content(
-    resp: reqwest::Response,
-) -> impl Stream<Item = Result<String>> {
+enum SseLine {
+    Token(String),
+    Done,
+}
+
+fn parse_sse_line(line: &str) -> Option<SseLine> {
+    let data = line.strip_prefix("data:")?.trim();
+    if data.is_empty() {
+        return None;
+    }
+    if data == "[DONE]" {
+        return Some(SseLine::Done);
+    }
+    let v: Value = serde_json::from_str(data).ok()?;
+    let tok = v
+        .get("choices")?
+        .get(0)?
+        .get("delta")?
+        .get("content")?
+        .as_str()?;
+    if tok.is_empty() {
+        None
+    } else {
+        Some(SseLine::Token(tok.to_string()))
+    }
+}
+
+
+#[derive(Default)]
+struct SseDecoder {
+    buf: Vec<u8>,
+}
+
+impl SseDecoder {
+
+
+    fn push(&mut self, chunk: &[u8]) -> (Vec<String>, bool) {
+        self.buf.extend_from_slice(chunk);
+        let mut tokens = Vec::new();
+
+        while let Some(nl) = self.buf.iter().position(|&b| b == b'\n') {
+            let raw: Vec<u8> = self.buf.drain(..=nl).collect();
+            let line = String::from_utf8_lossy(&raw[..nl]);
+            match parse_sse_line(line.trim_end_matches('\r')) {
+                Some(SseLine::Done) => return (tokens, true),
+                Some(SseLine::Token(t)) => tokens.push(t),
+                None => {}
+            }
+        }
+        (tokens, false)
+    }
+}
+
+pub fn stream_content(resp: reqwest::Response) -> impl Stream<Item = Result<String>> {
     async_stream::try_stream! {
         let mut bytes = resp.bytes_stream();
-        let mut buf = String::new();
+        let mut dec = SseDecoder::default();
 
         while let Some(chunk) = bytes.next().await {
             let chunk = chunk?;
-            buf.push_str(&String::from_utf8_lossy(&chunk));
-
-            while let Some(nl) = buf.find('\n') {
-                let line = buf[..nl].trim_end_matches('\r').to_string();
-                buf.drain(..=nl);
-
-                let Some(data) = line.strip_prefix("data:") else {
-                    continue;
-                };
-                let data = data.trim();
-                if data.is_empty() {
-                    continue;
-                }
-                if data == "[DONE]" {
-                    return;
-                }
-                if let Ok(v) = serde_json::from_str::<Value>(data) {
-                    if let Some(tok) = v
-                        .get("choices")
-                        .and_then(|c| c.get(0))
-                        .and_then(|c| c.get("delta"))
-                        .and_then(|d| d.get("content"))
-                        .and_then(|c| c.as_str())
-                    {
-                        if !tok.is_empty() {
-                            yield tok.to_string();
-                        }
-                    }
-                }
+            let (tokens, done) = dec.push(&chunk);
+            for tok in tokens {
+                yield tok;
+            }
+            if done {
+                return;
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn wire(content: &str) -> String {
+        format!(
+            "data: {}\n\n",
+            serde_json::json!({ "choices": [{ "delta": { "content": content } }] })
+        )
+    }
+
+
+    #[test]
+    fn khong_vo_chu_khi_chunk_cat_giua_ky_tu() {
+        let text = "Tòa án nhân dân tối cao xét xử vụ án tham ô tài sản";
+        let bytes = wire(text).into_bytes();
+
+        for split in 1..bytes.len() {
+            let mut dec = SseDecoder::default();
+            let (mut got, done) = dec.push(&bytes[..split]);
+            assert!(!done);
+            let (rest, _) = dec.push(&bytes[split..]);
+            got.extend(rest);
+            assert_eq!(got.concat(), text, "hỏng khi cắt tại byte {split}");
+        }
+    }
+
+    #[test]
+    fn ghep_nhieu_token_qua_nhieu_chunk() {
+        let mut dec = SseDecoder::default();
+        let mut out = Vec::new();
+        for part in ["Điều ", "353 ", "Bộ luật Hình sự"] {
+            let (toks, done) = dec.push(wire(part).as_bytes());
+            assert!(!done);
+            out.extend(toks);
+        }
+        assert_eq!(out.concat(), "Điều 353 Bộ luật Hình sự");
+    }
+
+    #[test]
+    fn dung_lai_o_done() {
+        let mut dec = SseDecoder::default();
+        let (toks, done) = dec.push(b"data: [DONE]\n");
+        assert!(done);
+        assert!(toks.is_empty());
+    }
+
+    #[test]
+    fn bo_qua_dong_keepalive_va_dong_rong() {
+        let mut dec = SseDecoder::default();
+        let (toks, done) = dec.push(b": keep-alive\n\ndata: \n");
+        assert!(!done);
+        assert!(toks.is_empty());
+    }
+
+
+    #[test]
+    fn giu_lai_dong_do_dang() {
+        let mut dec = SseDecoder::default();
+        let full = wire("nội dung");
+        let (toks, _) = dec.push(&full.as_bytes()[..full.len() - 3]);
+        assert!(toks.is_empty(), "chưa đủ dòng thì chưa được yield");
+        let (toks, _) = dec.push(&full.as_bytes()[full.len() - 3..]);
+        assert_eq!(toks.concat(), "nội dung");
     }
 }

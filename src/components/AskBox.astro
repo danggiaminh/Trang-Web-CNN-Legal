@@ -164,6 +164,11 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       border-radius 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+
+  :global(body[data-ask-panel-open]) {
+    overflow: hidden;
+  }
+
   @media (min-width: 640px) {
     :global(body[data-ask-panel-open] [data-app-shell]) {
       position: fixed;
@@ -176,9 +181,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       border: 1px solid var(--color-border-soft);
       border-radius: 1rem;
       background: var(--color-surface-white);
-    }
-    :global(body[data-ask-panel-open]) {
-      overflow: hidden;
     }
   }
 
@@ -252,27 +254,40 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 
     const shell = document.querySelector<HTMLElement>("[data-app-shell]");
 
+
+    const shellIsScroller = window.matchMedia("(min-width: 640px)");
+    let savedScroll = 0;
+
     const openPanel = () => {
-      const scrolled = window.scrollY;
+
+
+      if (panel.hasAttribute("data-open")) {
+        panelInput.focus({ preventScroll: true });
+        return;
+      }
+      savedScroll = window.scrollY;
       panel.classList.remove("translate-x-[calc(100%+1.5rem)]");
       panel.setAttribute("data-open", "");
       panel.setAttribute("aria-hidden", "false");
       panel.removeAttribute("inert");
       document.body.setAttribute("data-ask-panel-open", "");
       if (box) box.setAttribute("data-hidden", "");
-      if (shell) shell.scrollTop = scrolled;
+      if (shell && shellIsScroller.matches) shell.scrollTop = savedScroll;
       panelInput.focus({ preventScroll: true });
     };
 
     const closePanel = () => {
-      const scrolled = shell ? shell.scrollTop : 0;
+
+
+      const target =
+        shell && shellIsScroller.matches ? shell.scrollTop : savedScroll;
       panel.classList.add("translate-x-[calc(100%+1.5rem)]");
       panel.removeAttribute("data-open");
       panel.setAttribute("aria-hidden", "true");
       panel.setAttribute("inert", "");
       document.body.removeAttribute("data-ask-panel-open");
       if (box) box.removeAttribute("data-hidden");
-      window.scrollTo({ top: scrolled, left: 0, behavior: "instant" as ScrollBehavior });
+      window.scrollTo({ top: target, left: 0, behavior: "instant" as ScrollBehavior });
       input.focus({ preventScroll: true });
     };
 
@@ -343,12 +358,30 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       return answer;
     };
 
+
+    const MAX_HISTORY = 6;
+    const history: { role: "user" | "assistant"; content: string }[] = [];
+
+    let inFlight: AbortController | null = null;
+    const scrollToEnd = () => {
+      messages.scrollTop = messages.scrollHeight;
+    };
+
     const askQuestion = async (question: string) => {
+
+
+      inFlight?.abort();
+      const controller = new AbortController();
+      inFlight = controller;
+
       openPanel();
       messages.querySelector("[data-ask-disclaimer]")?.remove();
       addUserMessage(question);
       const answer = addAssistantMessage();
-      messages.scrollTop = messages.scrollHeight;
+
+
+      answer.setAttribute("aria-live", "off");
+      scrollToEnd();
 
       let dots = 1;
       answer.textContent = "Đang suy nghĩ.";
@@ -366,11 +399,28 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 
       let raw = "";
       let finalShown = false;
+
+
+      let frame = 0;
+      const flush = () => {
+        frame = 0;
+        answer.innerHTML = renderMarkdown(raw);
+        scrollToEnd();
+      };
+      const scheduleRender = () => {
+        if (!frame) frame = requestAnimationFrame(flush);
+      };
+
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: question, slug: currentSlug() }),
+          signal: controller.signal,
+          body: JSON.stringify({
+            message: question,
+            slug: currentSlug(),
+            history: history.slice(-MAX_HISTORY),
+          }),
         });
         if (!res.ok || !res.body) {
           stopThinking();
@@ -398,21 +448,41 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
             stopThinking();
             if (typeof obj.t === "string") {
               raw += obj.t;
-              answer.innerHTML = renderMarkdown(raw);
+              scheduleRender();
             } else if (typeof obj.r === "number") {
               answer.textContent = `Đang thử lại (${obj.r}/${obj.m ?? 5})`;
+              scrollToEnd();
             } else if (typeof obj.e === "string") {
               answer.textContent = obj.e;
               finalShown = true;
+              scrollToEnd();
             }
-            messages.scrollTop = messages.scrollHeight;
           }
         }
         stopThinking();
-        if (!raw && !finalShown) answer.textContent = "Hệ thống đang bận, thử lại sau nhé.";
-      } catch {
+        if (frame) cancelAnimationFrame(frame);
+        if (raw) {
+          answer.setAttribute("aria-live", "polite");
+          flush();
+          history.push({ role: "user", content: question });
+          history.push({ role: "assistant", content: raw });
+          while (history.length > MAX_HISTORY) history.shift();
+        } else if (!finalShown) {
+          answer.textContent = "Hệ thống đang bận, thử lại sau nhé.";
+        }
+      } catch (err) {
+        if (frame) cancelAnimationFrame(frame);
         stopThinking();
+        if ((err as Error)?.name === "AbortError") {
+
+          if (raw) flush();
+          else answer.remove();
+          return;
+        }
         answer.textContent = "Không kết nối được máy chủ, thử lại sau nhé.";
+      } finally {
+        clearInterval(thinking);
+        if (inFlight === controller) inFlight = null;
       }
     };
 

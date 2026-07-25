@@ -40,7 +40,7 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
 
-    
+
     {noindex
       ? <meta name="robots" content="noindex, nofollow" />
       : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -51,24 +51,24 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
     <link rel="icon" type="image/png" sizes="512x512" href="/cnn-icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/cnn-touch-180.png" />
 
-    
+
     <meta name="theme-color" content="#0f1923" />
     <meta name="color-scheme" content="light" />
-    
-    
+
+
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content={site.name} />
 
-    
+
     <meta name="author" content={site.name} />
     <meta name="geo.region" content="VN-SG" />
     <meta name="geo.placename" content="Thành phố Hồ Chí Minh" />
     <meta name="geo.position" content={`${site.geo.latitude};${site.geo.longitude}`} />
     <meta name="ICBM" content={`${site.geo.latitude}, ${site.geo.longitude}`} />
 
-    
+
     <meta property="og:locale" content="vi_VN" />
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={title} />
@@ -80,13 +80,13 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content={`${site.name} – ${site.slogan}`} />
 
-    
+
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
 
-    
+
     {jsonLdItems.map((item) => <script is:inline type="application/ld+json" set:html={jsonLdToString(item)} />)}
   </head>
   <body class="bg-warm-ivory text-text-dark antialiased">

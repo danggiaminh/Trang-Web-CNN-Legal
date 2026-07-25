@@ -2,7 +2,8 @@
 title: "Đại án Vạn Thịnh Phát — Giai đoạn 2 (Phúc thẩm)"
 slug: "dai-an-van-thinh-phat-giai-doan-2"
 category: "Hình sự"
-updatedAt: "2026-07-23"
+url: "/vu-an-tieu-bieu/dai-an-van-thinh-phat-giai-doan-2/"
+updatedAt: "sha256:281c4c30ede06d80"
 ---
 Luật sư Đặng Kim Chinh là người bào chữa cho bị cáo Kwok Hakman Oliver — nguyên Tổng Giám đốc kiêm người đại diện theo pháp luật Công ty Cổ phần Tập đoàn Đầu tư An Đông — tại cấp phúc thẩm. Ngày 21/4/2025, Hội đồng xét xử phúc thẩm tuyên phạt bị cáo 3 năm 6 tháng tù, giảm 2 năm so với bản án sơ thẩm.
 

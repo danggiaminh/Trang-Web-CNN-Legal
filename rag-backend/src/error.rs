@@ -16,9 +16,6 @@ pub enum ApiError {
     #[error("not found")]
     NotFound,
 
-    #[error("rate limited")]
-    RateLimited,
-
     #[error("internal error")]
     Internal(#[from] anyhow::Error),
 }
@@ -30,10 +27,6 @@ impl IntoResponse for ApiError {
             ApiError::BadRequest(m) => (StatusCode::BAD_REQUEST, m.as_str()),
             ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Không được phép."),
             ApiError::NotFound => (StatusCode::NOT_FOUND, "Không tìm thấy."),
-            ApiError::RateLimited => (
-                StatusCode::TOO_MANY_REQUESTS,
-                "Bạn thao tác quá nhanh, vui lòng thử lại sau giây lát.",
-            ),
             ApiError::Internal(err) => {
 
                 tracing::error!(error = ?err, "internal error");

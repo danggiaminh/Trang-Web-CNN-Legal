@@ -1,9 +1,5 @@
-//! Chuyển HTML (nội dung bài từ WordPress/Ghost) sang Markdown thô — ĐỦ tốt để
-//! cắt chunk cho RAG: giữ tiêu đề h1–h3 làm ranh giới section, đoạn văn và danh
-//! sách. Đây KHÔNG phải trình phân tích HTML đầy đủ (cố ý không thêm dependency
-//! nặng). Nếu phía CMS gửi sẵn Markdown thì dùng thẳng, không cần qua đây.
 
-/// Đổi một chuỗi HTML sang Markdown thô.
+
 pub fn html_to_markdown(html: &str) -> String {
     let s = strip_block(html, "script");
     let s = strip_block(&s, "style");
@@ -11,7 +7,7 @@ pub fn html_to_markdown(html: &str) -> String {
     normalize(&tokens_to_markdown(&s))
 }
 
-/// Xoá toàn bộ `<tag ...>...</tag>` (không phân biệt hoa/thường).
+
 fn strip_block(input: &str, tag: &str) -> String {
     let lower = input.to_lowercase();
     let open = format!("<{tag}");
@@ -24,7 +20,7 @@ fn strip_block(input: &str, tag: &str) -> String {
                 i += rel + close.len();
                 continue;
             } else {
-                break; // tag mở nhưng không đóng -> bỏ phần còn lại
+                break;
             }
         }
         let ch = input[i..].chars().next().unwrap();
@@ -55,7 +51,7 @@ fn tokens_to_markdown(input: &str) -> String {
     let mut chars = input.char_indices().peekable();
     while let Some((idx, ch)) = chars.next() {
         if ch == '<' {
-            // đọc tới '>' để lấy nguyên thẻ
+
             let mut end = idx + 1;
             let bytes = input.as_bytes();
             while end < input.len() && bytes[end] != b'>' {
@@ -63,7 +59,7 @@ fn tokens_to_markdown(input: &str) -> String {
             }
             let tag = &input[idx + 1..end.min(input.len())];
             out.push_str(&tag_marker(tag));
-            // nhảy con trỏ qua phần thẻ đã tiêu thụ
+
             while let Some(&(j, _)) = chars.peek() {
                 if j <= end {
                     chars.next();
@@ -78,7 +74,7 @@ fn tokens_to_markdown(input: &str) -> String {
     decode_entities(&out)
 }
 
-/// Trả về ký hiệu Markdown tương ứng cho một thẻ HTML (chỉ quan tâm tên thẻ).
+
 fn tag_marker(tag: &str) -> String {
     let closing = tag.starts_with('/');
     let name: String = tag
@@ -128,7 +124,7 @@ fn decode_entities(input: &str) -> String {
     while let Some(amp) = rest.find('&') {
         out.push_str(&rest[..amp]);
         rest = &rest[amp..];
-        // tìm dấu ';' trong khoảng ngắn (thực thể hợp lệ thường <= 10 ký tự)
+
         let semi = rest[..rest.len().min(12)].find(';');
         match semi {
             Some(pos) => {
@@ -179,7 +175,7 @@ fn decode_one(ent: &str) -> String {
     .to_string()
 }
 
-/// Gộp khoảng trắng: mỗi dòng bỏ khoảng trắng thừa, tối đa 1 dòng trống giữa khối.
+
 fn normalize(input: &str) -> String {
     let mut lines: Vec<String> = Vec::new();
     let mut blank_run = 0usize;

@@ -14,28 +14,45 @@ async function preloadPageImages(rawHref: string): Promise<void> {
   processed.add(url.pathname);
 
   try {
-    const res = await fetch(url.href, { signal: AbortSignal.timeout(5000) });
+
+
+    const res = await fetch(url.href, {
+      cache: "force-cache",
+      signal: AbortSignal.timeout(5000),
+    });
     if (!res.ok) return;
 
     const html = await res.text();
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const imgs = doc.querySelectorAll<HTMLImageElement>(
-      'img[loading="eager"], img[fetchpriority="high"]'
-    );
 
-    imgs.forEach((img) => {
-      const src = img.getAttribute("src");
-      if (!src) return;
-      try {
-        const preloader = new Image();
-        preloader.src = new URL(src, url.href).href;
-      } catch {
-        void 0;
-      }
+
+    whenIdle(() => {
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      const imgs = doc.querySelectorAll<HTMLImageElement>(
+        'img[loading="eager"], img[fetchpriority="high"]'
+      );
+
+      imgs.forEach((img) => {
+        const src = img.getAttribute("src");
+        if (!src) return;
+        try {
+          const preloader = new Image();
+          preloader.src = new URL(src, url.href).href;
+        } catch {
+          void 0;
+        }
+      });
     });
   } catch {
     void 0;
   }
+}
+
+function whenIdle(task: () => void): void {
+  const ric = (window as unknown as {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  }).requestIdleCallback;
+  if (typeof ric === "function") ric(task, { timeout: 1000 });
+  else setTimeout(task, 0);
 }
 
 function onIntent(event: Event): void {

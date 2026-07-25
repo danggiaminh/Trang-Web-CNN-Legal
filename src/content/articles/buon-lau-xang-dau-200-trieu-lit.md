@@ -2,7 +2,8 @@
 title: "Vụ buôn lậu gần 200 triệu lít xăng dầu (Phúc thẩm)"
 slug: "buon-lau-xang-dau-200-trieu-lit"
 category: "Hình sự"
-updatedAt: "2026-07-23"
+url: "/vu-an-tieu-bieu/buon-lau-xang-dau-200-trieu-lit/"
+updatedAt: "sha256:b2bc66531c181bd6"
 ---
 Luật sư Đặng Kim Chinh tham gia bào chữa tại phiên tòa phúc thẩm vụ án buôn lậu hơn 198 triệu lít xăng từ Singapore về Việt Nam, trị giá hơn 2.596 tỷ đồng, với 74 bị cáo bị xét xử sơ thẩm tại Tòa án nhân dân tỉnh Đồng Nai.
 

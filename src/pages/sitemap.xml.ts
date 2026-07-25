@@ -12,8 +12,7 @@ interface SitemapEntry {
 
 const today = new Date().toISOString().split("T")[0];
 
-// Chuyển ngày trong data (DD/MM/YYYY, ISO YYYY-MM-DD, hoặc chỉ năm YYYY) sang
-// ISO YYYY-MM-DD. Không parse được (rỗng, "Đang cập nhật", ...) → dùng ngày build.
+
 function toIsoDate(input: string | undefined): string {
   const s = (input ?? "").trim();
   const dmy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
@@ -28,7 +27,7 @@ export async function GET() {
   const articles = await getAllArticles();
 
   const pages: SitemapEntry[] = [
-    // Trang tĩnh/hub: được tạo lại mỗi lần build → dùng ngày build.
+
     { path: "/", changefreq: "weekly", priority: 1.0, lastmod: today },
     { path: "/tong-quan/", changefreq: "monthly", priority: 0.8, lastmod: today },
     { path: "/dich-vu/", changefreq: "weekly", priority: 0.9, lastmod: today },
@@ -39,7 +38,7 @@ export async function GET() {
       lastmod: today,
     })),
     { path: "/bai-viet/", changefreq: "weekly", priority: 0.9, lastmod: today },
-    // Trang chi tiết: dùng ngày nội dung thật.
+
     ...articles.map((a) => ({
       path: `/bai-viet/${a.slug}/`,
       changefreq: "monthly" as const,

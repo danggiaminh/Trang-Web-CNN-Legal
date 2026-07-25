@@ -2,7 +2,8 @@
 title: "Vụ án \"Tham ô tài sản\" xảy ra tại Công ty Cổ phần K Center - Phòng khám nha khoa K Dentist"
 slug: "tham-o-tai-san-k-center-k-dentist"
 category: "Hình sự"
-updatedAt: "2026-07-23"
+url: "/vu-an-tieu-bieu/tham-o-tai-san-k-center-k-dentist/"
+updatedAt: "sha256:445fdf0f3f677ac9"
 ---
 Luật sư Đặng Kim Chinh nêu ý kiến pháp lý trên báo chí về vụ hai người lao động tại một phòng khám nha khoa ở Thành phố Hồ Chí Minh bị truy tố về tội "Tham ô tài sản" do giữ 37,5 triệu đồng tiền thu của khách hàng, đặt vấn đề về khả năng vận dụng tình tiết giảm nhẹ "người bị hại cũng có lỗi" trong khu vực tư nhân. Ngày 30/6/2026, tòa xét xử lại tuyên phạt hai bị cáo 7 năm 6 tháng tù và 2 năm 6 tháng tù.
 

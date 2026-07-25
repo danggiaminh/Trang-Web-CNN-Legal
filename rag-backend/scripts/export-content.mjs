@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,19 +14,27 @@ function toIso(d) {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((d || "").trim());
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
   const m2 = /(\d{4})/.exec(d || "");
-  return m2 ? `${m2[1]}-01-01` : new Date().toISOString().slice(0, 10);
+  return m2 ? `${m2[1]}-01-01` : null;
+}
+
+
+function stamp(rawDate, body) {
+  return toIso(rawDate) ?? `sha256:${createHash("sha256").update(body).digest("hex").slice(0, 16)}`;
 }
 
 function yamlEscape(s) {
   return `"${String(s).replace(/"/g, '\\"')}"`;
 }
 
-function frontmatter({ title, slug, category, updatedAt }) {
+function frontmatter({ title, slug, category, updatedAt, url }) {
   return [
     "---",
     `title: ${yamlEscape(title)}`,
     `slug: ${yamlEscape(slug)}`,
     `category: ${yamlEscape(category || "Pháp luật")}`,
+
+
+    `url: ${yamlEscape(url)}`,
     `updatedAt: ${yamlEscape(updatedAt)}`,
     "---",
     "",
@@ -80,31 +89,35 @@ await mkdir(outDir, { recursive: true });
 let count = 0;
 
 for (const a of articles) {
+  const body = articleBody(a) + "\n";
   const md =
     frontmatter({
       title: a.title,
       slug: a.slug,
       category: a.category,
-      updatedAt: toIso(a.publishedAt),
-    }) + articleBody(a) + "\n";
+      url: `/bai-viet/${a.slug}/`,
+      updatedAt: stamp(a.publishedAt, body),
+    }) + body;
   await writeFile(resolve(outDir, `${a.slug}.md`), md, "utf8");
   count++;
 }
 
 for (const c of notableCases) {
-  const md =
-    frontmatter({
-      title: c.title,
-      slug: c.slug,
-      category: c.category,
-      updatedAt: toIso(c.date),
-    }) +
+  const body =
     (c.summary ? `${c.summary}\n\n` : "") +
     htmlToMd(c.body || "") +
     (Array.isArray(c.keyArguments) && c.keyArguments.length
       ? `\n\n## Luận điểm chính\n\n${c.keyArguments.map((x) => `- ${x}`).join("\n")}`
       : "") +
     "\n";
+  const md =
+    frontmatter({
+      title: c.title,
+      slug: c.slug,
+      category: c.category,
+      url: `/vu-an-tieu-bieu/${c.slug}/`,
+      updatedAt: stamp(c.date, body),
+    }) + body;
   await writeFile(resolve(outDir, `${c.slug}.md`), md, "utf8");
   count++;
 }

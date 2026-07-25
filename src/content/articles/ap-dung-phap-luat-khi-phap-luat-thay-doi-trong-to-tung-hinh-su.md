@@ -2,6 +2,7 @@
 title: "Bàn về việc áp dụng pháp luật đối với hành vi phạm tội xảy ra khi pháp luật thay đổi giữa quá trình điều tra, truy tố và xét xử"
 slug: "ap-dung-phap-luat-khi-phap-luat-thay-doi-trong-to-tung-hinh-su"
 category: "Hình sự"
+url: "/bai-viet/ap-dung-phap-luat-khi-phap-luat-thay-doi-trong-to-tung-hinh-su/"
 updatedAt: "2025-08-20"
 ---
 (LSVN) – Vụ án gà lôi trắng mặc dù không thuộc trường hợp đặc biệt nghiêm trọng nhưng đặt ra những vấn đề pháp lý phức tạp: Hành vi phạm tội xảy ra trong khi pháp luật thay đổi giữa quá trình điều tra, truy tố và xét xử; đồng thời, sự thay đổi này diễn ra trong bối cảnh phân quyền, phân cấp trong lĩnh vực nông nghiệp và môi trường. Điều này ảnh hưởng không nhỏ đến cách hiểu và áp dụng pháp luật.

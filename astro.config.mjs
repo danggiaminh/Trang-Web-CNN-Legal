@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   output: "static",
   image: {
-    // Ảnh minh hoạ bài viết được nạp từ img.lsvn.vn và tối ưu tại thời điểm build.
+
     domains: ["img.lsvn.vn"],
   },
   vite: {

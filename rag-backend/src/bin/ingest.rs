@@ -10,7 +10,7 @@ use cnn_legal_rag::{
 use std::collections::HashSet;
 use walkdir::WalkDir;
 
-/// Nguồn cho tài liệu nạp từ file .md cục bộ (phân biệt với nội dung do CMS push).
+
 const SOURCE: &str = "file";
 
 #[derive(Parser)]
@@ -89,7 +89,7 @@ async fn main() -> Result<()> {
             slug: parsed.front.slug.clone(),
             title: parsed.front.title.clone(),
             category: parsed.front.category.clone(),
-            url: String::new(), // file: rag.rs suy ra đường dẫn /bai-viet/{slug}
+            url: parsed.front.url.clone(),
             updated_at: parsed.front.updated_at.trim().to_string(),
             chunks: parsed.chunks,
         };
@@ -118,7 +118,7 @@ async fn main() -> Result<()> {
     if args.prune {
         let conn = pool.get()?;
         for (src, slug) in all_ingested(&conn)? {
-            // Chỉ prune tài liệu đến từ file; KHÔNG đụng nội dung CMS đã push.
+
             if src == SOURCE && !seen.contains(&slug) {
                 delete_doc(&conn, Some(&src), &slug)?;
                 tracing::info!("prune {slug} (không còn file)");

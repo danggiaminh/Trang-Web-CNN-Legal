@@ -2,6 +2,7 @@
 title: "Dự thảo Luật Đất đai (sửa đổi): Hệ quả pháp lý, xã hội và kiến nghị hoàn thiện cơ chế “thu hồi đất khi vượt ngưỡng đồng thuận 75%”"
 slug: "du-thao-luat-dat-dai-thu-hoi-dat-vuot-nguong-dong-thuan"
 category: "Dân sự"
+url: "/bai-viet/du-thao-luat-dat-dai-thu-hoi-dat-vuot-nguong-dong-thuan/"
 updatedAt: "2025-09-28"
 ---
 (LSVN) – Cơ chế "thu hồi đất khi vượt ngưỡng đồng thuận 75%" trong dự thảo sửa đổi, bổ sung Luật Đất đai là một điểm mới nhằm khắc phục hạn chế của cơ chế chuyển dịch đất đai tự nguyện. Tuy nhiên, cơ chế này tiềm ẩn nhiều hệ quả pháp lý – xã hội: từ vị trí đặt điều khoản, cách xác định số lượng người sử dụng đất, nguy cơ hồi tố bất lợi, cho đến khả năng bị lợi dụng bởi một số chủ đầu tư. Bài viết phân tích cơ sở chính sách, thực tiễn và các hệ quả pháp lý – xã hội tiềm ẩn, từ đó kiến nghị sửa đổi điều kiện, bổ sung nguyên tắc và các tiêu chí cơ bản ngay trong luật nhằm bảo đảm cơ chế được triển khai ổn định, khả thi và phù hợp với thực tiễn.
