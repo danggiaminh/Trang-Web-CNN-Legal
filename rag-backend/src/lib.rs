@@ -3,7 +3,6 @@ pub mod config;
 pub mod db;
 pub mod embed;
 pub mod error;
-pub mod html;
 pub mod openrouter;
 pub mod pipeline;
 pub mod rag;

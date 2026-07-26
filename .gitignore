@@ -26,3 +26,7 @@ npm-debug.log*
 .env.*
 !.env.example
 *.env
+
+# Corpus RAG sinh tu dong tu src/data/*.ts
+# Chay: npx tsx rag-backend/scripts/export-content.mjs
+src/content/articles/

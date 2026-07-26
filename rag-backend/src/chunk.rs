@@ -6,13 +6,14 @@ use std::path::Path;
 const TARGET_CHARS: usize = 1800;
 const MIN_CHARS: usize = 200;
 
+pub const HEADING_SEP: &str = " › ";
+
 #[derive(Debug, Deserialize)]
 pub struct Frontmatter {
     pub title: String,
     pub slug: String,
     #[serde(default)]
     pub category: String,
-
 
     #[serde(default)]
     pub url: String,
@@ -21,15 +22,20 @@ pub struct Frontmatter {
     pub updated_at: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Chunk {
-    pub section: String,
+
+
+    pub heading_path: String,
+
+
     pub content: String,
 }
 
 #[derive(Debug)]
 pub struct ParsedArticle {
     pub front: Frontmatter,
+    pub body: String,
     pub chunks: Vec<Chunk>,
 }
 
@@ -51,8 +57,8 @@ pub fn parse_file(path: &Path) -> Result<ParsedArticle> {
     let raw = std::fs::read_to_string(path)
         .with_context(|| format!("không đọc được {}", path.display()))?;
     let (yaml, body) = split_frontmatter(&raw)?;
-    let front: Frontmatter =
-        serde_yaml::from_str(&yaml).with_context(|| format!("frontmatter lỗi ở {}", path.display()))?;
+    let front: Frontmatter = serde_yaml::from_str(&yaml)
+        .with_context(|| format!("frontmatter lỗi ở {}", path.display()))?;
 
     if front.slug.trim().is_empty() {
         bail!("frontmatter thiếu slug ở {}", path.display());
@@ -60,44 +66,67 @@ pub fn parse_file(path: &Path) -> Result<ParsedArticle> {
 
     Ok(ParsedArticle {
         front,
+        body: body.to_string(),
         chunks: chunks_from_markdown(body),
     })
 }
-
 
 pub fn chunks_from_markdown(markdown: &str) -> Vec<Chunk> {
     build_chunks(extract_sections(markdown))
 }
 
 struct RawSection {
-    heading: String,
+    heading_path: String,
     text: String,
+}
+
+
+fn heading_rank(level: HeadingLevel) -> Option<u8> {
+    match level {
+        HeadingLevel::H1 => Some(1),
+        HeadingLevel::H2 => Some(2),
+        HeadingLevel::H3 => Some(3),
+        _ => None,
+    }
+}
+
+fn path_of(stack: &[(u8, String)]) -> String {
+    stack
+        .iter()
+        .map(|(_, t)| t.as_str())
+        .collect::<Vec<_>>()
+        .join(HEADING_SEP)
 }
 
 fn extract_sections(markdown: &str) -> Vec<RawSection> {
     let parser = Parser::new_ext(markdown, Options::all());
 
     let mut sections: Vec<RawSection> = Vec::new();
+    let mut stack: Vec<(u8, String)> = Vec::new();
     let mut cur = RawSection {
-        heading: String::new(),
+        heading_path: String::new(),
         text: String::new(),
     };
+    let mut heading_rank_open: Option<u8> = None;
     let mut in_heading = false;
     let mut heading_buf = String::new();
 
     let flush = |sections: &mut Vec<RawSection>, cur: &mut RawSection| {
-        if !cur.text.trim().is_empty() || !cur.heading.trim().is_empty() {
+        if !cur.text.trim().is_empty() {
             sections.push(RawSection {
-                heading: std::mem::take(&mut cur.heading),
+                heading_path: cur.heading_path.clone(),
                 text: std::mem::take(&mut cur.text),
             });
+        } else {
+            cur.text.clear();
         }
     };
 
     for ev in parser {
         match ev {
             Event::Start(Tag::Heading { level, .. }) => {
-                if matches!(level, HeadingLevel::H1 | HeadingLevel::H2 | HeadingLevel::H3) {
+                heading_rank_open = heading_rank(level);
+                if heading_rank_open.is_some() {
                     flush(&mut sections, &mut cur);
                 }
                 in_heading = true;
@@ -105,7 +134,22 @@ fn extract_sections(markdown: &str) -> Vec<RawSection> {
             }
             Event::End(TagEnd::Heading(_)) => {
                 in_heading = false;
-                cur.heading = heading_buf.trim().to_string();
+                let text = heading_buf.trim().to_string();
+                match heading_rank_open.take() {
+                    Some(rank) if !text.is_empty() => {
+
+
+                        stack.retain(|(lv, _)| *lv < rank);
+                        stack.push((rank, text));
+                        cur.heading_path = path_of(&stack);
+                    }
+
+                    None if !text.is_empty() => {
+                        cur.text.push_str(&text);
+                        cur.text.push('\n');
+                    }
+                    _ => {}
+                }
             }
             Event::Text(t) | Event::Code(t) => {
                 if in_heading {
@@ -114,7 +158,6 @@ fn extract_sections(markdown: &str) -> Vec<RawSection> {
                     cur.text.push_str(&t);
                 }
             }
-
             Event::End(TagEnd::Paragraph)
             | Event::End(TagEnd::Item)
             | Event::End(TagEnd::BlockQuote(_)) => {
@@ -132,22 +175,14 @@ fn build_chunks(sections: Vec<RawSection>) -> Vec<Chunk> {
     let mut out: Vec<Chunk> = Vec::new();
 
     for sec in sections {
-        let heading = sec.heading.trim().to_string();
         let clean = normalize_ws(&sec.text);
         if clean.is_empty() {
             continue;
         }
-
         for piece in split_by_size(&clean, TARGET_CHARS) {
-
-            let content = if heading.is_empty() {
-                piece
-            } else {
-                format!("{heading}\n{piece}")
-            };
             out.push(Chunk {
-                section: heading.clone(),
-                content,
+                heading_path: sec.heading_path.clone(),
+                content: piece,
             });
         }
     }
@@ -223,7 +258,7 @@ fn merge_tiny(chunks: Vec<Chunk>) -> Vec<Chunk> {
     let mut out: Vec<Chunk> = Vec::new();
     for c in chunks {
         if let Some(last) = out.last_mut() {
-            if c.content.chars().count() < MIN_CHARS && last.section == c.section {
+            if c.content.chars().count() < MIN_CHARS && last.heading_path == c.heading_path {
                 last.content.push('\n');
                 last.content.push_str(&c.content);
                 continue;
@@ -232,4 +267,83 @@ fn merge_tiny(chunks: Vec<Chunk>) -> Vec<Chunk> {
         out.push(c);
     }
     out
+}
+
+
+pub fn embed_text(title: &str, heading_path: &str, content: &str) -> String {
+    let mut s = String::with_capacity(title.len() + heading_path.len() + content.len() + 2);
+    if !title.is_empty() {
+        s.push_str(title);
+        s.push('\n');
+    }
+    if !heading_path.is_empty() {
+        s.push_str(heading_path);
+        s.push('\n');
+    }
+    s.push_str(content);
+    s
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn heading_path_giu_ca_cap_cha() {
+        let md = "# Phần I\n\nMở đầu.\n\n## Mục A\n\nNội dung A.\n\n### Tiểu mục A1\n\nNội dung A1.\n\n## Mục B\n\nNội dung B.\n";
+        let paths: Vec<&str> = chunks_from_markdown(md)
+            .iter()
+            .map(|c| c.heading_path.as_str())
+            .map(|s| Box::leak(s.to_string().into_boxed_str()) as &str)
+            .collect();
+        assert_eq!(
+            paths,
+            vec![
+                "Phần I",
+                "Phần I › Mục A",
+                "Phần I › Mục A › Tiểu mục A1",
+                "Phần I › Mục B",
+            ]
+        );
+    }
+
+
+    #[test]
+    fn cung_cap_thi_thay_the_khong_chong_them() {
+        let md = "## A\n\nx.\n\n### A1\n\ny.\n\n### A2\n\nz.\n";
+        let c = chunks_from_markdown(md);
+        assert_eq!(c.last().unwrap().heading_path, "A › A2");
+    }
+
+
+    #[test]
+    fn content_khong_chua_tieu_de() {
+        let md = "## Thẩm quyền xét xử\n\nToà án nhân dân cấp tỉnh giải quyết.\n";
+        let c = chunks_from_markdown(md);
+        assert_eq!(c.len(), 1);
+        assert_eq!(c[0].heading_path, "Thẩm quyền xét xử");
+        assert!(
+            !c[0].content.contains("Thẩm quyền xét xử"),
+            "content phải sạch: {:?}",
+            c[0].content
+        );
+    }
+
+    #[test]
+    fn embed_text_co_ngu_canh_con_ban_luu_thi_khong() {
+        let t = embed_text("Án lệ 13/2017", "Mục A › A1", "khoản 2 quy định…");
+        assert!(t.starts_with("Án lệ 13/2017\nMục A › A1\n"));
+        assert!(t.ends_with("khoản 2 quy định…"));
+    }
+
+    #[test]
+    fn h4_tro_xuong_khong_tao_muc_moi() {
+        let md = "## A\n\nx.\n\n#### Ghi chú nhỏ\n\ny.\n";
+        let c = chunks_from_markdown(md);
+        assert!(c.iter().all(|x| x.heading_path == "A"), "{c:?}");
+        assert!(
+            c.iter().any(|x| x.content.contains("Ghi chú nhỏ")),
+            "chữ của H4 không được mất"
+        );
+    }
 }

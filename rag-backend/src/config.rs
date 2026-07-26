@@ -30,9 +30,6 @@ pub struct Config {
     pub rate_limit_burst: u32,
 
 
-    pub ingest_secret: Option<String>,
-
-
     pub allowed_origins: Vec<String>,
 }
 
@@ -74,7 +71,6 @@ impl Config {
             rate_limit_per_second: with("RATE_LIMIT_PER_SECOND", "1").parse().unwrap_or(1),
             rate_limit_burst: with("RATE_LIMIT_BURST", "6").parse().unwrap_or(6),
 
-            ingest_secret: opt("INGEST_SECRET"),
             allowed_origins: with(
                 "ALLOWED_ORIGINS",
                 "https://cnnlegal.vn,https://www.cnnlegal.vn,http://localhost:4321",
@@ -101,10 +97,6 @@ impl std::fmt::Debug for Config {
             .field("content_dir", &self.content_dir)
             .field("bind_addr", &self.bind_addr)
             .field("top_k", &self.top_k)
-            .field(
-                "ingest_secret",
-                &self.ingest_secret.as_ref().map(|_| "***redacted***"),
-            )
             .finish()
     }
 }

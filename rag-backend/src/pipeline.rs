@@ -1,74 +1,51 @@
-
-
 use crate::{
-    chunk::{chunks_from_markdown, Chunk},
-    db::{last_source_updated_at, replace_doc, ChunkRow, Pool},
+    chunk::{chunks_from_markdown, embed_text, Chunk},
+    db::{last_updated_at, replace_doc, ChunkRow, DocMeta, Pool},
     embed::Embedder,
-    html::html_to_markdown,
 };
 use anyhow::{bail, Result};
 
 const EMBED_BATCH: usize = 64;
 
-
 pub struct IngestDoc {
-
-    pub source: String,
-
     pub slug: String,
     pub title: String,
     pub category: String,
-
     pub url: String,
-
     pub updated_at: String,
+
+
+    pub markdown: String,
     pub chunks: Vec<Chunk>,
 }
 
 impl IngestDoc {
-    #[allow(clippy::too_many_arguments)]
     pub fn from_markdown(
-        source: impl Into<String>,
         slug: impl Into<String>,
         title: impl Into<String>,
         category: impl Into<String>,
         url: impl Into<String>,
         updated_at: impl Into<String>,
-        markdown: &str,
+        markdown: impl Into<String>,
     ) -> Self {
+        let markdown = markdown.into();
+        let chunks = chunks_from_markdown(&markdown);
         Self {
-            source: source.into(),
             slug: slug.into(),
             title: title.into(),
             category: category.into(),
             url: url.into(),
             updated_at: updated_at.into(),
-            chunks: chunks_from_markdown(markdown),
+            markdown,
+            chunks,
         }
-    }
-
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn from_html(
-        source: impl Into<String>,
-        slug: impl Into<String>,
-        title: impl Into<String>,
-        category: impl Into<String>,
-        url: impl Into<String>,
-        updated_at: impl Into<String>,
-        html: &str,
-    ) -> Self {
-        let md = html_to_markdown(html);
-        Self::from_markdown(source, slug, title, category, url, updated_at, &md)
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub enum StoreOutcome {
     Ingested { chunks: usize },
-
     Skipped,
-
     Empty,
 }
 
@@ -80,7 +57,6 @@ fn should_skip(stored: &str, incoming: &str) -> bool {
         stored == incoming
     }
 }
-
 
 fn is_timestamp(s: &str) -> bool {
     let b = s.as_bytes();
@@ -100,7 +76,6 @@ fn rfc3339_now() -> String {
         .unwrap_or_default()
 }
 
-
 pub async fn store_doc(
     pool: &Pool,
     embedder: &Embedder,
@@ -112,14 +87,12 @@ pub async fn store_doc(
         bail!("IngestDoc thiếu slug");
     }
 
-
     if !force && !doc.updated_at.trim().is_empty() {
         let pool = pool.clone();
-        let source = doc.source.clone();
         let slug = doc.slug.clone();
         let last = tokio::task::spawn_blocking(move || -> Result<Option<String>> {
             let conn = pool.get()?;
-            last_source_updated_at(&conn, &source, &slug)
+            last_updated_at(&conn, &slug)
         })
         .await??;
         if let Some(old) = last {
@@ -134,46 +107,51 @@ pub async fn store_doc(
     }
 
 
-    let contents: Vec<String> = doc.chunks.iter().map(|c| c.content.clone()).collect();
-    let mut embeddings: Vec<Vec<f32>> = Vec::with_capacity(contents.len());
-    for batch in contents.chunks(EMBED_BATCH) {
+    let to_embed: Vec<String> = doc
+        .chunks
+        .iter()
+        .map(|c| embed_text(&doc.title, &c.heading_path, &c.content))
+        .collect();
+    let mut embeddings: Vec<Vec<f32>> = Vec::with_capacity(to_embed.len());
+    for batch in to_embed.chunks(EMBED_BATCH) {
         embeddings.extend(embedder.embed_batch(batch).await?);
     }
-
 
     let now = rfc3339_now();
     let n = doc.chunks.len();
 
     let pool = pool.clone();
-    let source = doc.source.clone();
     let slug = doc.slug.clone();
     let title = doc.title.clone();
     let url = doc.url.clone();
+    let category = doc.category.clone();
     let updated_at = doc.updated_at.clone();
-    let sections: Vec<String> = doc.chunks.iter().map(|c| c.section.clone()).collect();
+    let markdown = doc.markdown.clone();
+    let headings: Vec<String> = doc.chunks.iter().map(|c| c.heading_path.clone()).collect();
+    let contents: Vec<String> = doc.chunks.iter().map(|c| c.content.clone()).collect();
 
     tokio::task::spawn_blocking(move || -> Result<()> {
-        let rows: Vec<ChunkRow> = sections
+        let rows: Vec<ChunkRow> = headings
             .iter()
             .zip(contents.iter())
             .zip(embeddings.iter())
-            .map(|((section, content), embedding)| ChunkRow {
-                source: &source,
-                article_slug: &slug,
-                title: &title,
-                section,
+            .map(|((heading_path, content), embedding)| ChunkRow {
+                heading_path,
                 content,
-                url: &url,
-                updated_at: &updated_at,
                 embedding,
             })
             .collect();
         let mut conn = pool.get()?;
         replace_doc(
             &mut conn,
-            &source,
-            &slug,
-            &updated_at,
+            &DocMeta {
+                slug: &slug,
+                title: &title,
+                url: &url,
+                category: &category,
+                updated_at: &updated_at,
+                markdown: &markdown,
+            },
             &now,
             &rows,
             embed_dim,
@@ -191,10 +169,9 @@ mod tests {
     #[test]
     fn moc_thoi_gian_bo_qua_ban_khong_moi_hon() {
         assert!(should_skip("2025-09-28T10:00:00Z", "2025-09-28T10:00:00Z"));
-        assert!(should_skip("2025-09-28", "2025-01-01"), "webhook đến trễ");
+        assert!(should_skip("2025-09-28", "2025-01-01"));
         assert!(!should_skip("2025-01-01", "2025-09-28"), "bản mới phải vào");
     }
-
 
     #[test]
     fn van_tay_chi_bo_qua_khi_trung_khop() {
@@ -217,5 +194,14 @@ mod tests {
         assert!(!is_timestamp("sha256:aaaa1111"));
         assert!(!is_timestamp("2025-09"));
         assert!(!is_timestamp(""));
+    }
+
+    #[test]
+    fn from_markdown_giu_ban_goc() {
+        let md = "## Mục A\n\nNội dung.\n";
+        let d = IngestDoc::from_markdown("s", "T", "", "/u/", "2025-01-01", md);
+        assert_eq!(d.markdown, md, "bản gốc phải giữ nguyên để cắt lại về sau");
+        assert_eq!(d.chunks.len(), 1);
+        assert_eq!(d.chunks[0].heading_path, "Mục A");
     }
 }

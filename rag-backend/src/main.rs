@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
 use axum::{
-    extract::DefaultBodyLimit,
     routing::{get, post},
     Router,
 };
@@ -9,7 +8,7 @@ use cnn_legal_rag::{
     config::Config,
     db::{build_pool, init_schema},
     embed::Embedder,
-    routes::{chat, health, ingest, ingest_delete},
+    routes::{chat, health},
     state::{AppState, Inner},
 };
 use tower_governor::{
@@ -42,7 +41,7 @@ async fn main() -> anyhow::Result<()> {
     let pool = build_pool(&cfg.db_path)?;
     {
         let conn = pool.get()?;
-        init_schema(&conn, cfg.embed_dim)?;
+        init_schema(&conn, cfg.embed_dim, false)?;
     }
 
     let embedder = Embedder::new(
@@ -59,7 +58,6 @@ async fn main() -> anyhow::Result<()> {
         http,
         pool,
         embedder,
-        ingest_lock: tokio::sync::Mutex::new(()),
     }));
 
     let governor = Arc::new(
@@ -77,12 +75,6 @@ async fn main() -> anyhow::Result<()> {
         .layer(GovernorLayer { config: governor });
 
 
-    let ingest_routes = Router::new()
-        .route("/api/ingest", post(ingest))
-        .route("/api/ingest/delete", post(ingest_delete))
-        .layer(DefaultBodyLimit::max(8 * 1024 * 1024));
-
-
     let origins: Vec<_> = cfg
         .allowed_origins
         .iter()
@@ -97,7 +89,6 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/api/health", get(health))
         .merge(chat_routes)
-        .merge(ingest_routes)
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state);

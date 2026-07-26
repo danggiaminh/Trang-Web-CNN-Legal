@@ -10,12 +10,6 @@ pub enum ApiError {
     #[error("bad request: {0}")]
     BadRequest(String),
 
-    #[error("unauthorized")]
-    Unauthorized,
-
-    #[error("not found")]
-    NotFound,
-
     #[error("internal error")]
     Internal(#[from] anyhow::Error),
 }
@@ -25,8 +19,6 @@ impl IntoResponse for ApiError {
 
         let (status, client_msg) = match &self {
             ApiError::BadRequest(m) => (StatusCode::BAD_REQUEST, m.as_str()),
-            ApiError::Unauthorized => (StatusCode::UNAUTHORIZED, "Không được phép."),
-            ApiError::NotFound => (StatusCode::NOT_FOUND, "Không tìm thấy."),
             ApiError::Internal(err) => {
 
                 tracing::error!(error = ?err, "internal error");

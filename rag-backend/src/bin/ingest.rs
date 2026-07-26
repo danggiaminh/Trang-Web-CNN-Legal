@@ -3,15 +3,13 @@ use clap::Parser;
 use cnn_legal_rag::{
     chunk::parse_file,
     config::Config,
-    db::{all_ingested, build_pool, delete_doc, init_schema},
+    db::{all_slugs, build_pool, delete_doc, init_schema},
     embed::Embedder,
     pipeline::{store_doc, IngestDoc, StoreOutcome},
 };
 use std::collections::HashSet;
 use walkdir::WalkDir;
 
-
-const SOURCE: &str = "file";
 
 #[derive(Parser)]
 #[command(about = "Ingest bài viết CNN Legal (.md cục bộ) vào vector store")]
@@ -56,7 +54,7 @@ async fn main() -> Result<()> {
     let pool = build_pool(&db_path)?;
     {
         let conn = pool.get()?;
-        init_schema(&conn, cfg.embed_dim)?;
+        init_schema(&conn, cfg.embed_dim, true)?;
     }
 
     let mut seen: HashSet<String> = HashSet::new();
@@ -84,15 +82,14 @@ async fn main() -> Result<()> {
             }
         };
 
-        let doc = IngestDoc {
-            source: SOURCE.to_string(),
-            slug: parsed.front.slug.clone(),
-            title: parsed.front.title.clone(),
-            category: parsed.front.category.clone(),
-            url: parsed.front.url.clone(),
-            updated_at: parsed.front.updated_at.trim().to_string(),
-            chunks: parsed.chunks,
-        };
+        let doc = IngestDoc::from_markdown(
+            parsed.front.slug.clone(),
+            parsed.front.title.clone(),
+            parsed.front.category.clone(),
+            parsed.front.url.clone(),
+            parsed.front.updated_at.trim(),
+            parsed.body,
+        );
         seen.insert(doc.slug.clone());
 
         match store_doc(&pool, &embedder, cfg.embed_dim, &doc, args.force).await {
@@ -117,10 +114,9 @@ async fn main() -> Result<()> {
 
     if args.prune {
         let conn = pool.get()?;
-        for (src, slug) in all_ingested(&conn)? {
-
-            if src == SOURCE && !seen.contains(&slug) {
-                delete_doc(&conn, Some(&src), &slug)?;
+        for slug in all_slugs(&conn)? {
+            if !seen.contains(&slug) {
+                delete_doc(&conn, &slug)?;
                 tracing::info!("prune {slug} (không còn file)");
             }
         }
