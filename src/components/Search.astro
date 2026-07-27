@@ -1,0 +1,432 @@
+---
+---
+
+<button
+  type="button"
+  class="hidden h-10 items-center gap-2 rounded-full border border-white/10 bg-ink-black px-4 text-left shadow-[0_1px_3px_rgba(15,25,35,0.18)] transition-colors hover:bg-ink-hover lg:inline-flex"
+  aria-label="Tìm kiếm nội dung"
+  data-search-open
+>
+  <svg class="h-[1.125rem] w-[1.125rem] shrink-0 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+    <circle cx="7" cy="7" r="4.5" />
+    <path d="M10.5 10.5L14 14" stroke-linecap="round" />
+  </svg>
+  <span class="text-[0.9375rem] font-medium text-white">Tìm kiếm</span>
+</button>
+
+<button
+  type="button"
+  class="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-dark hover:bg-surface-subtle lg:hidden"
+  aria-label="Tìm kiếm nội dung"
+  data-search-open
+>
+  <svg class="h-[1.375rem] w-[1.375rem]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+    <circle cx="7" cy="7" r="4.5" />
+    <path d="M10.5 10.5L14 14" stroke-linecap="round" />
+  </svg>
+</button>
+
+<div
+  class="fixed inset-0 z-[70] hidden items-start justify-center bg-surface-white/70 px-4 pt-[6vh] sm:pt-[8vh]"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Tìm kiếm"
+  data-search-overlay
+>
+  <div class="w-full max-w-lg overflow-hidden rounded-2xl border border-border-soft bg-surface-white shadow-[0_24px_64px_-16px_rgba(15,25,35,0.30),0_4px_12px_-4px_rgba(15,25,35,0.14)] sm:max-w-xl lg:max-w-2xl">
+    <div class="flex items-center gap-2.5 border-b border-border-soft px-4 sm:gap-3 sm:px-5">
+      <svg class="h-5 w-5 shrink-0 text-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+        <circle cx="7" cy="7" r="4.5" />
+        <path d="M10.5 10.5L14 14" stroke-linecap="round" />
+      </svg>
+      <div class="flex shrink-0 items-center gap-1.5" data-search-crumbs></div>
+      <label class="sr-only" for="search-input">Tìm kiếm nội dung</label>
+      <input
+        id="search-input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        role="combobox"
+        tabindex="0"
+        aria-expanded="false"
+        aria-controls="search-results"
+        aria-autocomplete="list"
+        class="h-16 flex-1 bg-transparent text-[1.0625rem] text-text-dark placeholder:text-text-muted focus:outline-none"
+        placeholder="Tìm bài viết, vụ án, dịch vụ…"
+        data-search-input
+      />
+      <kbd class="shrink-0 rounded-full bg-[#f1f3f5] px-2 py-[0.125rem] font-sans text-[0.625rem] font-medium leading-[1.4] text-text-muted">
+        Esc
+      </kbd>
+    </div>
+
+    <div
+      id="search-results"
+      role="listbox"
+      aria-label="Kết quả tìm kiếm"
+      class="max-h-[55vh] overflow-y-auto overscroll-contain p-2 sm:max-h-[60vh]"
+      data-search-results
+    >
+    </div>
+  </div>
+</div>
+
+<style>
+  [data-search-overlay][data-open] {
+    display: flex;
+  }
+  :global(body[data-search-open]) {
+    overflow: hidden;
+  }
+  [data-search-hit][aria-selected="true"] {
+    background: var(--color-surface-subtle);
+  }
+
+  /* Kích thước hộp thoại phải theo CHIỀU CAO khung hình, không theo bề ngang.
+     Màn 1280×720 vẫn rộng nên breakpoint `lg:` của Tailwind kích hoạt và giữ ô
+     nhập ở 64px — chiếm quá nhiều trong 720px chiều cao. */
+  @media (max-height: 860px) {
+    [data-search-input] {
+      height: 3.25rem;
+      font-size: 1rem;
+    }
+  }
+  @media (max-height: 700px) {
+    [data-search-input] {
+      height: 2.75rem;
+      font-size: 0.9375rem;
+    }
+    [data-search-results] {
+      max-height: 50vh;
+    }
+  }
+</style>
+
+
+<script>
+  type Entry = { t: string; d: string; u: string; g: string; k: string };
+
+  /** Nút trong cây điều hướng: có `u` là đích đến, có `c` là nhánh mở tiếp. */
+  type Node = { t: string; d?: string; g?: string; u?: string; c?: Node[] };
+
+  const overlay = document.querySelector<HTMLElement>("[data-search-overlay]");
+  const input = document.querySelector<HTMLInputElement>("[data-search-input]");
+  const list = document.querySelector<HTMLElement>("[data-search-results]");
+  const crumbs = document.querySelector<HTMLElement>("[data-search-crumbs]");
+  const openers = document.querySelectorAll<HTMLButtonElement>("[data-search-open]");
+
+  if (overlay && input && list && crumbs) {
+
+    type Flat = Node & { p: string; ft: string; fd: string; et: string; ed: string; eg: string };
+
+    let tree: Node[] | null = null;
+    let flat: Flat[] = [];
+    let loading: Promise<void> | null = null;
+    let path: string[] = [];
+    let hits: Node[] = [];
+    let active = -1;
+    let lastFocus: HTMLElement | null = null;
+
+    const fold = (s: string) =>
+      s
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .toLowerCase();
+
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    /**
+     * Loại nội dung suy từ ĐƯỜNG DẪN, không dựa vào trường `k`.
+     * Chỉ mục cũ còn trong cache trình duyệt không có `k`; nếu lọc theo nó thì
+     * mọi nhánh rỗng và menu hỏng câm lặng. URL thì bản nào cũng có.
+     */
+    const kindOf = (e: Entry): string => {
+      const u = e.u || "";
+      if (u.startsWith("/dich-vu/") && u !== "/dich-vu/") return "Dịch vụ";
+      if (u.startsWith("/bai-viet/") && u !== "/bai-viet/") return "Bài viết";
+      if (u.startsWith("/vu-an-tieu-bieu/")) return "Vụ án";
+      return "Trang";
+    };
+
+    /** Dựng cây điều hướng từ chỉ mục phẳng. */
+    const buildTree = (docs: Entry[]): Node[] => {
+      const of = (kind: string): Node[] =>
+        docs.filter((e) => kindOf(e) === kind).map((e) => ({ t: e.t, d: e.d, g: e.g, u: e.u }));
+      return [
+        { t: "Tổng quan", u: "/tong-quan/" },
+        { t: "Dịch vụ", c: of("Dịch vụ") },
+        {
+          t: "Kinh nghiệm",
+          c: [
+            { t: "Bài viết", c: of("Bài viết") },
+            { t: "Vụ án", c: of("Vụ án") },
+          ],
+        },
+        { t: "Liên hệ", u: "/lien-he/" },
+      ];
+    };
+
+    /**
+     * Trải phẳng mọi lá MỘT LẦN lúc nạp, kèm `p` là đường dẫn nhánh chứa nó.
+     * Nhờ `p`, việc thu hẹp tìm kiếm về một nhánh chỉ là phép lọc chuỗi — không
+     * phải chạy lại normalize() và escape cho từng mục ở mỗi lần gõ phím.
+     * Dùng ký tự NUL (\u0000) làm dấu ngăn vì ký tự này không thể xuất hiện trong tiêu đề.
+     */
+    const flatten = (nodes: Node[], trail: string[] = []): Flat[] =>
+      nodes.flatMap((n) =>
+        n.c
+          ? flatten(n.c, [...trail, n.t])
+          : [
+              {
+                ...n,
+                p: trail.join("\u0000"),
+                ft: fold(n.t),
+                fd: fold(n.d || ""),
+                et: esc(n.t),
+                ed: esc(n.d || ""),
+                eg: esc(n.g || ""),
+              },
+            ]
+      );
+
+    const loadIndex = () => {
+      if (tree) return Promise.resolve();
+      if (!loading) {
+        loading = fetch("/search-index.json")
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error("http"))))
+          .then((d: Entry[]) => {
+            tree = buildTree(d);
+            flat = flatten(tree);
+          })
+          .catch(() => {
+            tree = null;
+            loading = null;
+          });
+      }
+      return loading;
+    };
+
+    /** Nhánh đang mở theo `path`; rỗng = gốc. */
+    const currentNodes = (): Node[] => {
+      let nodes = tree || [];
+      for (const seg of path) {
+        const next = nodes.find((n) => n.t === seg);
+        if (!next?.c) return nodes;
+        nodes = next.c;
+      }
+      return nodes;
+    };
+
+    const heading = (label: string) =>
+      `<p class="px-3 pb-1.5 pt-2.5 text-[0.9375rem] font-semibold text-text-dark">${esc(label)}</p>`;
+
+    const chevron =
+      '<svg class="h-4 w-4 shrink-0 text-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke-linecap="round"/></svg>';
+
+    const row = (n: Node, i: number) => {
+      const branch = !!n.c;
+      const right = branch
+        ? chevron
+        : n.g
+          ? `<span class="shrink-0 text-[0.6875rem] text-text-muted">${esc(n.g)}</span>`
+          : "";
+      return `
+      <div id="search-hit-${i}" role="option" aria-selected="${i === 0}"
+           data-search-hit ${branch ? 'data-branch="1"' : `data-url="${esc(n.u || "")}"`}
+           class="cursor-pointer rounded-lg px-3 py-2.5 hover:bg-surface-subtle">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-[0.875rem] font-medium leading-snug text-text-muted">${esc(n.t)}</span>
+          ${right}
+        </div>
+        ${n.d ? `<p class="mt-0.5 line-clamp-2 text-[0.8125rem] leading-[1.5] text-text-muted">${esc(n.d)}</p>` : ""}
+      </div>`;
+    };
+
+    const note = (msg: string) => {
+      hits = [];
+      active = -1;
+      list.innerHTML = `<p class="px-3 py-6 text-center text-[0.8125rem] text-text-muted">${msg}</p>`;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-activedescendant");
+    };
+
+    const paint = (label: string, items: Node[]) => {
+      hits = items;
+      active = items.length ? 0 : -1;
+      // Nhánh rỗng phải nói rõ, đừng để lại mỗi tiêu đề trơ trọi.
+      list.innerHTML =
+        heading(label) +
+        (items.length
+          ? items.map(row).join("")
+          : `<p class="px-3 py-6 text-center text-[0.8125rem] text-text-muted">Mục này chưa có nội dung.</p>`);
+      input.setAttribute("aria-expanded", items.length ? "true" : "false");
+      if (items.length) input.setAttribute("aria-activedescendant", "search-hit-0");
+      else input.removeAttribute("aria-activedescendant");
+    };
+
+    let crumbsDrawn: string | null = null;
+    const drawCrumbs = () => {
+      const key = path.join("\u0000");
+      if (key === crumbsDrawn) return;
+      crumbsDrawn = key;
+      crumbs.innerHTML = path
+        .map(
+          (seg, i) => `
+        <button type="button" data-crumb="${i}"
+          class="inline-flex items-center gap-1 rounded-md bg-[#f1f3f5] py-1 pl-2 pr-1.5 text-[0.8125rem] font-medium text-text-dark">
+          ${esc(seg)}
+          <svg class="h-3.5 w-3.5 text-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke-linecap="round"/></svg>
+        </button>`
+        )
+        .join("");
+      input.placeholder = path.length
+        ? `Tìm trong ${path[path.length - 1]}…`
+        : "Tìm bài viết, vụ án, dịch vụ…";
+    };
+
+    const render = () => {
+      if (!tree) {
+        note(loading ? "Đang tải dữ liệu tìm kiếm…" : "Không tải được dữ liệu tìm kiếm. Thử lại sau nhé.");
+        return;
+      }
+      drawCrumbs();
+      const raw = input.value.trim();
+      const q = fold(raw);
+
+      // Chưa gõ gì: hiện đúng một tầng của cây.
+      if (!q) {
+        paint(path.length ? path[path.length - 1] : "Điều hướng", currentNodes());
+        return;
+      }
+
+      // Đang ở trong một nhánh thì chỉ tìm trong nhánh đó.
+      const prefix = path.join("\u0000");
+      const pool = path.length
+        ? flat.filter((e) => e.p === prefix || e.p.startsWith(prefix + "\u0000"))
+        : flat;
+      const words = q.split(/\s+/).filter(Boolean);
+      const scored = pool
+        .map((e) => {
+          let s = 0;
+          if (e.ft.startsWith(q)) s = 100;
+          else if (e.ft.includes(q)) s = 70;
+          else if (e.fd.includes(q)) s = 25;
+          else if (words.length > 1 && words.every((w) => e.ft.includes(w) || e.fd.includes(w))) s = 15;
+          return { e, s };
+        })
+        .filter((x) => x.s > 0)
+        .sort((a, b) => b.s - a.s)
+        .slice(0, 8)
+        .map((x) => x.e as Node);
+
+      if (!scored.length) {
+        note(`Không tìm thấy kết quả cho “${esc(raw)}”.`);
+        return;
+      }
+      paint("Kết quả", scored);
+    };
+
+    const setActive = (next: number) => {
+      const items = list.querySelectorAll<HTMLElement>("[data-search-hit]");
+      if (!items.length) return;
+      active = (next + items.length) % items.length;
+      items.forEach((el, i) => el.setAttribute("aria-selected", String(i === active)));
+      items[active].scrollIntoView({ block: "nearest" });
+      input.setAttribute("aria-activedescendant", `search-hit-${active}`);
+    };
+
+    /** Chọn một dòng: nhánh thì mở sâu thêm, lá thì điều hướng. */
+    const choose = (n: Node | undefined) => {
+      if (!n) return;
+      if (n.c) {
+        path = [...path, n.t];
+        input.value = "";
+        render();
+        input.focus({ preventScroll: true });
+      } else if (n.u) {
+        window.location.href = n.u;
+      }
+    };
+
+    const popCrumb = (upto?: number) => {
+      path = typeof upto === "number" ? path.slice(0, upto) : path.slice(0, -1);
+      input.value = "";
+      render();
+      input.focus({ preventScroll: true });
+    };
+
+    const open = () => {
+      if (overlay.hasAttribute("data-open")) return;
+      lastFocus = document.activeElement as HTMLElement;
+      overlay.setAttribute("data-open", "");
+      document.body.setAttribute("data-search-open", "");
+      path = [];
+      input.value = "";
+      if (tree) render();
+      else note("Đang tải dữ liệu tìm kiếm…");
+      input.focus({ preventScroll: true });
+      loadIndex().then(render);
+    };
+
+    const close = () => {
+      if (!overlay.hasAttribute("data-open")) return;
+      overlay.removeAttribute("data-open");
+      document.body.removeAttribute("data-search-open");
+      hits = [];
+      active = -1;
+      lastFocus?.focus({ preventScroll: true });
+    };
+
+    openers.forEach((b) => b.addEventListener("click", open));
+    input.addEventListener("input", render);
+
+    list.addEventListener("click", (event) => {
+      const el = (event.target as HTMLElement).closest<HTMLElement>("[data-search-hit]");
+      if (!el) return;
+      const i = [...list.querySelectorAll("[data-search-hit]")].indexOf(el);
+      choose(hits[i]);
+    });
+
+    crumbs.addEventListener("click", (event) => {
+      const el = (event.target as HTMLElement).closest<HTMLElement>("[data-crumb]");
+      if (el) popCrumb(Number(el.dataset.crumb));
+    });
+
+    overlay.addEventListener("mousedown", (event) => {
+      if (event.target === overlay) close();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        overlay.hasAttribute("data-open") ? close() : open();
+        return;
+      }
+      if (!overlay.hasAttribute("data-open")) return;
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close();
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        setActive(active + 1);
+      } else if (event.key === "ArrowUp") {
+        event.preventDefault();
+        setActive(active - 1);
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        choose(hits[active]);
+      } else if (event.key === "Backspace" && !input.value && path.length) {
+        // Xoá lùi khi ô trống = lùi ra một tầng, giống thao tác gỡ chip.
+        event.preventDefault();
+        popCrumb();
+      } else if (event.key === "Tab") {
+        event.preventDefault();
+        input.focus();
+      }
+    });
+  }
+</script>

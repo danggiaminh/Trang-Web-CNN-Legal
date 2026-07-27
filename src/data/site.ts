@@ -6,8 +6,8 @@ export const site = {
   canonicalBaseUrl: "https://cnnlegal.vn",
   externalProfileUrl: "https://dangkimchinh.vn",
   linkedInUrl: "https://www.linkedin.com/in/dangkimchinh/",
-  publicEmail: "cnnlegal.vn@gmail.com",
-  publicEmailHref: "mailto:cnnlegal.vn@gmail.com",
+  publicEmail: "dangkimchinh@gmail.com",
+  publicEmailHref: "mailto:dangkimchinh@gmail.com",
   publicPhone: "0944968686",
   publicPhoneHref: "tel:0944968686",
 

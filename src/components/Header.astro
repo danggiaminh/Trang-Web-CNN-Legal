@@ -1,5 +1,6 @@
 ---
 import { navigationItems, type NavigationItem } from "../data/navigation";
+import Search from "./Search.astro";
 
 const currentPath = Astro.url.pathname;
 const matchesPrefix = (href: string) =>
@@ -39,6 +40,7 @@ const isActive = (item: NavigationItem) =>
     </nav>
 
     <div class="ml-auto flex shrink-0 items-center gap-3">
+      <Search />
       <a
         href="/lien-he/"
         class="hidden rounded-full bg-ink-black px-5 py-2 text-[0.9375rem] font-medium text-white shadow-sm transition-colors hover:bg-ink-hover active:scale-[0.97] lg:inline-flex"

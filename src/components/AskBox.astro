@@ -240,6 +240,11 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   const panelHint = document.querySelector<HTMLElement>("[data-ask-panel-hint]");
 
   if (form && input && submit && panel && panelForm && panelInput && panelSubmit && messages) {
+    // Đọc vị trí cuộn TRƯỚC mọi thao tác ghi DOM bên dưới. Đọc sau khi ghi sẽ
+    // buộc trình duyệt tính lại layout đồng bộ (forced reflow) — kể cả khi bọc
+    // trong requestAnimationFrame, vì rAF chạy trước bước layout của khung hình.
+    const initialScroll = window.scrollY;
+
     const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
     if (isMac) {
       if (hint) hint.textContent = "⌘I";
@@ -250,7 +255,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       box?.toggleAttribute("data-at-top", window.scrollY <= 8);
     };
     window.addEventListener("scroll", syncBoxOnScroll, { passive: true });
-    syncBoxOnScroll();
+    box?.toggleAttribute("data-at-top", initialScroll <= 8);
 
     const shell = document.querySelector<HTMLElement>("[data-app-shell]");
 

@@ -26,6 +26,10 @@ const dateIso = article.publishedAt !== "Đang cập nhật"
   ? article.publishedAt.split("/").reverse().join("-")
   : undefined;
 
+// Ảnh đầu tiên trong thân bài nằm ngay dưới đoạn mở — đó là phần tử LCP.
+// Để `loading="lazy"` là trì hoãn đúng thứ cần vẽ sớm nhất. Các ảnh sau vẫn lazy.
+const firstImageIndex = article.blocks?.findIndex((b) => b.type === "image") ?? -1;
+
 const structuredData = [
   {
     "@context": "https://schema.org",
@@ -111,7 +115,7 @@ const structuredData = [
 
         <div class="article-body mt-8 space-y-5">
           {article.blocks ? (
-            article.blocks.map((block) => {
+            article.blocks.map((block, i) => {
               switch (block.type) {
                 case "lead":
                   return (
@@ -162,7 +166,8 @@ const structuredData = [
                           widths={[320, 640, 768]}
                           sizes="(min-width: 768px) 768px, 100vw"
                           quality={80}
-                          loading="lazy"
+                          loading={i === firstImageIndex ? "eager" : "lazy"}
+                          fetchpriority={i === firstImageIndex ? "high" : undefined}
                         />
                       </div>
                       {block.caption && (

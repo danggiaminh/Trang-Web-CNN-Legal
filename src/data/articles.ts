@@ -42,7 +42,7 @@ export const articles: readonly Article[] = [
     sourceName: articleSourceName,
     sourceUrl: "https://lsvn.vn/du-thao-luat-dat-dai-sua-doi-he-qua-phap-ly-xa-hoi-va-kien-nghi-hoan-thien-co-che-thu-hoi-dat-khi-vuot-nguong-dong-thuan-75-a163464.html",
     category: "Dân sự",
-    imageUrl: "/images/article-dat-dai-75.png",
+    imageUrl: "/images/article-dat-dai-75.webp",
     imageAlt: "Minh họa cơ chế thu hồi đất khi vượt ngưỡng đồng thuận 75%.",
     excerpt: `Cơ chế "thu hồi đất khi vượt ngưỡng đồng thuận 75%" trong dự thảo sửa đổi, bổ sung Luật Đất đai là một điểm mới nhằm khắc phục hạn chế của cơ chế chuyển dịch đất đai tự nguyện.`,
     blocks: [
