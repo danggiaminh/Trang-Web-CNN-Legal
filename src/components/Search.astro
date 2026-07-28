@@ -55,9 +55,19 @@
         placeholder="Tìm bài viết, vụ án, dịch vụ…"
         data-search-input
       />
-      <kbd class="shrink-0 rounded-full bg-[#f1f3f5] px-2 py-[0.125rem] font-sans text-[0.625rem] font-medium leading-[1.4] text-text-muted">
+      <kbd class="hidden shrink-0 rounded-full bg-[#f1f3f5] px-2 py-[0.125rem] font-sans text-[0.625rem] font-medium leading-[1.4] text-text-muted sm:block">
         Esc
       </kbd>
+      <button
+        type="button"
+        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-surface-subtle sm:hidden"
+        aria-label="Đóng tìm kiếm"
+        data-search-close
+      >
+        <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M4 4l8 8M12 4l-8 8" stroke-linecap="round" />
+        </svg>
+      </button>
     </div>
 
     <div
@@ -113,6 +123,7 @@
   const input = document.querySelector<HTMLInputElement>("[data-search-input]");
   const list = document.querySelector<HTMLElement>("[data-search-results]");
   const crumbs = document.querySelector<HTMLElement>("[data-search-crumbs]");
+  const closeBtn = document.querySelector<HTMLButtonElement>("[data-search-close]");
   const openers = document.querySelectorAll<HTMLButtonElement>("[data-search-open]");
 
   if (overlay && input && list && crumbs) {
@@ -394,6 +405,8 @@
       const el = (event.target as HTMLElement).closest<HTMLElement>("[data-crumb]");
       if (el) popCrumb(Number(el.dataset.crumb));
     });
+
+    closeBtn?.addEventListener("click", close);
 
     overlay.addEventListener("mousedown", (event) => {
       if (event.target === overlay) close();
