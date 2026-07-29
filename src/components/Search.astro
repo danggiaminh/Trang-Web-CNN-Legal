@@ -92,6 +92,12 @@
     background: var(--color-surface-subtle);
   }
 
+  /* Từ khoá dài hơn ô nhập thì cắt bằng dấu … thay vì cụt giữa chữ.
+     (Placeholder do JS tự rút gọn — xem `fitHint`.) */
+  [data-search-input] {
+    text-overflow: ellipsis;
+  }
+
   /* Kích thước hộp thoại phải theo CHIỀU CAO khung hình, không theo bề ngang.
      Màn 1280×720 vẫn rộng nên breakpoint `lg:` của Tailwind kích hoạt và giữ ô
      nhập ở 64px — chiếm quá nhiều trong 720px chiều cao. */
@@ -278,6 +284,39 @@
       else input.removeAttribute("aria-activedescendant");
     };
 
+    /* Placeholder dài hơn ô nhập thì trình duyệt cắt cụt ngay giữa chữ
+       ("…, dịch" trên màn 320px). Tự đo rồi bỏ bớt từ cuối, kết bằng "…" để
+       câu vẫn đọc được: "Tìm bài viết, vụ án, dịch…". */
+    const gauge = document.createElement("canvas").getContext("2d");
+    let fullHint = "Tìm bài viết, vụ án, dịch vụ…";
+
+    const fitHint = () => {
+      const box = input.clientWidth;
+      if (!gauge || !box) {
+        input.placeholder = fullHint;
+        return;
+      }
+      const cs = getComputedStyle(input);
+      gauge.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      if (gauge.measureText(fullHint).width <= box) {
+        input.placeholder = fullHint;
+        return;
+      }
+      const words = fullHint.replace(/…$/, "").split(" ");
+      while (words.length > 1) {
+        words.pop();
+        const cut = words.join(" ").replace(/[,\s]+$/, "") + "…";
+        if (gauge.measureText(cut).width <= box) {
+          input.placeholder = cut;
+          return;
+        }
+      }
+      // Đến một từ vẫn tràn (ô quá hẹp) thì đành cắt theo ký tự.
+      let s = words[0];
+      while (s.length > 1 && gauge.measureText(s + "…").width > box) s = s.slice(0, -1);
+      input.placeholder = s + "…";
+    };
+
     let crumbsDrawn: string | null = null;
     const drawCrumbs = () => {
       const key = path.join("\u0000");
@@ -293,9 +332,10 @@
         </button>`
         )
         .join("");
-      input.placeholder = path.length
+      fullHint = path.length
         ? `Tìm trong ${path[path.length - 1]}…`
         : "Tìm bài viết, vụ án, dịch vụ…";
+      fitHint();
     };
 
     const render = () => {
@@ -379,6 +419,7 @@
       if (tree) render();
       else note("Đang tải dữ liệu tìm kiếm…");
       input.focus({ preventScroll: true });
+      fitHint();
       loadIndex().then(render);
     };
 
@@ -393,6 +434,10 @@
 
     openers.forEach((b) => b.addEventListener("click", open));
     input.addEventListener("input", render);
+    // Xoay ngang/dọc hay đổi cỡ cửa sổ thì đo lại cho vừa.
+    window.addEventListener("resize", () => {
+      if (overlay.hasAttribute("data-open")) fitHint();
+    });
 
     list.addEventListener("click", (event) => {
       const el = (event.target as HTMLElement).closest<HTMLElement>("[data-search-hit]");
