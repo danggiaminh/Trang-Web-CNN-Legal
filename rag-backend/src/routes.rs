@@ -23,6 +23,30 @@ const BUSY_MSG: &str = "Xin lỗi hệ thống đang bận, vui lòng thử lạ
 
 const MAX_HISTORY_TURNS: usize = 6;
 const MAX_HISTORY_CHARS: usize = 4000;
+/// Trả lời sẵn cho câu hỏi vô nghĩa — không gọi embedding, không gọi LLM.
+const VO_NGHIA_MSG: &str =
+    "Mình chưa hiểu câu hỏi. Bạn thử hỏi rõ hơn về một vụ án hoặc bài viết trên trang nhé.";
+
+/// Câu hỏi không mang thông tin nào thì đừng tiêu tiền vào nó.
+///
+/// Mỗi lượt hỏi tốn một lần gọi embedding cộng một lần gọi LLM. Một ký tự gõ
+/// nhầm ("d", "bbbb", "...") cũng đang kích hoạt trọn bộ đó.
+fn cau_hoi_vo_nghia(q: &str) -> bool {
+    let chu: Vec<char> = q.chars().filter(|c| c.is_alphanumeric()).collect();
+    // Quá ít ký tự có nghĩa.
+    if chu.len() < 3 {
+        return true;
+    }
+    // Chỉ một ký tự lặp lại: "bbbb", "aaaaaa".
+    let dau = chu[0].to_lowercase().next().unwrap_or(chu[0]);
+    if chu
+        .iter()
+        .all(|c| c.to_lowercase().next().unwrap_or(*c) == dau)
+    {
+        return true;
+    }
+    false
+}
 
 fn sse(payload: serde_json::Value) -> Result<Event, Infallible> {
     Ok(Event::default().data(payload.to_string()))
@@ -98,13 +122,26 @@ pub async fn chat(
                 .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
     });
 
-    let history = sanitize_history(body.history);
-    let messages = prepare_messages(&state, &question, slug, &history).await?;
+    // Chặn TRƯỚC khi truy xuất: `prepare_messages` gọi embedding, cũng tính tiền.
+    // `None` = câu hỏi vô nghĩa, luồng bên dưới trả câu mặc định rồi dừng.
+    let messages = if cau_hoi_vo_nghia(&question) {
+        tracing::info!(cau_hoi = %question, "bỏ qua câu hỏi vô nghĩa, không gọi API");
+        None
+    } else {
+        let history = sanitize_history(body.history);
+        Some(prepare_messages(&state, &question, slug, &history).await?)
+    };
 
     let http = state.http().clone();
     let cfg = state.config().clone();
 
     let stream = async_stream::stream! {
+        let Some(messages) = messages else {
+            yield sse(json!({ "m": 0, "r": 0 }));
+            yield sse(json!({ "t": VO_NGHIA_MSG }));
+            return;
+        };
+
         let mut attempt = 0u32;
         loop {
             let resp = match call_openrouter(&http, &cfg, &messages).await {
@@ -118,7 +155,7 @@ pub async fn chat(
 
             let status = resp.status();
             if status.is_success() {
-                let mut toks = std::pin::pin!(stream_content(resp));
+                let mut toks = std::pin::pin!(stream_content(resp, cfg.max_answer_chars));
                 while let Some(item) = toks.next().await {
                     match item {
                         Ok(tok) => yield sse(json!({ "t": tok })),

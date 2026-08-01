@@ -17,6 +17,17 @@ pub struct Config {
 
     pub openrouter_max_tokens: u32,
 
+    /// Không đặt `temperature` thì nhà cung cấp dùng mặc định (thường 1.0),
+    /// khiến câu trả lời dao động mạnh và đôi khi lan man vô nghĩa.
+    pub openrouter_temperature: f32,
+    pub openrouter_top_p: f32,
+    /// Hai hình phạt này chặn vòng lặp lặp chữ — thủ phạm chính làm đốt hết
+    /// `max_tokens` cho một câu trả lời rác.
+    pub openrouter_frequency_penalty: f32,
+    pub openrouter_presence_penalty: f32,
+    /// Chốt cứng: vượt số ký tự này thì ngắt luồng, không chờ model tự dừng.
+    pub max_answer_chars: usize,
+
     pub embed_base_url: String,
     pub embed_api_key: Option<String>,
     pub embed_model: String,
@@ -56,6 +67,17 @@ impl Config {
             openrouter_max_tokens: with("OPENROUTER_MAX_TOKENS", "1200")
                 .parse()
                 .context("OPENROUTER_MAX_TOKENS không phải số")?,
+            openrouter_temperature: with("OPENROUTER_TEMPERATURE", "0.2")
+                .parse()
+                .unwrap_or(0.2),
+            openrouter_top_p: with("OPENROUTER_TOP_P", "0.9").parse().unwrap_or(0.9),
+            openrouter_frequency_penalty: with("OPENROUTER_FREQUENCY_PENALTY", "0.4")
+                .parse()
+                .unwrap_or(0.4),
+            openrouter_presence_penalty: with("OPENROUTER_PRESENCE_PENALTY", "0.2")
+                .parse()
+                .unwrap_or(0.2),
+            max_answer_chars: with("MAX_ANSWER_CHARS", "4000").parse().unwrap_or(4000),
 
             embed_base_url: with("EMBED_BASE_URL", "http://127.0.0.1:8080/v1"),
             embed_api_key: opt("EMBED_API_KEY"),

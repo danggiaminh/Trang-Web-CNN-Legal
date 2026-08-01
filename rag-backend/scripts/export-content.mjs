@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, unlink, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,7 +7,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../..");
 const outDir = resolve(repoRoot, "src/content/articles");
 
-const { articles } = await import(resolve(repoRoot, "src/data/articles.ts"));
+const { articles, externalArticles } = await import(resolve(repoRoot, "src/data/articles.ts"));
 const { notableCases } = await import(resolve(repoRoot, "src/data/cases.ts"));
 
 function toIso(d) {
@@ -85,7 +85,17 @@ function strip(t) {
   return String(t).replace(/<[^>]+>/g, "").trim();
 }
 
+/** Bài đăng báo ngoài không có slug riêng — lấy từ đoạn cuối đường dẫn cho ổn định. */
+function slugFromUrl(url) {
+  const last = new URL(url).pathname.split("/").filter(Boolean).pop() || "";
+  return last
+    .replace(/\.(html?|htm|chn|tpo|ldo|amp)$/i, "")
+    .replace(/-\d{6,}$/, "")
+    .slice(0, 90);
+}
+
 await mkdir(outDir, { recursive: true });
+const written = new Set();
 let count = 0;
 
 for (const a of articles) {
@@ -99,6 +109,7 @@ for (const a of articles) {
       updatedAt: stamp(a.publishedAt, body),
     }) + body;
   await writeFile(resolve(outDir, `${a.slug}.md`), md, "utf8");
+  written.add(`${a.slug}.md`);
   count++;
 }
 
@@ -119,7 +130,38 @@ for (const c of notableCases) {
       updatedAt: stamp(c.date, body),
     }) + body;
   await writeFile(resolve(outDir, `${c.slug}.md`), md, "utf8");
+  written.add(`${c.slug}.md`);
   count++;
 }
 
-console.log(`Đã xuất ${count} file .md vào ${outDir}`);
+// Bài đăng trên báo ngoài: trang web chỉ giới thiệu chứ không đăng lại toàn văn,
+// nên phần đưa vào kho tri thức cũng chỉ là tóm tắt. Ghi rõ điều đó trong nội dung
+// để trợ lý không trả lời như thể đã đọc trọn bài.
+for (const a of externalArticles ?? []) {
+  const slug = slugFromUrl(a.sourceUrl);
+  const body = `${a.summary}\n\nĐây là phần giới thiệu ngắn. Toàn văn bài viết đăng trên ${a.sourceName}.\n`;
+  const md =
+    frontmatter({
+      title: a.title,
+      slug,
+      category: a.category,
+      url: a.sourceUrl,
+      updatedAt: stamp(a.publishedAt, body),
+    }) + body;
+  await writeFile(resolve(outDir, `${slug}.md`), md, "utf8");
+  written.add(`${slug}.md`);
+  count++;
+}
+
+// Dọn file của bài đã gỡ khỏi dữ liệu — để sót thì `ingest --prune` không thấy,
+// và trợ lý sẽ tiếp tục trích dẫn đường dẫn đã chết.
+let removed = 0;
+for (const name of await readdir(outDir)) {
+  if (!name.endsWith(".md") || written.has(name)) continue;
+  await unlink(resolve(outDir, name));
+  console.log(`Đã xoá file mồ côi: ${name}`);
+  removed++;
+}
+
+console.log(`Đã xuất ${count} file .md vào ${outDir}${removed ? ` (xoá ${removed} file cũ)` : ""}`);
+

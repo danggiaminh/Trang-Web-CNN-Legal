@@ -32,6 +32,10 @@ struct ChatRequest<'a> {
     reasoning: Reasoning<'a>,
 
     max_tokens: u32,
+    temperature: f32,
+    top_p: f32,
+    frequency_penalty: f32,
+    presence_penalty: f32,
     messages: &'a [ChatMessage],
 }
 
@@ -61,6 +65,10 @@ pub async fn call_openrouter(
         stream: true,
         reasoning,
         max_tokens: cfg.openrouter_max_tokens,
+        temperature: cfg.openrouter_temperature,
+        top_p: cfg.openrouter_top_p,
+        frequency_penalty: cfg.openrouter_frequency_penalty,
+        presence_penalty: cfg.openrouter_presence_penalty,
         messages,
     };
 
@@ -139,16 +147,66 @@ impl SseDecoder {
     }
 }
 
-pub fn stream_content(resp: reqwest::Response) -> impl Stream<Item = Result<String>> {
+/// Phát hiện model rơi vào vòng lặp lặp chữ ("d d d d…", "bbbb…").
+///
+/// Xét phần đuôi câu trả lời: nếu nó là một đoạn ngắn (1–8 ký tự) lặp lại liên
+/// tiếp từ `NGUONG_LAP` lần trở lên thì coi là hỏng. Không có chốt này, model
+/// lặp cho tới hết `max_tokens` và khách hàng bị tính tiền trọn gói cho một câu
+/// trả lời rác.
+fn la_lap_vo_nghia(duoi: &str) -> bool {
+    const NGUONG_LAP: usize = 12;
+    let ky_tu: Vec<char> = duoi.chars().collect();
+    for do_dai in 1..=8usize {
+        if ky_tu.len() < do_dai * NGUONG_LAP {
+            continue;
+        }
+        let mau = &ky_tu[ky_tu.len() - do_dai..];
+        let mut lan = 0usize;
+        let mut i = ky_tu.len();
+        while i >= do_dai && &ky_tu[i - do_dai..i] == mau {
+            lan += 1;
+            i -= do_dai;
+        }
+        if lan >= NGUONG_LAP {
+            return true;
+        }
+    }
+    false
+}
+
+pub fn stream_content(
+    resp: reqwest::Response,
+    gioi_han_ky_tu: usize,
+) -> impl Stream<Item = Result<String>> {
     async_stream::try_stream! {
         let mut bytes = resp.bytes_stream();
         let mut dec = SseDecoder::default();
+        let mut da_ra = String::new();
 
         while let Some(chunk) = bytes.next().await {
             let chunk = chunk?;
             let (tokens, done) = dec.push(&chunk);
             for tok in tokens {
+                da_ra.push_str(&tok);
                 yield tok;
+
+                // Cắt sớm khi câu trả lời hỏng hoặc quá dài — mỗi token sau đó
+                // đều là tiền bỏ đi.
+                if da_ra.chars().count() >= gioi_han_ky_tu {
+                    tracing::warn!(
+                        da_ra = da_ra.chars().count(),
+                        "ngắt luồng: câu trả lời vượt giới hạn ký tự"
+                    );
+                    return;
+                }
+                let so_ky_tu = da_ra.chars().count();
+                if so_ky_tu >= 120 {
+                    let duoi: String = da_ra.chars().skip(so_ky_tu.saturating_sub(160)).collect();
+                    if la_lap_vo_nghia(&duoi) {
+                        tracing::warn!("ngắt luồng: phát hiện model lặp chữ vô nghĩa");
+                        return;
+                    }
+                }
             }
             if done {
                 return;
@@ -160,6 +218,33 @@ pub fn stream_content(resp: reqwest::Response) -> impl Stream<Item = Result<Stri
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bat_duoc_lap_mot_ky_tu() {
+        assert!(la_lap_vo_nghia(&"d".repeat(20)));
+        assert!(la_lap_vo_nghia(&"b".repeat(13)));
+    }
+
+    #[test]
+    fn bat_duoc_lap_cum_ngan() {
+        assert!(la_lap_vo_nghia(&"d ".repeat(15)));
+        assert!(la_lap_vo_nghia(&"abc".repeat(14)));
+    }
+
+    #[test]
+    fn khong_bat_oan_van_ban_binh_thuong() {
+        let that = "Luật sư Đặng Kim Chinh là người bào chữa cho bị cáo tại cấp phúc thẩm. \
+                    Hội đồng xét xử đã tuyên phạt bị cáo ba năm tù, giảm hai năm so với bản án sơ thẩm.";
+        assert!(!la_lap_vo_nghia(that));
+        assert!(!la_lap_vo_nghia("Vụ án hành chính tại Quận 3 liên quan chỉ tiêu kiến trúc."));
+        // Lặp ít lần thì không tính là hỏng.
+        assert!(!la_lap_vo_nghia("ha ha ha"));
+    }
+
+    #[test]
+    fn cau_hoi_ngan_khong_bi_coi_la_lap() {
+        assert!(!la_lap_vo_nghia("Xin chào"));
+    }
 
     fn wire(content: &str) -> String {
         format!(
