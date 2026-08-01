@@ -2,50 +2,51 @@
 import { Image } from "astro:assets";
 import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getAllArticles } from "../../data/articles";
-import { notableCases } from "../../data/cases";
+import { getAllArticles, externalArticles } from "../../data/articles";
 import { site } from "../../data/site";
 import articleHero from "../../assets/images/article-hero.jpg";
 
 const articles = await getAllArticles();
 
+/** "dd/mm/yyyy" -> số so sánh được. Bài thiếu ngày xếp cuối. */
+const mocThoiGian = (d: string) => {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((d ?? "").trim());
+  return m ? Number(`${m[3]}${m[2]}${m[1]}`) : 0;
+};
+
 const allItems = [
+  // Bài đăng toàn văn trên website mở trang chi tiết; bài chỉ giới thiệu thì
+  // dẫn thẳng sang báo gốc.
   ...articles.map((a) => ({
-    type: "article" as const,
-    slug: a.slug,
     href: `/bai-viet/${a.slug}/`,
+    external: false,
     title: a.title,
     category: a.category,
     date: a.publishedAt,
-    excerpt: a.excerpt,
-    imageUrl: a.imageUrl,
-    imageAlt: a.imageAlt,
     source: a.sourceName,
   })),
-  ...notableCases.map((c) => ({
-    type: "case" as const,
-    slug: c.slug,
-    href: `/vu-an-tieu-bieu/${c.slug}/`,
-    title: c.title,
-    category: c.category,
-    date: c.date,
-    excerpt: c.summary,
-    imageUrl: "",
-    imageAlt: "",
-    source: c.court,
+  ...externalArticles.map((a) => ({
+    href: a.sourceUrl,
+    external: true,
+    title: a.title,
+    category: a.category,
+    date: a.publishedAt,
+    source: a.sourceName,
   })),
-];
+  // Ba yêu cầu bài đăng mới nhất nằm trên đầu.
+].sort((a, b) => mocThoiGian(b.date) - mocThoiGian(a.date));
 
-const categoryOrder = ["Hình sự", "Dân sự", "Kinh doanh thương mại"];
-const usedCategories = new Set(allItems.map((i) => i.category));
 const categories = [
   "Tất cả",
-  ...categoryOrder.filter((c) => usedCategories.has(c)),
-  ...Array.from(usedCategories).filter((c) => !categoryOrder.includes(c)).sort(),
+  "Hình sự",
+  "Dân sự - Hành chính",
+  "Kinh doanh - Thương mại",
+  "Nghề luật sư",
 ];
 
-const title = `Kinh nghiệm | ${site.name}`;
-const description = "Tổng hợp các bài viết chuyên môn và vụ án tiêu biểu trong quá trình hành nghề của Luật sư Đặng Kim Chinh.";
+const title = `Bài viết | ${site.name}`;
+const description =
+  "Các bài viết, bình luận và ý kiến pháp lý của Luật sư Đặng Kim Chinh cùng đội ngũ cộng sự CNN Legal trên các tạp chí và báo chuyên ngành.";
 const canonicalPath = "/bai-viet/";
 const pageUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
 const structuredData = [
@@ -62,7 +63,7 @@ const structuredData = [
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Trang chủ", item: site.canonicalBaseUrl },
-      { "@type": "ListItem", position: 2, name: "Kinh nghiệm", item: pageUrl },
+      { "@type": "ListItem", position: 2, name: "Bài viết", item: pageUrl },
     ],
   },
 ];
@@ -74,7 +75,7 @@ const structuredData = [
       <Image
         class="h-full w-full object-cover object-center"
         src={articleHero}
-        alt="Hình ảnh nền trang kinh nghiệm pháp lý CNN Legal"
+        alt="Hình ảnh nền trang bài viết pháp lý CNN Legal"
         widths={[320, 640, 768, 1024, 1280]}
         sizes="100vw"
         quality={80}
@@ -85,14 +86,14 @@ const structuredData = [
     </div>
 
     <div class="section-shell relative z-10">
-      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Kinh nghiệm" }]} />
+      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Bài viết" }]} />
 
-      <h1 class="mt-8 max-w-3xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
-        Kinh nghiệm thực tiễn pháp lý.
+      <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+        Bài viết và ý kiến pháp lý
       </h1>
 
-      <p class="mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
-        Tổng hợp các bài viết chuyên môn và vụ án tiêu biểu trong quá trình hành nghề của Luật sư Đặng Kim Chinh.
+      <p class="prose-justify mt-6 max-w-2xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        Kinh nghiệm tích lũy từ hoạt động tranh tụng và tư vấn là nền tảng để Luật sư Đặng Kim Chinh và đội ngũ cộng sự thực hiện các nghiên cứu, phân tích và chia sẻ các bài viết, bình luận, ý kiến pháp lý trên các tạp chí, báo chuyên ngành, qua đó góp phần kết nối giữa lý luận và thực tiễn trong quá trình áp dụng pháp luật.
       </p>
     </div>
   </section>
@@ -116,10 +117,11 @@ const structuredData = [
             {categories.map((cat) => (
               <button
                 class:list={[
-                  "filter-btn px-4 py-4 text-center text-[0.875rem] font-medium transition-all border border-text-dark/20 rounded-xl hover:scale-105",
+                  "filter-btn px-4 py-4 text-center text-[0.875rem] transition-all border border-text-dark/20 rounded-xl hover:scale-105",
+                  // Ba yêu cầu bôi đậm riêng chữ "Tất cả".
                   cat === "Tất cả"
-                    ? "bg-ink-black text-white"
-                    : "bg-surface-white text-text-dark",
+                    ? "bg-ink-black font-bold text-white"
+                    : "bg-surface-white font-medium text-text-dark",
                 ]}
                 data-category={cat}
               >
@@ -130,16 +132,20 @@ const structuredData = [
         </aside>
 
         <div class="flex-1">
-          <p class="mb-8 font-sans text-[2rem] font-semibold tracking-[-0.01em] text-text-dark">Bài viết & Vụ án</p>
           <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-5" id="items-grid">
             {allItems.map((item) => (
               <li class="experience-item" data-category={item.category}>
                 <a
                   class="text-[1.0625rem] leading-snug text-[#1a4a9e] hover:text-[#0f2f6b] hover:underline underline-offset-2"
                   href={item.href}
+                  target={item.external ? "_blank" : undefined}
+                  rel={item.external ? "noopener noreferrer" : undefined}
                 >
                   {item.title}
                 </a>
+                <p class="mt-1 text-[0.8125rem] text-text-muted">
+                  {item.source}{item.date ? ` — ${item.date}` : ""}
+                </p>
               </li>
             ))}
           </ul>

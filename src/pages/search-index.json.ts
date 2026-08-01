@@ -1,8 +1,7 @@
 import type { APIRoute } from "astro";
-import { articles } from "../data/articles";
+import { articles, externalArticles } from "../data/articles";
 import { notableCases } from "../data/cases";
 import { services } from "../data/services";
-import { navigationItems } from "../data/navigation";
 
 type Entry = {
   t: string;
@@ -11,7 +10,7 @@ type Entry = {
   /** Nhãn lĩnh vực hiện bên phải mỗi dòng (Hình sự, Dân sự…). */
   g: string;
   /** Loại nội dung, dùng để gom nhóm trong menu. */
-  k: "Trang" | "Dịch vụ" | "Bài viết" | "Vụ án";
+  k: "Dịch vụ" | "Bài viết" | "Vụ án";
 };
 
 const trim = (s: string, n = 120) => {
@@ -20,20 +19,15 @@ const trim = (s: string, n = 120) => {
 };
 
 export const GET: APIRoute = () => {
+  // Chỉ mục chỉ chứa NỘI DUNG. Các mục điều hướng (Giới thiệu, Liên hệ, trang
+  // danh sách của từng nhánh) do `buildTree` trong Search.astro dựng cứng, nên
+  // đưa vào đây chỉ làm phình tệp mà không bao giờ hiển thị.
   const entries: Entry[] = [
-    ...navigationItems.map((n) => ({
-      t: n.label,
-      d: "",
-      u: n.href,
-      g: "Trang",
-      k: "Trang" as const,
-    })),
-    { t: "Liên hệ", d: "", u: "/lien-he/", g: "Trang", k: "Trang" as const },
-
     ...services.map((s) => ({
       t: s.title,
       d: trim(s.summary),
-      u: `/dich-vu/${s.slug}/`,
+      // Không còn trang chi tiết dịch vụ nên trỏ chung về trang Dịch vụ.
+      u: "/dich-vu/",
       g: "Dịch vụ",
       k: "Dịch vụ" as const,
     })),
@@ -42,6 +36,17 @@ export const GET: APIRoute = () => {
       t: a.title,
       d: trim(a.excerpt),
       u: `/bai-viet/${a.slug}/`,
+      g: a.category || "Bài viết",
+      k: "Bài viết" as const,
+    })),
+
+    // Bài đăng báo ngoài: `u` là đường dẫn tuyệt đối nên `kindOf` không suy được
+    // loại từ tiền tố — phải dựa vào `k`. Ghi tên báo vào mô tả để người dùng
+    // biết trước là sẽ rời khỏi trang.
+    ...externalArticles.map((a) => ({
+      t: a.title,
+      d: trim(`${a.sourceName} · ${a.summary}`),
+      u: a.sourceUrl,
       g: a.category || "Bài viết",
       k: "Bài viết" as const,
     })),

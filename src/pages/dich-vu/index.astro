@@ -61,24 +61,27 @@ const structuredData = [
     <div class="section-shell relative z-10">
       <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Dịch vụ" }]} />
 
-      <h1 class="mt-8 max-w-3xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
-        Lĩnh vực hỗ trợ của CNN Legal
+      <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+        Dịch vụ pháp lý
       </h1>
 
-      <p class="mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
-        CNN Legal hỗ trợ khách hàng trên nhiều lĩnh vực pháp lý, từ tranh tụng tại tòa đến tư vấn và phòng ngừa rủi ro pháp lý. Dù vụ việc thuộc lĩnh vực nào, chúng tôi luôn tiếp cận với sự cẩn trọng, thực tế và đặt quyền lợi của khách hàng làm trung tâm.
+      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        CNN Legal cung cấp các dịch vụ pháp lý trọng tâm gồm: Bào chữa hình sự; Tranh tụng dân sự, kinh doanh, thương mại &amp; hành chính; Đàm phán, giải quyết tranh chấp đất đai &amp; bất động sản; Tư vấn đầu tư, doanh nghiệp và hợp đồng.
       </p>
     </div>
   </section>
 
   <section class="bg-warm-ivory">
     <div class="section-shell pb-16 pt-10 md:pb-20 md:pt-12">
-      <div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      {/* Đúng 4 dịch vụ nên khoá 2 cột: 2 ô trên, 2 ô dưới. Dùng 3 cột thì
+          hàng dưới trơ lại một ô lệch. Thẻ không phải liên kết — bấm vào không
+          mở trang nào, theo yêu cầu của khách hàng. */}
+      <div class="grid gap-5 md:grid-cols-2">
         {services.map((service) => (
-          <a class="group rounded-xl border border-border-soft bg-surface-white p-7 transition-all hover:border-text-muted/30 hover:shadow-[0_4px_16px_rgba(15,25,35,0.08)]" href={`/dich-vu/${service.slug}/`}>
+          <div class="rounded-xl border border-border-soft bg-surface-white p-7">
             <h2 class="text-[1.125rem] font-semibold leading-snug text-text-dark">{service.title}</h2>
-            <p class="mt-3.5 text-[0.875rem] leading-[1.75] text-text-muted">{service.summary}</p>
-          </a>
+            <p class="prose-justify mt-3.5 text-[0.875rem] leading-[1.75] text-text-muted">{service.summary}</p>
+          </div>
         ))}
       </div>
     </div>

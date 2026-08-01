@@ -90,11 +90,13 @@ import carousel3 from "../assets/images/carousel-3.jpg";
 
 
     <div class="relative order-2 bg-ink-black lg:order-2 z-10">
-      <div class="flex h-full flex-col justify-start px-6 pt-20 pb-12 sm:px-10 sm:pt-24 md:px-16 md:pt-28 lg:pt-32 xl:px-20 xl:pt-36">
+      <div class="hero-copy flex h-full flex-col justify-start px-6 pt-20 pb-12 sm:px-10 sm:pt-24 md:px-16 md:pt-28 lg:pt-32 xl:px-20 xl:pt-36">
 
 
-        <h1 class="max-w-xl font-sans text-[2rem] font-semibold leading-[1.2] tracking-[-0.02em] text-white sm:text-[2.5rem] md:text-[3rem] lg:text-[3.25rem] xl:text-[3.5rem]">
-          {site.slogan}
+        <h1 class="hero-title font-sans font-semibold leading-[1.2] tracking-[-0.02em] text-white">
+          {site.sloganLines.map((line) => (
+            <span class="block">{line}</span>
+          ))}
         </h1>
       </div>
     </div>
@@ -102,6 +104,30 @@ import carousel3 from "../assets/images/carousel-3.jpg";
 </section>
 
 <style>
+  /* Khẩu hiệu là hai câu đối nhau nên mỗi câu phải nằm trọn một dòng — rớt
+     chữ "lý" xuống dòng riêng là hỏng ý. Đặt cỡ chữ cứng theo breakpoint
+     không giải quyết được vì cột chữ rộng 60vw, mỗi bề ngang màn hình lại
+     cho một khoảng trống khác nhau. Cho cỡ chữ bám thẳng vào bề ngang thật
+     của cột (đã trừ padding) bằng đơn vị container query. */
+  .hero-copy {
+    container-type: inline-size;
+  }
+
+  .hero-title {
+    font-size: 2rem; /* dự phòng cho trình duyệt chưa hỗ trợ cqi */
+    /* Câu dài nhất rộng ≈ 13.5× cỡ chữ; lấy 7cqi để chừa ~5% hao cho font
+       thay thế lúc chưa tải xong Inter. Sàn phải đủ thấp để 7cqi luôn là giá
+       trị quyết định trên mọi màn điện thoại — đặt sàn cao hơn thì máy hẹp bị
+       ép ngắt dòng, làm gãy cặp câu đối. */
+    font-size: clamp(1.125rem, 7cqi, 3.5rem);
+  }
+
+  /* Màn quá hẹp thì buộc phải xuống dòng — cho ngắt cân hai bên thay vì
+     bỏ lại một chữ trơ trọi. */
+  .hero-title span {
+    text-wrap: balance;
+  }
+
   .hero-bg-image {
     opacity: 0;
     transition: opacity 700ms ease-in-out;

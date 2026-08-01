@@ -1,23 +1,16 @@
 ---
 ---
 
+{/*
+  Một nút duy nhất cho mọi bề ngang. Bỏ chữ "Tìm kiếm" thì mất đi phần gợi ý
+  nhìn thấy được, nên `aria-label` (cho trình đọc màn hình) và `title` (tooltip
+  khi rê chuột, có nhắc phím tắt) là hai thứ bù lại — đừng gỡ.
+*/}
 <button
   type="button"
-  class="hidden h-10 items-center gap-2 rounded-full border border-white/10 bg-ink-black px-4 text-left shadow-[0_1px_3px_rgba(15,25,35,0.18)] transition-colors hover:bg-ink-hover lg:inline-flex"
+  class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-dark transition-colors hover:bg-[#f1f3f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-dark lg:h-10 lg:w-10"
   aria-label="Tìm kiếm nội dung"
-  data-search-open
->
-  <svg class="h-[1.125rem] w-[1.125rem] shrink-0 text-white" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
-    <circle cx="7" cy="7" r="4.5" />
-    <path d="M10.5 10.5L14 14" stroke-linecap="round" />
-  </svg>
-  <span class="text-[0.9375rem] font-medium text-white">Tìm kiếm</span>
-</button>
-
-<button
-  type="button"
-  class="inline-flex h-9 w-9 items-center justify-center rounded-full text-text-dark hover:bg-surface-subtle lg:hidden"
-  aria-label="Tìm kiếm nội dung"
+  title="Tìm kiếm nội dung (Ctrl + K)"
   data-search-open
 >
   <svg class="h-[1.375rem] w-[1.375rem]" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
@@ -51,7 +44,7 @@
         aria-expanded="false"
         aria-controls="search-results"
         aria-autocomplete="list"
-        class="h-16 min-w-0 flex-1 bg-transparent text-[1.0625rem] text-text-dark placeholder:text-text-muted focus:outline-none"
+        class="min-w-0 flex-1 bg-transparent text-text-dark placeholder:text-text-muted focus:outline-none"
         placeholder="Tìm bài viết, vụ án, dịch vụ…"
         data-search-input
       />
@@ -99,12 +92,18 @@
   }
 
   /* Kích thước hộp thoại phải theo CHIỀU CAO khung hình, không theo bề ngang.
-     Màn 1280×720 vẫn rộng nên breakpoint `lg:` của Tailwind kích hoạt và giữ ô
-     nhập ở 64px — chiếm quá nhiều trong 720px chiều cao. */
-  @media (max-height: 860px) {
+     Màn 1280×720 vẫn rộng nên breakpoint `lg:` của Tailwind kích hoạt, giữ ô
+     nhập quá cao so với 720px chiều cao.
+
+     Mốc cao nhất đặt 3.25rem: 64px của lớp `h-16` khiến ô nhập cao gấp rưỡi một
+     dòng kết quả bên dưới, nhìn nặng nề ngay cả trên màn 1080p. */
+  [data-search-input] {
+    height: 3.25rem;
+    font-size: 1rem;
+  }
+  @media (max-height: 800px) {
     [data-search-input] {
-      height: 3.25rem;
-      font-size: 1rem;
+      height: 3rem;
     }
   }
   @media (max-height: 700px) {
@@ -156,11 +155,14 @@
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
     /**
-     * Loại nội dung suy từ ĐƯỜNG DẪN, không dựa vào trường `k`.
-     * Chỉ mục cũ còn trong cache trình duyệt không có `k`; nếu lọc theo nó thì
-     * mọi nhánh rỗng và menu hỏng câm lặng. URL thì bản nào cũng có.
+     * Ưu tiên trường `k`, thiếu thì suy từ ĐƯỜNG DẪN.
+     * Bài đăng báo ngoài có `u` là http(s) tuyệt đối nên không suy được từ tiền
+     * tố — bắt buộc phải đọc `k`. Ngược lại, chỉ mục cũ còn trong cache trình
+     * duyệt lại không có `k`; chỉ dựa vào nó thì mọi nhánh rỗng và menu hỏng
+     * câm lặng. Giữ cả hai đường mới an toàn.
      */
     const kindOf = (e: Entry): string => {
+      if (e.k) return e.k;
       const u = e.u || "";
       if (u.startsWith("/dich-vu/") && u !== "/dich-vu/") return "Dịch vụ";
       if (u.startsWith("/bai-viet/") && u !== "/bai-viet/") return "Bài viết";
@@ -172,15 +174,25 @@
     const buildTree = (docs: Entry[]): Node[] => {
       const of = (kind: string): Node[] =>
         docs.filter((e) => kindOf(e) === kind).map((e) => ({ t: e.t, d: e.d, g: e.g, u: e.u }));
+      // Thứ tự và tên nhánh phải khớp thanh điều hướng của trang. Mỗi nhánh mở
+      // đầu bằng chính trang danh sách để người dùng tới được trang tổng hợp,
+      // vì một nút vừa là nhánh vừa là liên kết thì không biểu diễn được.
       return [
-        { t: "Tổng quan", u: "/tong-quan/" },
-        { t: "Dịch vụ", c: of("Dịch vụ") },
+        { t: "Giới thiệu", u: "/tong-quan/" },
+        {
+          t: "Dịch vụ",
+          c: [{ t: "Tất cả dịch vụ", d: "Xem trang Dịch vụ", u: "/dich-vu/" }, ...of("Dịch vụ")],
+        },
         {
           t: "Kinh nghiệm",
           c: [
-            { t: "Bài viết", c: of("Bài viết") },
-            { t: "Vụ án", c: of("Vụ án") },
+            { t: "Tất cả vụ án", d: "Xem trang Kinh nghiệm", u: "/kinh-nghiem/" },
+            ...of("Vụ án"),
           ],
+        },
+        {
+          t: "Bài viết",
+          c: [{ t: "Tất cả bài viết", d: "Xem trang Bài viết", u: "/bai-viet/" }, ...of("Bài viết")],
         },
         { t: "Liên hệ", u: "/lien-he/" },
       ];
@@ -326,9 +338,9 @@
         .map(
           (seg, i) => `
         <button type="button" data-crumb="${i}"
-          class="inline-flex items-center gap-1 rounded-md bg-[#f1f3f5] py-1 pl-2 pr-1.5 text-[0.8125rem] font-medium text-text-dark">
+          class="inline-flex h-7 items-center gap-1 rounded-md bg-[#f1f3f5] pl-2 pr-1.5 text-[0.8125rem] font-medium text-text-dark">
           ${esc(seg)}
-          <svg class="h-3.5 w-3.5 text-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke-linecap="round"/></svg>
+          <svg class="h-3.5 w-3.5 text-text-muted" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3.5 3.5L9.5 9.5M9.5 3.5L3.5 9.5" stroke-linecap="round"/></svg>
         </button>`
         )
         .join("");
@@ -398,7 +410,10 @@
         render();
         input.focus({ preventScroll: true });
       } else if (n.u) {
-        window.location.href = n.u;
+        // Bài đăng báo ngoài mở tab mới, giống cách trang Bài viết đang làm —
+        // đang tìm kiếm mà bị đá khỏi trang thì mất hết ngữ cảnh.
+        if (/^https?:\/\//.test(n.u)) window.open(n.u, "_blank", "noopener,noreferrer");
+        else window.location.href = n.u;
       }
     };
 

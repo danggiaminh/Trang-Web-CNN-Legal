@@ -34,7 +34,7 @@ const structuredData = [
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Trang chủ", item: site.canonicalBaseUrl },
-      { "@type": "ListItem", position: 2, name: "Kinh nghiệm", item: new URL("/bai-viet/", site.canonicalBaseUrl).toString() },
+      { "@type": "ListItem", position: 2, name: "Kinh nghiệm", item: new URL("/kinh-nghiem/", site.canonicalBaseUrl).toString() },
       { "@type": "ListItem", position: 3, name: caseItem.title, item: pageUrl },
     ],
   },
@@ -48,21 +48,27 @@ const structuredData = [
       <div class="mx-auto max-w-3xl">
 
 
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-[0.75rem] font-semibold text-text-dark">
-            {caseItem.year}
-          </span>
-          <span class="text-[0.8125rem] font-medium text-text-muted">
-            {caseItem.court}
-          </span>
+        {/* Hiện ngày tháng năm đầy đủ. Vụ việc không có ngày xét xử cụ thể
+            (như vụ hành chính Quận 3) thì lùi về hiển thị năm — không bịa ngày. */}
+        <div class="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium text-text-muted">
+          <span>{caseItem.date || caseItem.year}</span>
+          {caseItem.court && (
+            <>
+              <span aria-hidden="true">|</span>
+              <span>{caseItem.court}</span>
+            </>
+          )}
         </div>
 
-        <h1 class="mt-5 text-[1.75rem] font-bold leading-[1.25] text-text-dark md:text-[2rem] lg:text-[2.25rem]">
+        <h1 class="mt-5 text-balance text-[1.75rem] font-bold leading-[1.25] text-text-dark md:text-[2rem] lg:text-[2.25rem]">
           {caseItem.title}
         </h1>
 
 
-        {(caseItem.role || caseItem.defendant || caseItem.charge || caseItem.date) && (
+        {/* Không còn ô "Thời gian" ở đây — ngày đã hiện ngay dưới tiêu đề, để
+            lại là lặp thông tin. Cả khối tự biến mất khi không còn gì để hiện,
+            nên không để lại khoảng trống thừa. */}
+        {(caseItem.role || caseItem.defendant || caseItem.charge) && (
           <div class="mt-8 grid gap-4 rounded-xl border border-border-soft bg-surface-subtle p-5 sm:grid-cols-2 lg:grid-cols-4">
             {caseItem.role && <div>
               <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Vai trò</p>
@@ -75,10 +81,6 @@ const structuredData = [
             {caseItem.charge && <div>
               <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Tội danh</p>
               <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.charge}</p>
-            </div>}
-            {caseItem.date && <div>
-              <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Thời gian</p>
-              <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.date}</p>
             </div>}
           </div>
         )}
@@ -118,29 +120,33 @@ const structuredData = [
         {caseItem.sources.length > 0 && (
           <div class="mt-10 border-t border-border-soft pt-8">
             <h2 class="text-[1rem] font-bold text-text-dark">Nguồn tham khảo</h2>
-            <div class="mt-4 space-y-2">
+            {/* Trình bày giống danh sách ở trang Bài viết: tiêu đề bài là liên
+                kết, bên dưới là tên báo — ngày đăng. Trước đây chỉ hiện tên báo
+                nên không biết bài nào. */}
+            <ul class="mt-4 space-y-4">
               {caseItem.sources.map((source) => (
-                <a
-                  class="flex items-center gap-3 rounded-lg border border-border-soft bg-surface-white px-4 py-3 text-[0.875rem] font-medium text-deep-blue-navy transition-all hover:border-deep-blue-navy/30 hover:shadow-md"
-                  href={source.url}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  <svg class="h-4 w-4 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                    <path d="M6.5 3.5H3a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1V9.5" stroke-linecap="round" stroke-linejoin="round" />
-                    <path d="M9.5 2h4.5v4.5M14 2L7 9" stroke-linecap="round" stroke-linejoin="round" />
-                  </svg>
-                  <span>{source.name}</span>
-                </a>
+                <li>
+                  <a
+                    class="text-[1.0625rem] leading-snug text-[#1a4a9e] hover:text-[#0f2f6b] hover:underline underline-offset-2"
+                    href={source.url}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {source.title || source.name}
+                  </a>
+                  <p class="mt-1 text-[0.8125rem] text-text-muted">
+                    {source.name}{source.publishedAt ? ` — ${source.publishedAt}` : ""}
+                  </p>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
 
 
         <div class="mt-10 border-t border-border-soft pt-8">
           <a
-            href="/bai-viet/"
+            href="/kinh-nghiem/"
             class="inline-flex items-center gap-2 text-[0.875rem] font-medium text-deep-blue-navy hover:text-professional-blue"
           >
             <svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">

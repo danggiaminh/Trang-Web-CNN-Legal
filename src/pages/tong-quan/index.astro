@@ -5,9 +5,9 @@ import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
 import { site } from "../../data/site";
 import aboutHero from "../../assets/images/about-hero.jpg";
 
-const title = `Tổng quan | ${site.name}`;
+const title = `Giới thiệu | ${site.name}`;
 const description =
-  "Tổng quan về CNN Legal – công ty luật chuyên về tư vấn pháp lý, bào chữa hình sự và hỗ trợ doanh nghiệp tại Thành phố Hồ Chí Minh.";
+  "Giới thiệu về CNN Legal – công ty luật chuyên về tư vấn pháp lý, bào chữa hình sự và hỗ trợ doanh nghiệp tại Thành phố Hồ Chí Minh.";
 const canonicalPath = "/tong-quan/";
 const pageUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
 const structuredData = [
@@ -24,7 +24,7 @@ const structuredData = [
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Trang chủ", item: site.canonicalBaseUrl },
-      { "@type": "ListItem", position: 2, name: "Tổng quan", item: pageUrl },
+      { "@type": "ListItem", position: 2, name: "Giới thiệu", item: pageUrl },
     ],
   },
 ];
@@ -51,14 +51,14 @@ const structuredData = [
 
 
     <div class="section-shell relative z-10">
-      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Tổng quan" }]} />
+      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Giới thiệu" }]} />
 
-      <h1 class="mt-8 max-w-3xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+      <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
         Về chúng tôi
       </h1>
 
-      <p class="mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
-        CNN Legal là công ty luật tại TP. Hồ Chí Minh. Chúng tôi không hứa hẹn những điều không chắc chắn — chỉ làm việc thật sự, nói thẳng những gì bạn cần biết, và đứng về phía bạn đến cùng.
+      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        CNN Legal là công ty luật được xây dựng trên nền tảng của sự chính trực, chuyên môn và tư duy pháp lý thực tiễn. Chúng tôi phân tích đúng bản chất vụ việc, tư vấn trung thực và xây dựng giải pháp pháp lý phù hợp với yêu cầu của khách hàng.
       </p>
     </div>
   </section>
@@ -75,18 +75,15 @@ const structuredData = [
         </div>
 
 
-        <div class="font-sans text-[1rem] leading-[1.85] text-text-dark space-y-5">
+        <div class="prose-justify font-sans text-[1rem] leading-[1.85] text-text-dark space-y-5">
           <p>
-            CNN Legal là công ty luật tại TP. Hồ Chí Minh, hỗ trợ khách hàng cá nhân và doanh nghiệp trong các lĩnh vực tranh tụng hình sự, dân sự, đất đai, hợp đồng và tư vấn pháp lý thương mại.
+            Mỗi vụ việc đều có những đặc điểm riêng, vì vậy không có một giải pháp pháp lý phù hợp cho mọi trường hợp. CNN Legal tiếp cận từng hồ sơ trên cơ sở phân tích các tình tiết của vụ việc, quy định của pháp luật và thực tiễn áp dụng pháp luật, từ đó xác định những vấn đề pháp lý cần ưu tiên giải quyết.
           </p>
           <p>
-            Đội ngũ của chúng tôi có kinh nghiệm thực chiến trong nhiều loại vụ việc khác nhau, từ tranh chấp dân sự đến các vụ án hình sự kinh tế phức tạp. Chúng tôi tiếp cận mỗi vụ việc bằng sự chuẩn bị kỹ lưỡng và thái độ làm việc thẳng thắn — nói rõ những gì có thể làm được, và cả những gì không.
+            Trong quá trình tư vấn, chúng tôi hướng đến việc giúp khách hàng hiểu rõ bản chất của vụ việc, các lựa chọn có thể cân nhắc cũng như hệ quả pháp lý của từng phương án. Điều đó giúp khách hàng có đầy đủ thông tin để đưa ra quyết định phù hợp với mục tiêu và lợi ích hợp pháp của mình.
           </p>
           <p>
-            Chúng tôi hiểu rằng khi khách hàng tìm đến luật sư, họ thường đang đối mặt với những vấn đề không nhỏ. Điều chúng tôi có thể làm là lắng nghe, phân tích tình huống một cách thực tế, tư vấn trung thực về các lựa chọn, và đồng hành trong suốt quá trình giải quyết vụ việc.
-          </p>
-          <p>
-            CNN Legal hoạt động trên nền tảng của sự chính trực và trách nhiệm nghề nghiệp — làm đúng việc, đúng cách, vì quyền lợi thực sự của khách hàng.
+            Bên cạnh hoạt động tranh tụng và tư vấn, CNN Legal cũng dành sự quan tâm cho nghiên cứu pháp lý và phản biện chính sách. Chúng tôi tin rằng kinh nghiệm thực tiễn và nghiên cứu chuyên môn bổ trợ cho nhau, qua đó góp phần nâng cao chất lượng dịch vụ pháp lý.
           </p>
         </div>
 
@@ -106,9 +103,12 @@ const structuredData = [
         </div>
 
 
-        <div class="font-sans text-[1rem] leading-[1.85] text-text-dark">
+        <div class="font-sans text-[1rem] leading-[1.85] text-text-dark space-y-5">
           <p>
-            Chúng tôi tin rằng nghề luật không chỉ là giải quyết tranh chấp — mà còn là góp phần xây dựng một xã hội công bằng hơn. CNN Legal cam kết dành thời gian và năng lực để hỗ trợ những cá nhân, gia đình và doanh nghiệp nhỏ đang đối mặt với các vấn đề pháp lý mà không có nhiều nguồn lực. Với chúng tôi, trách nhiệm với cộng đồng không phải là khẩu hiệu — mà là một phần trong cách chúng tôi hành nghề mỗi ngày.
+            CNN Legal tin rằng nghề luật sư không chỉ mang đến các giải pháp pháp lý cho khách hàng mà còn góp phần nâng cao hiểu biết pháp luật và ý thức thượng tôn pháp luật trong cộng đồng. Với tinh thần đó, chúng tôi luôn dành thời gian và nguồn lực để chia sẻ kiến thức pháp luật, hỗ trợ cộng đồng và thực hiện các hoạt động xã hội phù hợp với chuyên môn của mình.
+          </p>
+          <p>
+            Đối với chúng tôi, trách nhiệm xã hội không phải là một hoạt động riêng biệt mà là một phần trong hoạt động hành nghề luật sư.
           </p>
         </div>
 

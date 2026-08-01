@@ -116,6 +116,19 @@
     background-size: 1rem 1rem;
   }
 
+  /* Khách hàng yêu cầu văn xuôi căn đều hai bên.
+     KHÔNG thêm `text-wrap: pretty` hay `hyphens: auto` ở đây. Đo bằng Lighthouse
+     trên bài dài nhất (mỗi bản 2 lượt, máy rảnh): có hai thuộc tính đó thì
+     Total Blocking Time 100–110ms và điểm hiệu năng 98; bỏ đi thì TBT còn
+     20–70ms và điểm lên 99. Thử riêng `hyphens: auto` trên đoạn tiếng Việt
+     cũng không thấy đổi cách ngắt dòng — tốn thời gian tính toán mà không
+     đổi lại được gì nhìn thấy được. */
+  .prose-justify,
+  .article-body p,
+  .prose-legal p {
+    text-align: justify;
+  }
+
   .article-body {
     overflow-wrap: break-word;
   }

@@ -32,12 +32,12 @@ const legalServiceData = {
     latitude: site.geo.latitude,
     longitude: site.geo.longitude,
   },
-  openingHoursSpecification: {
+  openingHoursSpecification: site.workingHours.map((h) => ({
     "@type": "OpeningHoursSpecification",
     dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    opens: "08:00",
-    closes: "17:00",
-  },
+    opens: h.opens,
+    closes: h.closes,
+  })),
 };
 const structuredData = [
   legalServiceData,
@@ -78,11 +78,11 @@ const structuredData = [
     </div>
     <div class="section-shell relative z-10">
       <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Liên hệ" }]} />
-      <h1 class="mt-8 max-w-3xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+      <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
         Liên hệ với chúng tôi
       </h1>
-      <p class="mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
-        Mọi thông tin trao đổi ban đầu đều được giữ kín. Khi cần chia sẻ tài liệu, chúng tôi sẽ thống nhất cách thức phù hợp trước.
+      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        Thông tin Quý khách cung cấp qua website chỉ bao gồm những nội dung cần thiết ban đầu. Khi tiếp nhận vụ việc, CNN Legal sẽ thống nhất phương thức trao đổi hồ sơ, tài liệu hoặc chứng cứ phù hợp nhằm bảo đảm tính bảo mật và an toàn của thông tin.
       </p>
     </div>
   </section>
@@ -118,7 +118,9 @@ const structuredData = [
 
           <div>
             <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Thời gian làm việc</p>
-            <p class="mt-1 text-[1rem] leading-[1.85] text-text-dark">{site.workingHoursDisplay}</p>
+            {site.workingHoursLines.map((line) => (
+              <p class="mt-1 text-[1rem] leading-[1.85] text-text-dark">{line}</p>
+            ))}
           </div>
 
           <div class="mt-8 overflow-hidden rounded-xl border border-input-border">
@@ -200,10 +202,10 @@ const structuredData = [
               >
                 <option value="" disabled selected style="color: #9ca3af;">— Chọn lĩnh vực —</option>
                 <option value="Hình sự">Hình sự</option>
-                <option value="Đất đai / Dân sự">Đất đai / Dân sự</option>
-                <option value="Doanh nghiệp / Thương mại">Doanh nghiệp / Thương mại</option>
-                <option value="Lao động">Lao động</option>
-                <option value="Nghiên cứu & phản biện pháp luật">Nghiên cứu &amp; phản biện pháp luật</option>
+                <option value="Dân sự - Kinh doanh">Dân sự - Kinh doanh</option>
+                <option value="Hành chính">Hành chính</option>
+                <option value="Nghiên cứu và phản biện">Nghiên cứu và phản biện</option>
+                <option value="Ứng tuyển vào CNN Legal">Ứng tuyển vào CNN Legal</option>
               </select>
             </div>
 

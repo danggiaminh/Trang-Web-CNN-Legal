@@ -36,12 +36,12 @@ const structuredData = [
       latitude: site.geo.latitude,
       longitude: site.geo.longitude,
     },
-    openingHoursSpecification: {
+    openingHoursSpecification: site.workingHours.map((h) => ({
       "@type": "OpeningHoursSpecification",
       dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-      opens: "08:00",
-      closes: "17:00",
-    },
+      opens: h.opens,
+      closes: h.closes,
+    })),
     areaServed: {
       "@type": "City",
       name: site.areaServed,
