@@ -6,7 +6,7 @@ export type NavigationItem = {
 
 export const navigationItems: readonly NavigationItem[] = [
   {
-    label: "Tổng quan",
+    label: "Giới thiệu",
     href: "/tong-quan/",
   },
   {
@@ -15,7 +15,11 @@ export const navigationItems: readonly NavigationItem[] = [
   },
   {
     label: "Kinh nghiệm",
-    href: "/bai-viet/",
+    href: "/kinh-nghiem/",
     activePrefixes: ["/vu-an-tieu-bieu/"],
+  },
+  {
+    label: "Bài viết",
+    href: "/bai-viet/",
   },
 ];

@@ -1,6 +1,11 @@
 export type CaseSource = {
+  /** Tên cơ quan báo chí. */
   readonly name: string;
   readonly url: string;
+  /** Tiêu đề bài báo — hiển thị làm chữ của liên kết, giống trang Bài viết. */
+  readonly title: string;
+  /** Ngày đăng dạng dd/mm/yyyy. Để trống nếu nguồn không công bố. */
+  readonly publishedAt: string;
 };
 
 export type NotableCase = {
@@ -22,71 +27,10 @@ export type NotableCase = {
 
 export const notableCases: readonly NotableCase[] = [
   {
-    slug: "tham-o-tai-san-k-center-k-dentist",
-    title:
-      'Vụ án "Tham ô tài sản" xảy ra tại Công ty Cổ phần K Center - Phòng khám nha khoa K Dentist',
-    court: "TAND khu vực 4 - TP.HCM",
-    date: "",
-    year: 2026,
-    role: "",
-    defendant: "",
-    charge: "",
-    category: "Hình sự",
-    summary:
-      'Luật sư Đặng Kim Chinh nêu ý kiến pháp lý trên báo chí về vụ hai người lao động tại một phòng khám nha khoa ở Thành phố Hồ Chí Minh bị truy tố về tội "Tham ô tài sản" do giữ 37,5 triệu đồng tiền thu của khách hàng, đặt vấn đề về khả năng vận dụng tình tiết giảm nhẹ "người bị hại cũng có lỗi" trong khu vực tư nhân. Ngày 30/6/2026, tòa xét xử lại tuyên phạt hai bị cáo 7 năm 6 tháng tù và 2 năm 6 tháng tù.',
-    body: `<h2>Nội dung vụ án</h2>
-<p>Hai bị cáo Phan Ngọc Thanh Tâm và Châu Văn Sang làm việc tại một phòng khám nha khoa tại Thành phố Hồ Chí Minh, không có hợp đồng lao động, bị truy tố về tội "Tham ô tài sản" theo Điều 353 Bộ luật Hình sự do giữ 37,5 triệu đồng tiền làm răng thu của khách hàng. Bản án sơ thẩm lần đầu của Tòa án nhân dân Quận 10 tuyên phạt bị cáo Tâm 8 năm tù, bị cáo Sang 7 năm tù. Tòa án nhân dân Thành phố Hồ Chí Minh xét xử phúc thẩm, hủy toàn bộ bản án để điều tra lại. Tại cáo trạng ban hành ngày 11/8/2025, bị cáo Tâm bị truy tố theo khoản 2 Điều 353 (khung hình phạt 7–15 năm tù), bị cáo Sang theo khoản 1 (khung hình phạt 2–7 năm tù).</p>
-
-<h2>Ý kiến pháp lý</h2>
-<p>Trên Báo Pháp luật Thành phố Hồ Chí Minh ngày 14/8/2025, Luật sư Đặng Kim Chinh đặt vấn đề về khả năng vận dụng tình tiết giảm nhẹ "người bị hại cũng có lỗi" đối với tội tham ô tài sản trong khu vực tư nhân, với ba luận điểm:</p>
-<h3>Về thực trạng quản trị</h3>
-<p>Không ít doanh nghiệp khu vực tư nhân, đặc biệt trong lĩnh vực dịch vụ và thương mại, duy trì quy trình quản lý dòng tiền thu từ khách hàng lỏng lẻo.</p>
-<h3>Về hệ quả phân bổ rủi ro</h3>
-<p>Thực trạng này đặt người lao động — phần lớn có thu nhập thấp và áp lực tài chính cao — vào môi trường rủi ro phạm tội. Khi vụ việc xảy ra, trách nhiệm hình sự và trách nhiệm dân sự dồn về phía người lao động, còn doanh nghiệp mặc nhiên giữ tư cách bị hại.</p>
-<h3>Về bản chất lỗi của bị hại</h3>
-<p>Doanh nghiệp là bị hại, nhưng doanh nghiệp do chủ sở hữu và người quản lý trực tiếp điều hành, kiểm soát. Nếu hành vi tạo sơ hở trong quản lý xuất phát từ ý chí chủ động và quyết định có chủ đích của chính chủ sở hữu hưởng lợi hoặc người quản lý, thì lỗi đó gắn trực tiếp với bị hại. Nói cách khác, lỗi của bị hại trong trường hợp này thực chất là lỗi do chính chủ sở hữu hưởng lợi hoặc người quản lý doanh nghiệp cố ý gây ra.</p>
-
-<h2>Diễn biến tố tụng</h2>
-<p>Ngày 30/6/2026, Tòa án nhân dân khu vực 4 — Thành phố Hồ Chí Minh xét xử lại, tuyên phạt bị cáo Phan Ngọc Thanh Tâm 7 năm 6 tháng tù và bị cáo Châu Văn Sang 2 năm 6 tháng tù.</p>`,
-    keyArguments: [],
-    result: undefined,
-    sources: [],
-  },
-  {
-    slug: "cuu-hieu-truong-tham-o-tai-san-ca-mau",
-    title: "Vụ án cựu Hiệu trưởng bị cáo buộc tham ô tài sản ở Cà Mau",
-    court: "TAND tỉnh Cà Mau",
-    date: "",
-    year: 2026,
-    role: "",
-    defendant: "",
-    charge: "",
-    category: "Hình sự",
-    summary:
-      "Luật sư Đặng Kim Chinh nêu ý kiến pháp lý trên báo chí về vụ ông Trần Văn Tâm — nguyên Hiệu trưởng Trường Trung học cơ sở Tam Giang Tây, tỉnh Cà Mau — bị cáo buộc tham ô 10,7 triệu đồng và bị tuyên 7 năm tù ở cấp sơ thẩm. Bản án sơ thẩm sau đó bị hủy để điều tra lại; ngày 28/5/2026, Cơ quan Cảnh sát điều tra đình chỉ điều tra bị can.",
-    body: `<h2>Nội dung vụ án</h2>
-<p>Ông Trần Văn Tâm, nguyên Hiệu trưởng Trường Trung học cơ sở Tam Giang Tây (huyện Ngọc Hiển cũ, tỉnh Cà Mau), bị cáo buộc trong năm học 2022–2023 đã tự mua vật tư và trực tiếp sửa chữa, chế tạo thiết bị phục vụ nhà trường, sau đó sử dụng hóa đơn của ba doanh nghiệp (lần lượt 11 triệu đồng, 3,45 triệu đồng và 3,45 triệu đồng) để thanh quyết toán. Phần chênh lệch 10,7 triệu đồng bị quy kết là tài sản chiếm đoạt. Tòa án nhân dân huyện Ngọc Hiển xét xử sơ thẩm ngày 17/02/2025, tuyên phạt 7 năm tù về tội "Tham ô tài sản".</p>
-
-<h2>Ý kiến pháp lý</h2>
-<p>Trên Báo Pháp luật Thành phố Hồ Chí Minh ngày 12/7/2025, Luật sư Đặng Kim Chinh phân tích ba vấn đề:</p>
-<h3>Thứ nhất, về cách tính giá trị tài sản chiếm đoạt</h3>
-<p>Bị cáo vừa giữ chức vụ quản lý, vừa trực tiếp bỏ công lao động sửa chữa, chế tạo thiết bị. Phần công lao động này cần được ghi nhận và tách bạch khi xác định giá trị tài sản bị chiếm đoạt, thay vì quy toàn bộ phần chênh lệch giữa hóa đơn và chi phí vật tư thành tài sản chiếm đoạt.</p>
-<h3>Thứ hai, về việc xác định tình tiết giảm nhẹ</h3>
-<p>Luật sư chỉ ra sự thiếu thống nhất giữa kết luận điều tra — vốn đề nghị áp dụng tình tiết "thành khẩn khai báo, ăn năn hối cải" theo điểm s khoản 1 Điều 51 Bộ luật Hình sự — và bản án sơ thẩm không ghi nhận tình tiết này.</p>
-<h3>Thứ ba, về khả năng áp dụng Điều 54</h3>
-<p>Nếu tình tiết giảm nhẹ nêu trên được ghi nhận đầy đủ, bị cáo hội đủ điều kiện để Hội đồng xét xử quyết định hình phạt dưới mức thấp nhất của khung hình phạt được áp dụng theo khoản 1 Điều 54 Bộ luật Hình sự.</p>
-
-<h2>Diễn biến tố tụng</h2>
-<p>Ngày 06/5/2025, Tòa án nhân dân tỉnh Cà Mau xét xử phúc thẩm, hủy toàn bộ bản án sơ thẩm để điều tra lại do vi phạm tố tụng: không đưa người đại diện theo pháp luật của nhà trường vào tham gia tố tụng để xác định thiệt hại. Ngày 16/8/2025, ông Tâm được thay đổi biện pháp ngăn chặn từ tạm giam sang bảo lĩnh, sau khi bị tạm giam từ ngày 15/8/2024. Ngày 28/5/2026, Cơ quan Cảnh sát điều tra Công an tỉnh Cà Mau ban hành kết luận điều tra và đình chỉ điều tra bị can đối với ông Trần Văn Tâm; quyết định được trao ngày 29/5/2026.</p>`,
-    keyArguments: [],
-    result: undefined,
-    sources: [],
-  },
-  {
     slug: "dai-an-van-thinh-phat-giai-doan-2",
-    title: "Đại án Vạn Thịnh Phát — Giai đoạn 2 (Phúc thẩm)",
-    court: "TAND Cấp cao tại TP.HCM",
-    date: "",
+    title: "Đại án Vạn Thịnh Phát — Giai đoạn 2",
+    court: "Tòa án nhân dân Cấp cao tại TP.HCM",
+    date: "21/04/2025",
     year: 2025,
     role: "",
     defendant: "",
@@ -114,22 +58,34 @@ export const notableCases: readonly NotableCase[] = [
       {
         name: "Pháp Luật TP.HCM",
         url: "https://plo.vn/chi-tiet-muc-an-doi-voi-28-bi-cao-vu-van-thinh-phat-giai-doan-2-post845550.html",
+        title: "Chi tiết mức án đối với 28 bị cáo vụ Vạn Thịnh Phát giai đoạn 2",
+        publishedAt: "21/04/2025",
+      },
+      {
+        name: "Báo Tin tức (TTXVN)",
+        url: "https://baotintuc.vn/phap-luat/vu-an-van-thinh-phat-giai-doan-2-tuyen-an-doi-voi-cac-bi-cao-20241017092905474.htm",
+        title: "Vụ án Vạn Thịnh Phát giai đoạn 2: Tuyên án đối với các bị cáo",
+        publishedAt: "17/10/2024",
       },
       {
         name: "Báo Tiền Phong",
         url: "https://tienphong.vn/luat-su-de-nghi-ap-dung-tinh-tiet-giam-nhe-pham-toi-do-lac-hau-cho-mot-dong-pham-cua-ba-truong-my-lan-post1731264.tpo",
+        title: "Luật sư đề nghị áp dụng tình tiết giảm nhẹ “phạm tội do lạc hậu” cho một đồng phạm của bà Trương Mỹ Lan",
+        publishedAt: "05/04/2025",
       },
       {
-        name: "VnExpress",
+        name: "Báo VnExpress",
         url: "https://vnexpress.net/ba-truong-my-lan-duoc-giam-an-chung-than-xuong-30-nam-tu-4876576.html",
+        title: "Bà Trương Mỹ Lan được giảm án chung thân xuống 30 năm tù",
+        publishedAt: "21/04/2025",
       },
     ],
   },
   {
     slug: "dai-an-van-thinh-phat-giai-doan-1",
-    title: "Đại án Vạn Thịnh Phát — Giai đoạn 1 (Phúc thẩm)",
-    court: "TAND Cấp cao tại TP.HCM",
-    date: "",
+    title: "Đại án Vạn Thịnh Phát — Giai đoạn 1",
+    court: "Tòa án nhân dân Cấp cao tại TP.HCM",
+    date: "03/12/2024",
     year: 2024,
     role: "",
     defendant: "",
@@ -156,14 +112,22 @@ export const notableCases: readonly NotableCase[] = [
       {
         name: "Báo Tiền Phong",
         url: "https://tienphong.vn/phuc-tham-dai-an-van-thinh-phat-luat-su-trinh-bay-ve-truong-hop-dac-biet-cua-mot-bi-cao-post1689183.tpo",
+        title: "Phúc thẩm đại án Vạn Thịnh Phát: Luật sư trình bày về “trường hợp đặc biệt” của một bị cáo",
+        publishedAt: "06/11/2024",
+      },
+      {
+        name: "CafeF",
+        url: "https://cafef.vn/phuc-tham-dai-an-van-thinh-phat-luat-su-trinh-bay-ve-truong-hop-dac-biet-cua-mot-bi-cao-188241106211809523.chn",
+        title: "Phúc thẩm đại án Vạn Thịnh Phát: Luật sư trình bày về “trường hợp đặc biệt” của một bị cáo",
+        publishedAt: "06/11/2024",
       },
     ],
   },
   {
     slug: "buon-lau-xang-dau-200-trieu-lit",
-    title: "Vụ buôn lậu gần 200 triệu lít xăng dầu (Phúc thẩm)",
-    court: "TAND Cấp cao tại TP.HCM",
-    date: "",
+    title: "Vụ buôn lậu gần 200 triệu lít xăng dầu",
+    court: "Tòa án nhân dân Cấp cao tại TP.HCM",
+    date: "17/04/2023",
     year: 2023,
     role: "",
     defendant: "",
@@ -180,13 +144,181 @@ export const notableCases: readonly NotableCase[] = [
 <h2>Diễn biến tố tụng về sau</h2>
 <p>Năm 2024, Hội đồng Thẩm phán Tòa án nhân dân Tối cao xét xử giám đốc thẩm, nhận định việc hai cấp tòa chỉ áp dụng hình phạt tiền là hình phạt chính đối với 10 bị cáo là chủ doanh nghiệp — trong khi những người giúp sức có vai trò nhẹ hơn lại bị áp dụng hình phạt tù — là sai lầm trong việc áp dụng pháp luật, chưa bảo đảm nguyên tắc phân hóa trách nhiệm hình sự trong đồng phạm. Trên cơ sở đó, Hội đồng giám đốc thẩm hủy một phần bản án phúc thẩm và một phần bản án sơ thẩm để xét xử sơ thẩm lại theo hướng không áp dụng hình phạt chính là phạt tiền.</p>
 
-<h2>Phạm vi tài liệu</h2>
+<h2>Phạm vi thông tin</h2>
 <p>Việc Luật sư Đặng Kim Chinh tham gia bào chữa tại phiên phúc thẩm tháng 3/2023 được ghi nhận trong hồ sơ nghề nghiệp của luật sư. Phiên tòa có 43 luật sư tham gia bào chữa; các bài báo tường thuật hiện tiếp cận được không nêu tên từng người bào chữa, do đó danh tính bị cáo được luật sư bào chữa trong vụ án này chưa được xác định qua nguồn công khai. Nội dung quan điểm bào chữa vì vậy không được trình bày tại bài viết này.</p>`,
     keyArguments: [],
     sources: [
       {
         name: "Báo Lao Động",
         url: "https://laodong.vn/phap-luat/an-ninh-that-chat-tai-phien-phuc-tham-vu-buon-lau-200-trieu-lit-xang-dau-1157100.ldo",
+        title: "An ninh thắt chặt tại phiên phúc thẩm vụ buôn lậu 200 triệu lít xăng dầu",
+        publishedAt: "13/03/2023",
+      },
+    ],
+  },
+  {
+    slug: "dai-an-xang-dau-giai-doan-2-tron-thue",
+    title: "Đại án xăng dầu giai đoạn 2 — tội “Trốn thuế”",
+    court: "Tòa án nhân dân tỉnh Đồng Nai",
+    date: "01/04/2024",
+    year: 2024,
+    role: "",
+    defendant: "",
+    charge: "Trốn thuế",
+    category: "Hình sự",
+    summary:
+      "Giai đoạn 2 của đại án xăng dầu, xét xử 32 bị cáo về tội “Trốn thuế” với tổng số tiền trốn thuế hơn 15,2 tỷ đồng. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ án này.",
+    body: `<h2>Bối cảnh tố tụng</h2>
+<p>Sau giai đoạn 1 về hành vi buôn lậu xăng dầu, cơ quan tố tụng tiếp tục xử lý giai đoạn 2 đối với nhóm doanh nghiệp và cá nhân tiêu thụ nguồn xăng nhập lậu. Ngày 01/4/2024, Tòa án nhân dân tỉnh Đồng Nai tuyên án đối với 32 bị cáo về tội "Trốn thuế", với tổng số tiền trốn thuế được xác định là hơn 15,2 tỷ đồng.</p>
+
+<h2>Kết quả xét xử</h2>
+<p>Hội đồng xét xử tuyên phạt bị cáo Nguyễn Đức Dần 24 tháng tù và bị cáo Nguyễn Đức Chuyên 16 tháng tù. Bị cáo Mai Thị Dần bị áp dụng hình phạt tiền 01 tỷ đồng. 29 bị cáo còn lại bị áp dụng hình phạt tiền hoặc hình phạt tù bằng thời hạn tạm giam.</p>
+
+<h2>Phạm vi thông tin</h2>
+<p>Bài báo tường thuật phiên tòa không nêu tên người bào chữa của từng bị cáo. Do yêu cầu bảo mật thông tin khách hàng và do nguồn công khai không xác định danh tính người được bào chữa, nội dung quan điểm bào chữa không được trình bày tại bài viết này.</p>`,
+    keyArguments: [],
+    sources: [
+      {
+        name: "Thông tấn xã Việt Nam (VietnamPlus)",
+        url: "https://www.vietnamplus.vn/dai-an-xang-dau-giai-doan-2-tuyen-an-cac-bi-cao-ve-toi-tron-thue-post937755.amp",
+        title: "Đại án xăng dầu giai đoạn 2: Tuyên án các bị cáo về tội “Trốn thuế”",
+        publishedAt: "01/04/2024",
+      },
+    ],
+  },
+  {
+    slug: "ma-tuy-quan-bar-phuong-lam",
+    title: "Vụ án ma túy tại quán bar Phương Lâm",
+    court: "Tòa án nhân dân TP.HCM",
+    date: "20/01/2025",
+    year: 2025,
+    role: "",
+    defendant: "",
+    charge:
+      "Mua bán, tàng trữ, tổ chức và chứa chấp việc sử dụng trái phép chất ma túy",
+    category: "Hình sự",
+    summary:
+      "Vụ án 23 bị cáo liên quan đến hoạt động ma túy tại một quán bar ở quận Tân Phú, xét xử tại Tòa án nhân dân Thành phố Hồ Chí Minh từ ngày 20/01/2025. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ án này.",
+    body: `<h2>Bối cảnh vụ việc</h2>
+<p>Rạng sáng ngày 21/01/2024, lực lượng công an kiểm tra hành chính quán bar Phương Lâm tại quận Tân Phú, Thành phố Hồ Chí Minh. Tại thời điểm kiểm tra, quán có hơn 200 người; cơ quan chức năng ghi nhận 25 bàn có chất ma túy và 79 người có kết quả dương tính với chất ma túy.</p>
+
+<h2>Diễn biến tố tụng</h2>
+<p>Tòa án nhân dân Thành phố Hồ Chí Minh mở phiên tòa từ ngày 20/01/2025, xét xử 23 bị cáo gồm người quản lý, nhân viên và khách của quán về các tội "Mua bán trái phép chất ma túy", "Tàng trữ trái phép chất ma túy", "Tổ chức sử dụng trái phép chất ma túy" và "Chứa chấp việc sử dụng trái phép chất ma túy".</p>
+
+<h2>Phạm vi thông tin</h2>
+<p>Bài báo tường thuật phiên tòa không nêu tên người bào chữa của từng bị cáo. Do yêu cầu bảo mật thông tin khách hàng và do nguồn công khai không xác định danh tính người được bào chữa, nội dung quan điểm bào chữa không được trình bày tại bài viết này.</p>`,
+    keyArguments: [],
+    sources: [
+      {
+        name: "Báo VnExpress",
+        url: "https://vnexpress.net/23-nguoi-lien-quan-ma-tuy-tai-quan-bar-phuong-lam-hau-toa-4841067.html",
+        title: "23 người liên quan ma túy tại quán bar Phương Lâm hầu tòa",
+        publishedAt: "20/01/2025",
+      },
+      {
+        name: "Cổng Thông tin điện tử Bộ Công an",
+        url: "https://vov.gov.vn/bo-cong-an-thong-tin-ve-chuyen-an-ma-tuy-lon-tai-quan-bar-phuong-lam-tphcm-dtnew-856175",
+        title: "Bộ Công an thông tin về chuyên án ma tuý lớn tại quán bar Phương Lâm, TPHCM",
+        publishedAt: "",
+      },
+    ],
+  },
+  {
+    slug: "tranh-chap-bat-dong-san-go-vap",
+    title: "Vụ tranh chấp bất động sản tại Gò Vấp",
+    court: "Tòa án nhân dân TP.HCM",
+    date: "08/01/2026",
+    year: 2026,
+    role: "",
+    defendant: "",
+    charge: "",
+    category: "Dân sự",
+    summary:
+      "Tranh chấp yêu cầu tuyên vô hiệu hợp đồng chuyển nhượng quyền sử dụng đất và tài sản gắn liền với đất tại quận Gò Vấp. Tòa phúc thẩm hủy bản án sơ thẩm, trả hồ sơ để xét xử lại. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ việc này.",
+    body: `<h2>Nội dung tranh chấp</h2>
+<p>Vụ việc liên quan đến yêu cầu tuyên bố vô hiệu hợp đồng chuyển nhượng quyền sử dụng đất, quyền sở hữu nhà ở và tài sản khác gắn liền với đất đối với bất động sản trên đường Quang Trung, quận Gò Vấp (nay thuộc phường An Hội Tây), Thành phố Hồ Chí Minh.</p>
+
+<h2>Kết quả phúc thẩm</h2>
+<p>Ngày 08/01/2026, Tòa án nhân dân Thành phố Hồ Chí Minh xét xử phúc thẩm và tuyên hủy bản án sơ thẩm, trả hồ sơ để xét xử lại. Hội đồng xét xử phúc thẩm nhận định cả hai hợp đồng chuyển nhượng đều đã được công chứng, chứng thực theo quy định của pháp luật; đồng thời cấp sơ thẩm chưa xác minh và đưa những người có quyền lợi, nghĩa vụ liên quan vào tham gia tố tụng.</p>
+
+<h2>Phạm vi thông tin</h2>
+<p>Do yêu cầu bảo mật thông tin khách hàng, bài viết không nêu danh tính các đương sự và không trình bày nội dung quan điểm bảo vệ trong vụ việc.</p>`,
+    keyArguments: [],
+    sources: [
+      {
+        name: "Báo Công an TP.HCM",
+        url: "https://congan.com.vn/song-theo-phap-luat/toa-phuc-tham-tuyen-huy-ban-an-tra-ve-xet-xu-lai_187853.html",
+        title: "Tòa phúc thẩm tuyên hủy bản án, trả về xét xử lại",
+        publishedAt: "10/01/2026",
+      },
+      {
+        name: "Báo Công an TP.HCM",
+        url: "https://congan.com.vn/thong-tin-ban-doc/nguy-co-mat-nha-du-nhan-chuyen-nhuong-ngay-tinh-va-hop-phap_181917.html",
+        title: "Nguy cơ mất nhà dù nhận chuyển nhượng ngay tình và hợp pháp",
+        publishedAt: "18/08/2025",
+      },
+      {
+        name: "Báo Công an TP.HCM",
+        url: "https://congan.com.vn/thong-tin-ban-doc/nguy-co-mat-nha-du-nhan-chuyen-nhuong-ngay-tinh-va-hop-phap_182049.html",
+        title: "Nguy cơ mất nhà dù nhận chuyển nhượng ngay tình và hợp pháp (kỳ cuối)",
+        publishedAt: "20/08/2025",
+      },
+      {
+        name: "Tạp chí điện tử Luật sư Việt Nam",
+        url: "https://lsvn.vn/chuyen-nhuong-quyen-su-dung-dat-de-thuc-hien-nghia-vu-tra-no-ranh-gioi-voi-giao-dich-dan-su-vo-hieu-do-gia-tao-a166081.html",
+        title: "Chuyển nhượng quyền sử dụng đất để thực hiện nghĩa vụ trả nợ: Ranh giới với giao dịch dân sự vô hiệu do giả tạo",
+        publishedAt: "23/11/2025",
+      },
+    ],
+  },
+  {
+    slug: "hanh-chinh-cuong-che-van-phong-quan-3",
+    title: "Vụ án hành chính - Quyết định cưỡng chế phá dỡ Tòa nhà văn phòng tại Quận 3",
+    court: "",
+    date: "",
+    year: 2019,
+    role: "",
+    defendant: "",
+    charge: "",
+    category: "Hành chính",
+    summary:
+      "Vụ việc hành chính liên quan đến chỉ tiêu kiến trúc và giấy phép xây dựng công trình nhà liên kế tại đường Trương Định, Quận 3, Thành phố Hồ Chí Minh. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ việc này.",
+    body: `<h2>Nội dung vụ việc</h2>
+<p>Công trình tại số 8 Trương Định, Quận 3 được cấp Giấy phép xây dựng số 10/GPXD ngày 12/01/2017. Chủ đầu tư cho rằng giấy phép có sự bất cập giữa các văn bản pháp luật và văn bản hành chính của Ủy ban nhân dân Thành phố Hồ Chí Minh, liên quan đến cả ba tiêu chí: chiều cao công trình, mật độ xây dựng và hệ số sử dụng đất.</p>
+
+<h2>Vướng mắc về chỉ tiêu kiến trúc</h2>
+<p>Theo tiêu chuẩn áp dụng, công trình chỉ được xây 5 tầng với chiều cao khoảng 18m; muốn xây 8 tầng cao 27m thì phải mở lỗ thông tầng (giếng trời) qua các tầng. Trên diện tích sàn 79m², lỗ thông tầng chiếm 15,9m² ở các tầng 2, 3, 4 và lên tới 36,9m² ở các tầng 5 đến 8 — khiến diện tích sử dụng chính mỗi tầng chỉ còn lần lượt khoảng 23,94m² và 12,6m². Giấy phép đồng thời không cho lắp thang máy, không có tum thang và không được lợp mái sân thượng.</p>
+
+<h2>Quá trình khiếu nại</h2>
+<p>Chủ đầu tư đã dừng thi công và gửi đơn đến Sở Quy hoạch – Kiến trúc, Sở Xây dựng đề nghị điều chỉnh chỉ tiêu kiến trúc nhưng không được chấp nhận; văn bản xin hướng dẫn áp dụng quy định pháp luật cũng không được trả lời. Chủ đầu tư tiếp tục gửi đơn cứu xét đến Chủ tịch Ủy ban nhân dân Thành phố từ tháng 11/2017.</p>
+
+<h2>Phạm vi thông tin</h2>
+<p>Bài báo hiện tiếp cận được (Báo Xây dựng, ngày 13/11/2019) phản ánh giai đoạn tranh chấp về chỉ tiêu kiến trúc và giấy phép xây dựng; bài viết không đề cập quyết định cưỡng chế, việc khởi kiện hay quá trình giải quyết tại Tòa án. Do yêu cầu bảo mật thông tin khách hàng, bài viết cũng không nêu danh tính đương sự và không trình bày nội dung quan điểm bảo vệ trong vụ việc.</p>`,
+    keyArguments: [],
+    sources: [
+      {
+        name: "Báo Xây dựng",
+        url: "https://baoxaydung.vn/thanh-pho-ho-chi-minh-chuyen-gieng-troi-nhung-bat-cap-trong-chi-tieu-kien-truc-va-cap-phep-xay-dung-1926868266944.htm",
+        title: "Thành phố Hồ Chí Minh: Chuyện “giếng trời” những bất cập trong chỉ tiêu kiến trúc và cấp phép xây dựng",
+        publishedAt: "13/11/2019",
+      },
+      {
+        name: "Báo Ngày mới",
+        url: "https://ngaymoionline.com.vn/tp-ho-chi-minh-xay-gieng-trong-nha-pho-cau-hoi-den-bao-gio-duoc-tra-loi-4269.html",
+        title: "TP Hồ Chí Minh: “Xây giếng” trong nhà phố, câu hỏi đến bao giờ được trả lời?",
+        publishedAt: "16/11/2019",
+      },
+      {
+        name: "Báo Xây dựng",
+        url: "https://baoxaydung.vn/thanh-pho-ho-chi-minh-xay-gieng-trong-nha-pho-cau-hoi-den-bao-gio-moi-duoc-tra-loi-1926868267265.htm",
+        title: "Thành phố Hồ Chí Minh: “Xây giếng” trong nhà phố, câu hỏi đến bao giờ mới được trả lời?",
+        publishedAt: "18/11/2019",
+      },
+      {
+        name: "Cục Kinh tế xây dựng (Bộ Xây dựng)",
+        url: "https://cemia.gov.vn/tin-tuc/thanh-pho-ho-chi-minh-chuyen-%E2%80%9Cgieng-troi%E2%80%9D-nhung-bat-cap-trong-chi-tieu-kien-truc-va-cap-phep-xay-dung.t-9.html",
+        title: "Thành phố Hồ Chí Minh: Chuyện “giếng trời” những bất cập trong chỉ tiêu kiến trúc và cấp phép xây dựng",
+        publishedAt: "",
       },
     ],
   },

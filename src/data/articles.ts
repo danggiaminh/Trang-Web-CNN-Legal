@@ -41,7 +41,7 @@ export const articles: readonly Article[] = [
     publishedAt: "28/09/2025",
     sourceName: articleSourceName,
     sourceUrl: "https://lsvn.vn/du-thao-luat-dat-dai-sua-doi-he-qua-phap-ly-xa-hoi-va-kien-nghi-hoan-thien-co-che-thu-hoi-dat-khi-vuot-nguong-dong-thuan-75-a163464.html",
-    category: "Dân sự",
+    category: "Dân sự - Hành chính",
     imageUrl: "/images/article-dat-dai-75.webp",
     imageAlt: "Minh họa cơ chế thu hồi đất khi vượt ngưỡng đồng thuận 75%.",
     excerpt: `Cơ chế "thu hồi đất khi vượt ngưỡng đồng thuận 75%" trong dự thảo sửa đổi, bổ sung Luật Đất đai là một điểm mới nhằm khắc phục hạn chế của cơ chế chuyển dịch đất đai tự nguyện.`,
@@ -145,7 +145,7 @@ export const articles: readonly Article[] = [
     publishedAt: "19/09/2025",
     sourceName: articleSourceName,
     sourceUrl: "https://lsvn.vn/ban-ve-khung-the-che-ho-tro-doanh-nghiep-doi-moi-sang-tao-theo-nghi-quyet-226-2025-qh15-a163275.html",
-    category: "Kinh doanh thương mại",
+    category: "Kinh doanh - Thương mại",
     imageUrl: "https://img.lsvn.vn/resize/DKBM1_6r5IY1JAs2T-ydKw2/upload/2025/09/17/z69885848697480f0c19caf335f3f52d9b677289419cb0-14260789.jpg",
     imageAlt: "Ảnh minh họa. Nguồn: Internet.",
     excerpt: `(LSVN) - Khái niệm "doanh nghiệp đổi mới sáng tạo" lần đầu tiên được ghi nhận trong văn bản quy phạm pháp luật – Nghị quyết số 226/2025/QH15 – thể hiện bước tiến quan trọng trong việc thể chế hóa các định hướng chính sách lớn của Đảng về khoa học, công nghệ và đổi mới sáng tạo.`,
@@ -410,7 +410,7 @@ export const articles: readonly Article[] = [
     publishedAt: "05/08/2025",
     sourceName: articleSourceName,
     sourceUrl: "https://lsvn.vn/binh-luan-an-le-so-13-2017-al-ve-hieu-luc-thanh-toan-cua-thu-tin-dung-l-c-a161363.html",
-    category: "Kinh doanh thương mại",
+    category: "Kinh doanh - Thương mại",
     imageUrl: "https://img.lsvn.vn/resize/DKBM1_6r5Ia3oS3Tq16KJw2/upload/2025/08/04/161363-638899144061499795-14264627.png",
     imageAlt: "Ảnh minh họa.",
     excerpt: `(LSVN) – Án lệ số 13/2017/AL khẳng định việc áp dụng UCP 600 trong trường hợp các bên có thỏa thuận thanh toán bằng thư tín dụng (L/C) theo quy tắc này, theo đó L/C không bị mất hiệu lực thanh toán ngay cả khi hợp đồng mua bán hàng hóa quốc tế – vốn là cơ sở của L/C – bị hủy bỏ.`,
@@ -707,7 +707,7 @@ export const articles: readonly Article[] = [
     publishedAt: "18/06/2025",
     sourceName: articleSourceName,
     sourceUrl: "https://lsvn.vn/ban-ve-phan-quyen-cap-thu-hoi-chung-chi-hanh-nghe-luat-su-theo-nghi-dinh-121-2025-nd-cp-a159114.html",
-    category: "Dân sự",
+    category: "Nghề luật sư",
     imageUrl: "https://img.lsvn.vn/resize/DKBM1_6r5IaGVNpYYlJJzA2/upload/2025/06/16/159114-638856826234360283-14570349.png",
     imageAlt: "Ảnh minh họa.",
     excerpt: `(LSVN) - Bài viết này phân tích các quy định của Nghị định số 121/2025/NĐ-CP liên quan đến việc phân quyền cấp và thu hồi Chứng chỉ hành nghề luật sư, trong mối tương quan với Luật Luật sư hiện hành và các văn bản pháp luật có liên quan đến tổ chức bộ máy nhà nước, đặc biệt là trong bối cảnh thực hiện Nghị quyết số 190/2025/QH15 của Quốc hội.`,
@@ -936,6 +936,200 @@ export const articles: readonly Article[] = [
     `Trong bối cảnh toàn cầu hoá, hợp tác quốc tế về pháp luật và tư pháp ngày càng sâu rộng, một chính sách hình phạt hài hòa với chuẩn mực và thông lệ quốc tế sẽ gỡ bỏ các rào cản pháp lý về dẫn độ, qua đó nâng cao hiệu quả truy cứu trách nhiệm hình sự và thực thi pháp luật đến cùng, tránh để tội phạm không bị trừng phạt chỉ vì khác biệt về chính sách hình phạt giữa Việt Nam và xu hướng chung đang được đa số các quốc gia áp dụng.`,
     ],
     originalLinkLabel: articleOriginalLinkLabel,
+  },
+];
+
+/** Bài đăng trên báo, tạp chí ngoài — chỉ giới thiệu và dẫn sang nguồn gốc,
+ *  không đăng lại toàn văn. */
+export type ExternalArticle = {
+  readonly title: string;
+  readonly sourceName: string;
+  readonly sourceUrl: string;
+  readonly publishedAt: string;
+  readonly category: string;
+  readonly summary: string;
+};
+
+export const externalArticles: readonly ExternalArticle[] = [
+  {
+    title: "Vụ cô gái thuê mặt bằng bị chủ nhà hành hung: Dấu hiệu của tội gì?",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/vu-co-gai-thue-mat-bang-bi-chu-nha-hanh-hung-dau-hieu-cua-toi-gi-109867964.htm",
+    publishedAt: "28/08/2025",
+    category: "Hình sự",
+    summary:
+      "Hành vi hành hung người thuê mặt bằng có dấu hiệu của tội “Cố ý gây thương tích hoặc gây tổn hại cho sức khỏe của người khác” theo Điều 134 Bộ luật Hình sự năm 2015. Song song với trách nhiệm hình sự, bên cho thuê còn vi phạm nghĩa vụ bảo đảm quyền sử dụng ổn định mặt bằng, làm phát sinh quyền yêu cầu hủy hợp đồng và bồi thường thiệt hại của bên thuê.",
+  },
+  {
+    title: "Góc nhìn pháp lý vụ giữ 37,5 triệu tiền làm răng của khách bị tội tham ô",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/goc-nhin-phap-ly-vu-giu-375-trieu-tien-lam-rang-cua-khach-bi-toi-tham-o-109865183.htm",
+    publishedAt: "14/08/2025",
+    category: "Hình sự",
+    summary:
+      "Vấn đề tranh luận là nhân viên phòng khám có đủ điều kiện chủ thể của tội “Tham ô tài sản” hay không khi quan hệ lao động chỉ được thỏa thuận miệng, không giao kết bằng văn bản. Nếu không thỏa mãn dấu hiệu chủ thể, hành vi có thể cấu thành tội danh khác như “Lừa đảo chiếm đoạt tài sản” hoặc “Lạm dụng tín nhiệm chiếm đoạt tài sản”.",
+  },
+  {
+    title: "Sức khỏe tài xế gây tai nạn ở Vĩnh Long ảnh hưởng đến quá trình giải quyết vụ án thế nào?",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/suc-khoe-tai-xe-gay-tai-nan-o-vinh-long-anh-huong-den-qua-trinh-giai-quyet-vu-an-the-nao-109864057.htm",
+    publishedAt: "07/08/2025",
+    category: "Hình sự",
+    summary:
+      "Bài viết phân tích ảnh hưởng của tình trạng sức khỏe bị can đến tiến trình tố tụng hình sự. Cơ quan điều tra có thể tạm đình chỉ điều tra khi bị can mắc bệnh hiểm nghèo, hoặc tiếp tục điều tra trên cơ sở các nguồn chứng cứ khác trong trường hợp không thể lấy lời khai trực tiếp.",
+  },
+  {
+    title: "Vụ hiệu trưởng ở Cà Mau bị cáo buộc tham ô 10,7 triệu đồng: Chưa thấu lý, chẳng đạt tình",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/vu-hieu-truong-o-ca-mau-bi-cao-buoc-tham-o-107-trieu-dong-chua-thau-ly-chang-dat-tinh-109859835.htm",
+    publishedAt: "12/07/2025",
+    category: "Hình sự",
+    summary:
+      "Bài viết chỉ ra những điểm chưa thống nhất trong việc áp dụng tình tiết giảm nhẹ “thành khẩn khai báo, ăn năn hối cải” giữa kết luận điều tra và nhận định của cấp sơ thẩm. Bên cạnh đó là vấn đề định giá tài sản và việc chứng minh ý chí chiếm đoạt — dấu hiệu bắt buộc của tội “Tham ô tài sản”.",
+  },
+  {
+    title: "Pháp lý vụ “chạy” kết luận giám định tâm thần tại Viện Pháp y tâm thần Trung ương",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/phap-ly-vu-chay-ket-luan-giam-dinh-tam-than-tai-vien-phap-y-tam-than-trung-uong-109856905.htm",
+    publishedAt: "25/06/2025",
+    category: "Hình sự",
+    summary:
+      "Cơ quan điều tra khởi tố 40 người trong vụ làm sai lệch kết luận giám định pháp y tâm thần, trong đó 36 bị can là lãnh đạo, cán bộ của Viện. Hành vi hợp thức hóa kết luận giám định nhằm giúp bị can né tránh trách nhiệm hình sự thông qua biện pháp bắt buộc chữa bệnh có dấu hiệu của các tội nhận hối lộ, đưa hối lộ và lợi dụng chức vụ, quyền hạn.",
+  },
+  {
+    title: "Thêm góc nhìn về thu hẹp hình phạt tử hình",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/them-goc-nhin-ve-thu-hep-hinh-phat-tu-hinh-109851480.htm",
+    publishedAt: "26/05/2025",
+    category: "Hình sự",
+    summary:
+      "Dự thảo Bộ luật Hình sự (sửa đổi) đề xuất bỏ hình phạt tử hình đối với 8 tội danh, thay bằng tù chung thân không xét giảm án. Bài viết cho rằng nhóm tội xâm phạm an ninh quốc gia và tội phạm về ma túy cần được cân nhắc riêng, với lộ trình phù hợp với tính chất và mức độ nguy hiểm của từng nhóm.",
+  },
+  {
+    title: "Trách nhiệm pháp lý trong vụ chồng đánh vợ dã man khi đang bồng con ở Long An",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/trach-nhiem-phap-ly-trong-vu-chong-danh-vo-da-man-khi-dang-bong-con-o-long-an-109846091.htm",
+    publishedAt: "23/04/2025",
+    category: "Hình sự",
+    summary:
+      "Hành vi bạo hành vợ là hành vi bạo lực gia đình bị nghiêm cấm theo Luật Phòng, chống bạo lực gia đình năm 2022, có thể bị xử phạt vi phạm hành chính hoặc truy cứu trách nhiệm hình sự theo Điều 134 Bộ luật Hình sự tùy tỷ lệ tổn thương cơ thể. Đây đồng thời là căn cứ để Tòa án giải quyết ly hôn theo Điều 56 Luật Hôn nhân và gia đình năm 2014.",
+  },
+  {
+    title: "Bàn về “Quyết định truy tìm người” trong quy định về thời hiệu truy cứu trách nhiệm hình sự tại dự thảo Bộ luật Hình sự (sửa đổi)",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/ban-ve-quyet-dinh-truy-tim-nguoi-trong-quy-dinh-ve-thoi-hieu-truy-cuu-trach-nhiem-hinh-su-tai-du-thao-bo-luat-hinh-su-sua-doi-a157662.html",
+    publishedAt: "19/05/2025",
+    category: "Hình sự",
+    summary:
+      "Bài viết phân tích việc bổ sung “quyết định truy tìm người” vào Điều 27 dự thảo Bộ luật Hình sự (sửa đổi 2025) với tư cách căn cứ tính lại thời hiệu truy cứu trách nhiệm hình sự đối với người phạm tội cố tình trốn tránh. Trên cơ sở đó, tác giả kiến nghị hoàn thiện các quy định tố tụng tương ứng.",
+  },
+  {
+    title: "Tình tiết giảm nhẹ “phạm tội lần đầu và thuộc trường hợp ít nghiêm trọng”: Bất cập trong hướng dẫn và đề xuất hoàn thiện pháp luật",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/tinh-tiet-giam-nhe-pham-toi-lan-dau-va-thuoc-truong-hop-it-nghiem-trong-bat-cap-trong-huong-dan-va-de-xuat-hoan-thien-phap-luat-a157082.html",
+    publishedAt: "04/05/2025",
+    category: "Hình sự",
+    summary:
+      "Xuất phát từ tranh luận tại phiên tòa phúc thẩm vụ án Vạn Thịnh Phát giai đoạn 2, bài viết phân tích những bất cập trong hướng dẫn hiện hành về tình tiết giảm nhẹ “phạm tội lần đầu và thuộc trường hợp ít nghiêm trọng”. Tác giả đề xuất hướng dẫn cụ thể nhằm bảo đảm áp dụng pháp luật thống nhất, phù hợp với thực tiễn xét xử.",
+  },
+  {
+    title: "Tội “Sử dụng trái phép chất ma túy” trong dự thảo Bộ luật Hình sự (sửa đổi) và nguy cơ mâu thuẫn với chính sách khuyến khích cai nghiện ma túy tự nguyện",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/toi-su-dung-trai-phep-chat-ma-tuy-trong-du-thao-bo-luat-hinh-su-sua-doi-va-nguy-co-mau-thuan-voi-chinh-sach-khuyen-khich-cai-nghien-ma-tuy-tu-nguyen-a157066.html",
+    publishedAt: "01/05/2025",
+    category: "Hình sự",
+    summary:
+      "Dự thảo Bộ luật Hình sự (sửa đổi 2025) đề xuất bổ sung Điều 256a để hình sự hóa hành vi sử dụng trái phép chất ma túy, giới hạn ở nhóm đang hoặc đã từng cai nghiện nhưng tái sử dụng. Bài viết chỉ ra nghịch lý chính sách: việc từng tham gia cai nghiện tự nguyện lại trở thành dấu hiệu bất lợi, có thể làm suy giảm động lực cai nghiện tự nguyện.",
+  },
+  {
+    title: "Đề xuất mở rộng trường hợp áp dụng phạt tiền là hình phạt chính tại khoản 1 Điều 35 Bộ luật Hình sự",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/de-xuat-mo-rong-truong-hop-ap-dung-phat-tien-la-hinh-phat-chinh-tai-khoan-1-dieu-35-bo-luat-hinh-su-a155573.html",
+    publishedAt: "28/03/2025",
+    category: "Hình sự",
+    summary:
+      "Các trường hợp áp dụng phạt tiền là hình phạt chính tại khoản 1 Điều 35 Bộ luật Hình sự năm 2015 chưa bao quát hết thực tiễn, đặc biệt với người giúp sức có vai trò không đáng kể trong vụ án đặc biệt nghiêm trọng. Bài viết đề xuất mở rộng phạm vi áp dụng nhằm bảo đảm nguyên tắc cá thể hóa trách nhiệm hình sự trong đồng phạm.",
+  },
+  {
+    title: "Chuyển nhượng quyền sử dụng đất để thực hiện nghĩa vụ trả nợ: Ranh giới với giao dịch dân sự vô hiệu do giả tạo",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/chuyen-nhuong-quyen-su-dung-dat-de-thuc-hien-nghia-vu-tra-no-ranh-gioi-voi-giao-dich-dan-su-vo-hieu-do-gia-tao-a166081.html",
+    publishedAt: "23/11/2025",
+    category: "Dân sự - Hành chính",
+    summary:
+      "Thỏa thuận chuyển nhượng quyền sử dụng đất thay cho nghĩa vụ trả nợ là giao dịch phức tạp do đan xen giữa hợp đồng vay và hợp đồng chuyển nhượng. Trong bối cảnh giá đất tăng và yêu cầu tuyên vô hiệu do giả tạo không bị giới hạn thời hiệu, bài viết phân tích bản chất pháp lý của giao dịch và nhận diện các yếu tố gây nhầm lẫn khi đánh giá.",
+  },
+  {
+    title: "Trách nhiệm pháp lý trong vụ vỡ hồ chứa nước ở Lâm Đồng gây chết người",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/trach-nhiem-phap-ly-trong-vu-vo-ho-chua-nuoc-o-lam-dong-gay-chet-nguoi-109879202.htm",
+    publishedAt: "04/11/2025",
+    category: "Dân sự - Hành chính",
+    summary:
+      "Việc xây dựng hồ chứa nước khi chưa được cấp phép dẫn đến vỡ đập, gây chết người và thiệt hại tài sản, có dấu hiệu vi phạm quy định về xây dựng và bảo vệ an toàn công trình thủy lợi. Trách nhiệm pháp lý phát sinh gồm xử phạt vi phạm hành chính, bồi thường thiệt hại và khả năng truy cứu trách nhiệm hình sự đối với người đại diện pháp nhân.",
+  },
+  {
+    title: "Nhiều shipper bị lừa khi giao hàng COD, hãng xe cần có cơ chế bảo vệ và hỗ trợ",
+    sourceName: "Báo Tuổi Trẻ",
+    sourceUrl: "https://tuoitre.vn/nhieu-shipper-bi-lua-khi-giao-hang-cod-hang-xe-can-co-co-che-bao-ve-va-ho-tro-20250916172709915.htm",
+    publishedAt: "16/09/2025",
+    category: "Dân sự - Hành chính",
+    summary:
+      "Nhiều tài xế công nghệ bị chiếm đoạt tiền ứng trước khi giao hàng thu tiền hộ (COD) theo thủ đoạn đặt đơn hàng liên tục rồi rời khỏi địa điểm giao. Bài viết đặt vấn đề về cơ chế bảo vệ và hỗ trợ tài xế từ phía doanh nghiệp vận tải, bên cạnh việc xử lý hình sự đối với hành vi chiếm đoạt.",
+  },
+  {
+    title: "Quy định về thiết bị an toàn cho trẻ em dùng trên xe ô tô: Góc nhìn từ hoạt động của xe taxi và xe buýt",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/quy-dinh-ve-thiet-bi-an-toan-cho-tre-em-dung-tren-xe-o-to-goc-nhin-tu-hoat-dong-cua-xe-taxi-va-xe-buyt-a166410.html",
+    publishedAt: "27/11/2025",
+    category: "Kinh doanh - Thương mại",
+    summary:
+      "Quy định về thiết bị an toàn cho trẻ em trên xe ô tô có hiệu lực từ ngày 01/01/2026 nhưng chưa có hướng dẫn thế nào là “thiết bị an toàn phù hợp”, gây khó khăn khi áp dụng cho xe taxi, xe công nghệ và xe buýt vốn đón khách ngẫu nhiên. Bài viết nhận diện vướng mắc thực tiễn và tham khảo kinh nghiệm Singapore để kiến nghị hoàn thiện pháp luật.",
+  },
+  {
+    title: "Hợp đồng hứa thưởng trong hoạt động hành nghề luật sư: Vấn đề hiệu lực và tiếp cận công lý",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/hop-dong-hua-thuong-trong-hoat-dong-hanh-nghe-luat-su-van-de-hieu-luc-va-tiep-can-cong-ly-a170161.html",
+    publishedAt: "16/03/2026",
+    category: "Dân sự - Hành chính",
+    summary:
+      "Bài viết đặt vấn đề về sự nhầm lẫn giữa “hứa thưởng” theo Bộ luật Dân sự và thù lao luật sư tính theo kết quả trong hợp đồng dịch vụ pháp lý — nguyên nhân dẫn đến việc xem đây là khoản ngoài hợp đồng và nhận định giao dịch vô hiệu. Vấn đề này không chỉ quyết định hiệu lực của giao dịch mà còn ảnh hưởng đến khả năng tiếp cận công lý.",
+  },
+  {
+    title: "Quyền gặp bị can, bị cáo của người bào chữa: Cơ sở pháp lý và thực trạng",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/quyen-gap-bi-can-bi-cao-cua-nguoi-bao-chua-co-so-phap-ly-va-thuc-trang-a166727.html",
+    publishedAt: "04/12/2025",
+    category: "Nghề luật sư",
+    summary:
+      "Việc người bào chữa bị hạn chế gặp bị can, bị cáo diễn ra ở nhiều mức độ, nghiêm trọng nhất là trường hợp Tòa án ban hành công văn không chấp nhận cho gặp. Bài viết phân tích bản chất pháp lý của quyền này và sự khác biệt giữa quy định của luật với các văn bản hướng dẫn, đồng thời kiến nghị hoàn thiện pháp luật.",
+  },
+  {
+    title: "Quy định về việc mang thiết bị điện tử vào phiên tòa, phiên họp và tác động đối với mục tiêu chuyển đổi số của ngành Tòa án",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/quy-dinh-ve-viec-mang-thiet-bi-dien-tu-vao-phien-toa-phien-hop-va-tac-dong-doi-voi-muc-tieu-chuyen-doi-so-cua-nganh-toa-an-a176305.html",
+    publishedAt: "25/07/2026",
+    category: "Nghề luật sư",
+    summary:
+      "Thông tư số 12/2026/TT-TANDTC quy định không được mang thiết bị điện tử vào phiên tòa, phiên họp trừ khi được Thẩm phán chủ tọa cho phép, nhằm bảo đảm an ninh, trật tự và bí mật thông tin. Bài viết phân tích mối quan hệ giữa yêu cầu quản lý này với mục tiêu chuyển đổi số của ngành Tòa án và đề xuất hướng hoàn thiện pháp luật.",
+  },
+  {
+    title: "Đề xuất truy cứu TNHS luật sư không tố giác thân chủ: Cần cân nhắc thấu đáo mọi vấn đề",
+    sourceName: "Báo Tuổi Trẻ (Pháp Luật TP.HCM)",
+    sourceUrl: "https://tuoitre.vn/plo/de-xuat-truy-cuu-tnhs-luat-su-khong-to-giac-than-chu-can-can-nhac-thau-dao-moi-van-de-109905704.htm",
+    publishedAt: "25/04/2026",
+    category: "Nghề luật sư",
+    summary:
+      "Bài viết ghi nhận ý kiến về đề xuất mở rộng trách nhiệm hình sự đối với luật sư không tố giác thân chủ. Quan điểm chung cho rằng khoản 3 Điều 19 Bộ luật Hình sự năm 2015 hiện đã phù hợp, việc mở rộng có thể làm suy yếu nguyên tắc bảo mật thông tin và phá vỡ thế cân bằng trong tố tụng.",
+  },
+  {
+    title: "Khi 'nhà sáng tạo nội dung nhảm' hám view",
+    sourceName: "Báo Tuổi Trẻ",
+    sourceUrl: "https://tuoitre.vn/khi-nha-sang-tao-noi-dung-nham-ham-view-2025092623193704.htm",
+    publishedAt: "27/09/2025",
+    category: "Hình sự",
+    summary:
+      "Cơ quan Cảnh sát điều tra Công an TP.HCM khởi tố, bắt tạm giam hai người sáng tạo nội dung trên mạng xã hội về tội \"Gây rối trật tự công cộng\". Bài viết phân tích ranh giới pháp lý giữa hoạt động sáng tạo nội dung và hành vi vi phạm pháp luật hình sự.",
   },
 ];
 
