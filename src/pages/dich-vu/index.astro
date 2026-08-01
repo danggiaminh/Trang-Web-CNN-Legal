@@ -1,0 +1,89 @@
+---
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
+import { services } from "../../data/services";
+import { site } from "../../data/site";
+import servicesMosaic from "../../assets/images/services-mosaic.png";
+
+const title = `Dịch vụ pháp lý | ${site.name}`;
+const description =
+  "Các dịch vụ pháp lý của CNN Legal được trình bày theo từng lĩnh vực để khách hàng dễ xác định nhu cầu tư vấn ban đầu.";
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: title,
+    description,
+    url: new URL("/dich-vu/", site.canonicalBaseUrl).toString(),
+    inLanguage: "vi-VN",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Trang chủ",
+        item: site.canonicalBaseUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Dịch vụ",
+        item: new URL("/dich-vu/", site.canonicalBaseUrl).toString(),
+      },
+    ],
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/dich-vu/" structuredData={structuredData}>
+  <section class="relative overflow-hidden py-20 md:py-28 lg:py-32">
+
+    <div class="absolute inset-0 z-0 bg-ink-black">
+      <Image
+        class="h-full w-full object-cover object-center"
+        src={servicesMosaic}
+        alt="Hình ảnh minh họa dịch vụ pháp lý CNN Legal"
+        widths={[320, 640, 768, 1024, 1280, 1536, 1920]}
+        sizes="100vw"
+        quality={80}
+        loading="eager"
+        fetchpriority="high"
+      />
+
+      <div class="absolute inset-0 bg-black/40"></div>
+    </div>
+
+
+    <div class="section-shell relative z-10">
+      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Dịch vụ" }]} />
+
+      <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+        Dịch vụ pháp lý
+      </h1>
+
+      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        CNN Legal cung cấp các dịch vụ pháp lý trọng tâm gồm: Bào chữa hình sự; Tranh tụng dân sự, kinh doanh, thương mại &amp; hành chính; Đàm phán, giải quyết tranh chấp đất đai &amp; bất động sản; Tư vấn đầu tư, doanh nghiệp và hợp đồng.
+      </p>
+    </div>
+  </section>
+
+  <section class="bg-warm-ivory">
+    <div class="section-shell pb-16 pt-10 md:pb-20 md:pt-12">
+      {/* Đúng 4 dịch vụ nên khoá 2 cột: 2 ô trên, 2 ô dưới. Dùng 3 cột thì
+          hàng dưới trơ lại một ô lệch. Thẻ không phải liên kết — bấm vào không
+          mở trang nào, theo yêu cầu của khách hàng. */}
+      <div class="grid gap-5 md:grid-cols-2">
+        {services.map((service) => (
+          <div class="rounded-xl border border-border-soft bg-surface-white p-7">
+            <h2 class="text-[1.125rem] font-semibold leading-snug text-text-dark">{service.title}</h2>
+            <p class="prose-justify mt-3.5 text-[0.875rem] leading-[1.75] text-text-muted">{service.summary}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

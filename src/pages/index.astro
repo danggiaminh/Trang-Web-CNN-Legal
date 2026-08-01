@@ -1,0 +1,57 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import { site } from "../data/site";
+
+const title = `${site.name} | ${site.slogan}`;
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${site.canonicalBaseUrl}/#website`,
+    name: site.name,
+    url: site.canonicalBaseUrl,
+    inLanguage: "vi-VN",
+    description: site.description,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": ["Organization", "LegalService"],
+    "@id": `${site.canonicalBaseUrl}/#legal-service`,
+    name: site.name,
+    url: site.canonicalBaseUrl,
+    description: site.description,
+    sameAs: [site.externalProfileUrl, site.linkedInUrl],
+    email: site.publicEmail,
+    telephone: site.publicPhone,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: site.address.streetAddress,
+      addressLocality: site.address.addressLocality,
+      addressRegion: site.address.addressRegion,
+      addressCountry: site.address.addressCountry,
+    },
+    geo: {
+      "@type": "GeoCoordinates",
+      latitude: site.geo.latitude,
+      longitude: site.geo.longitude,
+    },
+    openingHoursSpecification: site.workingHours.map((h) => ({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: h.opens,
+      closes: h.closes,
+    })),
+    areaServed: {
+      "@type": "City",
+      name: site.areaServed,
+    },
+    priceRange: "$$",
+  },
+];
+---
+
+<BaseLayout title={title} description={site.description} canonicalPath="/" structuredData={structuredData}>
+  <Hero />
+</BaseLayout>
+

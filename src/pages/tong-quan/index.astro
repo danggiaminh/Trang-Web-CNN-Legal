@@ -1,0 +1,118 @@
+---
+import { Image } from "astro:assets";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
+import { site } from "../../data/site";
+import aboutHero from "../../assets/images/about-hero.jpg";
+
+const title = `Giới thiệu | ${site.name}`;
+const description =
+  "Giới thiệu về CNN Legal – công ty luật chuyên về tư vấn pháp lý, bào chữa hình sự và hỗ trợ doanh nghiệp tại Thành phố Hồ Chí Minh.";
+const canonicalPath = "/tong-quan/";
+const pageUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: title,
+    description,
+    url: pageUrl,
+    inLanguage: "vi-VN",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang chủ", item: site.canonicalBaseUrl },
+      { "@type": "ListItem", position: 2, name: "Giới thiệu", item: pageUrl },
+    ],
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath={canonicalPath} structuredData={structuredData}>
+
+  <section class="relative overflow-hidden py-24 md:py-32 lg:py-40">
+
+    <div class="absolute inset-0 z-0 bg-ink-black">
+      <Image
+        class="h-full w-full object-cover object-center"
+        src={aboutHero}
+        alt="Hình ảnh giới thiệu CNN Legal"
+        widths={[320, 640, 768, 1024, 1280, 1536, 1920]}
+        sizes="100vw"
+        quality={80}
+        loading="eager"
+        fetchpriority="high"
+      />
+
+      <div class="absolute inset-0 bg-black/50"></div>
+    </div>
+
+
+    <div class="section-shell relative z-10">
+      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Giới thiệu" }]} />
+
+      <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+        Về chúng tôi
+      </h1>
+
+      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        CNN Legal là công ty luật được xây dựng trên nền tảng của sự chính trực, chuyên môn và tư duy pháp lý thực tiễn. Chúng tôi phân tích đúng bản chất vụ việc, tư vấn trung thực và xây dựng giải pháp pháp lý phù hợp với yêu cầu của khách hàng.
+      </p>
+    </div>
+  </section>
+
+
+  <section class="bg-panel-cream">
+    <div class="section-shell py-16 md:py-24">
+      <div class="grid gap-10 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
+
+
+        <div class="pt-1">
+          <p class="font-sans text-[1.0625rem] font-medium text-text-dark">Tổng quan</p>
+          <div class="mt-3 h-px w-8 bg-text-dark"></div>
+        </div>
+
+
+        <div class="prose-justify font-sans text-[1rem] leading-[1.85] text-text-dark space-y-5">
+          <p>
+            Mỗi vụ việc đều có những đặc điểm riêng, vì vậy không có một giải pháp pháp lý phù hợp cho mọi trường hợp. CNN Legal tiếp cận từng hồ sơ trên cơ sở phân tích các tình tiết của vụ việc, quy định của pháp luật và thực tiễn áp dụng pháp luật, từ đó xác định những vấn đề pháp lý cần ưu tiên giải quyết.
+          </p>
+          <p>
+            Trong quá trình tư vấn, chúng tôi hướng đến việc giúp khách hàng hiểu rõ bản chất của vụ việc, các lựa chọn có thể cân nhắc cũng như hệ quả pháp lý của từng phương án. Điều đó giúp khách hàng có đầy đủ thông tin để đưa ra quyết định phù hợp với mục tiêu và lợi ích hợp pháp của mình.
+          </p>
+          <p>
+            Bên cạnh hoạt động tranh tụng và tư vấn, CNN Legal cũng dành sự quan tâm cho nghiên cứu pháp lý và phản biện chính sách. Chúng tôi tin rằng kinh nghiệm thực tiễn và nghiên cứu chuyên môn bổ trợ cho nhau, qua đó góp phần nâng cao chất lượng dịch vụ pháp lý.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section class="bg-panel-taupe border-t border-panel-taupe-border">
+    <div class="section-shell py-16 md:py-24">
+      <div class="grid gap-10 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
+
+
+        <div class="pt-1">
+          <p class="font-sans text-[1.0625rem] font-medium text-text-dark">Đóng góp cho cộng đồng</p>
+          <div class="mt-3 h-px w-8 bg-text-dark"></div>
+        </div>
+
+
+        <div class="font-sans text-[1rem] leading-[1.85] text-text-dark space-y-5">
+          <p>
+            CNN Legal tin rằng nghề luật sư không chỉ mang đến các giải pháp pháp lý cho khách hàng mà còn góp phần nâng cao hiểu biết pháp luật và ý thức thượng tôn pháp luật trong cộng đồng. Với tinh thần đó, chúng tôi luôn dành thời gian và nguồn lực để chia sẻ kiến thức pháp luật, hỗ trợ cộng đồng và thực hiện các hoạt động xã hội phù hợp với chuyên môn của mình.
+          </p>
+          <p>
+            Đối với chúng tôi, trách nhiệm xã hội không phải là một hoạt động riêng biệt mà là một phần trong hoạt động hành nghề luật sư.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+</BaseLayout>

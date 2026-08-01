@@ -1,0 +1,340 @@
+---
+import { Image } from "astro:assets";
+import HeroBreadcrumb from "../components/HeroBreadcrumb.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { site } from "../data/site";
+import lienHeHero from "../assets/images/lien-he-hero.png";
+import contactSuccessBg from "../assets/images/contact-success-bg.avif";
+
+const title = `Liên hệ | ${site.name}`;
+const description =
+  "Thông tin liên hệ trực tiếp của CNN Legal qua email và điện thoại.";
+const pagePath = "/lien-he/";
+const pageUrl = new URL(pagePath, site.canonicalBaseUrl).toString();
+const legalServiceData = {
+  "@context": "https://schema.org",
+  "@type": "LegalService",
+  name: site.name,
+  url: site.canonicalBaseUrl,
+  description: site.description,
+  sameAs: [site.externalProfileUrl, site.linkedInUrl],
+  telephone: site.publicPhone,
+  email: site.publicEmail,
+  address: {
+    "@type": "PostalAddress",
+    streetAddress: site.address.streetAddress,
+    addressLocality: site.address.addressLocality,
+    addressRegion: site.address.addressRegion,
+    addressCountry: site.address.addressCountry,
+  },
+  geo: {
+    "@type": "GeoCoordinates",
+    latitude: site.geo.latitude,
+    longitude: site.geo.longitude,
+  },
+  openingHoursSpecification: site.workingHours.map((h) => ({
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    opens: h.opens,
+    closes: h.closes,
+  })),
+};
+const structuredData = [
+  legalServiceData,
+  {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    name: title,
+    description,
+    url: pageUrl,
+    inLanguage: "vi-VN",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Trang chủ", item: site.canonicalBaseUrl },
+      { "@type": "ListItem", position: 2, name: "Liên hệ", item: pageUrl },
+    ],
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath={pagePath} structuredData={structuredData}>
+
+  <section class="relative overflow-hidden py-24 md:py-32 lg:py-40">
+    <div class="absolute inset-0 z-0 bg-ink-black">
+      <Image
+        src={lienHeHero}
+        alt="Liên hệ với chúng tôi"
+        class="h-full w-full object-cover object-center"
+        widths={[320, 640, 937]}
+        sizes="100vw"
+        quality={42}
+        loading="eager"
+        fetchpriority="high"
+      />
+      <div class="absolute inset-0 bg-black/50"></div>
+    </div>
+    <div class="section-shell relative z-10">
+      <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Liên hệ" }]} />
+      <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
+        Liên hệ với chúng tôi
+      </h1>
+      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+        Thông tin Quý khách cung cấp qua website chỉ bao gồm những nội dung cần thiết ban đầu. Khi tiếp nhận vụ việc, CNN Legal sẽ thống nhất phương thức trao đổi hồ sơ, tài liệu hoặc chứng cứ phù hợp nhằm bảo đảm tính bảo mật và an toàn của thông tin.
+      </p>
+    </div>
+  </section>
+
+  <section class="bg-panel-cream">
+    <div class="section-shell py-16 md:py-24">
+      <div class="grid gap-16 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
+
+        <div class="space-y-8 font-sans text-[1rem] leading-[1.85] text-text-dark">
+          <div>
+            <p class="text-[1.0625rem] font-medium text-text-dark">Văn phòng</p>
+            <div class="mt-3 h-px w-8 bg-text-dark"></div>
+          </div>
+
+          <div>
+            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Email</p>
+            <a class="mt-1 block text-[1rem] leading-[1.85] text-text-dark hover:text-deep-blue-navy" href={`${site.publicEmailHref}?subject=${encodeURIComponent('Yêu cầu tư vấn pháp lý – CNN Legal')}`}>
+              {site.publicEmail}
+            </a>
+          </div>
+
+          <div>
+            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Số điện thoại</p>
+            <a class="mt-1 block text-[1rem] leading-[1.85] text-text-dark hover:text-deep-blue-navy" href={site.publicPhoneHref}>
+              {site.publicPhone}
+            </a>
+          </div>
+
+          <div>
+            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Địa chỉ</p>
+            <p class="mt-1 text-[1rem] leading-[1.85] text-text-dark">{site.addressDisplay}</p>
+          </div>
+
+          <div>
+            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Thời gian làm việc</p>
+            {site.workingHoursLines.map((line) => (
+              <p class="mt-1 text-[1rem] leading-[1.85] text-text-dark">{line}</p>
+            ))}
+          </div>
+
+          <div class="mt-8 overflow-hidden rounded-xl border border-input-border">
+            <iframe
+              data-map-src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.2979383976517!2d106.76532397666304!3d10.788477589361069!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x317527003ee47bdf%3A0x75dc07e36f22f8e1!2zQ8O0bmcgdHkgTHXhuq10IENOTiBMZWdhbA!5e0!3m2!1svi!2s!4v1784172388898!5m2!1svi!2s"
+              width="100%"
+              height="280"
+              style="border:0; display:block;"
+              allowfullscreen
+              loading="lazy"
+              referrerpolicy="strict-origin-when-cross-origin"
+              title="Vị trí văn phòng CNN Legal trên Google Maps"
+            ></iframe>
+          </div>
+        </div>
+
+        <div>
+          <form id="contact-form" novalidate data-email={site.publicEmail}>
+
+          <div id="cf-fields">
+            <p class="text-[1.0625rem] font-medium text-text-dark">Gửi liên hệ đến CNN Legal</p>
+            <div class="mt-3 h-px w-8 bg-text-dark"></div>
+
+            <div class="mt-8 space-y-5">
+            <div class="grid gap-5 sm:grid-cols-2">
+              <div>
+                <label for="cf-name" class="block text-[0.875rem] font-normal text-text-dark">
+                  Họ tên <span class="text-red-500" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="cf-name"
+                  name="name"
+                  type="text"
+                  required
+                  autocomplete="name"
+                  class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
+                  placeholder="Họ tên của bạn"
+                />
+              </div>
+              <div>
+                <label for="cf-phone" class="block text-[0.875rem] font-normal text-text-dark">
+                  Số điện thoại <span class="text-red-500" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="cf-phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  autocomplete="tel"
+                  class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
+                  placeholder="Số điện thoại để luật sư liên hệ"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="cf-email" class="block text-[0.875rem] font-normal text-text-dark">
+                Email
+              </label>
+              <input
+                id="cf-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
+                placeholder="Email nhận phản hồi"
+              />
+            </div>
+
+            <div>
+              <label for="cf-field" class="block text-[0.875rem] font-normal text-text-dark">
+                Lĩnh vực <span class="text-red-500" aria-hidden="true">*</span>
+              </label>
+              <select
+                id="cf-field"
+                name="field"
+                required
+                class="select-arrow mt-2 w-full rounded-xl border border-input-border bg-white py-3 pl-4 pr-11 text-[0.9375rem] text-text-dark focus:border-text-dark focus:outline-none"
+              >
+                <option value="" disabled selected style="color: #9ca3af;">— Chọn lĩnh vực —</option>
+                <option value="Hình sự">Hình sự</option>
+                <option value="Dân sự - Kinh doanh">Dân sự - Kinh doanh</option>
+                <option value="Hành chính">Hành chính</option>
+                <option value="Nghiên cứu và phản biện">Nghiên cứu và phản biện</option>
+                <option value="Ứng tuyển vào CNN Legal">Ứng tuyển vào CNN Legal</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="cf-subject" class="block text-[0.875rem] font-normal text-text-dark">
+                Tiêu đề
+              </label>
+              <input
+                id="cf-subject"
+                name="subject"
+                type="text"
+                class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
+                placeholder="Mô tả ngắn gọn vụ việc..."
+              />
+            </div>
+
+            <div>
+              <label for="cf-message" class="block text-[0.875rem] font-normal text-text-dark">
+                Nội dung <span class="text-red-500" aria-hidden="true">*</span>
+              </label>
+              <textarea
+                id="cf-message"
+                name="message"
+                required
+                rows="5"
+                class="mt-2 w-full rounded-xl resize-none border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
+                placeholder="Mô tả chi tiết vụ việc hoặc câu hỏi của bạn..."
+              ></textarea>
+            </div>
+
+            <div id="cf-error" class="hidden rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-[0.875rem] text-red-800"></div>
+
+            <button
+              type="submit"
+              class="inline-flex items-center gap-2 rounded-full bg-ink-black px-7 py-3 text-[0.9375rem] font-medium text-white transition-colors hover:bg-ink-hover active:scale-[0.97]"
+            >
+              Gửi yêu cầu
+            </button>
+            </div>
+          </div>
+
+          <div id="cf-success" class="hidden min-h-[34rem] flex flex-col justify-center relative overflow-hidden rounded-xl border border-border-soft px-8 py-8">
+            <Image
+              src={contactSuccessBg}
+              alt=""
+              class="absolute inset-0 h-full w-full object-cover"
+              widths={[320, 640]}
+              sizes="(min-width: 640px) 640px, 100vw"
+              quality={80}
+            />
+            <div class="relative z-10 max-w-md">
+              <p class="font-sans text-[34px] font-[657] leading-tight tracking-[-0.02em] text-white">Ứng dụng email của bạn sẽ mở ra.</p>
+              <p class="mt-4 font-sans text-[19px] leading-relaxed text-white">Nội dung đã được soạn sẵn — vui lòng nhấn <strong>Gửi</strong> trong ứng dụng email để hoàn tất. Nếu không mở được, bạn gửi trực tiếp tới {site.publicEmail} hoặc gọi {site.publicPhone}.</p>
+            </div>
+          </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>
+
+<script>
+  const mapFrame = document.querySelector<HTMLIFrameElement>('iframe[data-map-src]');
+  if (mapFrame) {
+    const loadMap = () => {
+      if (!mapFrame.src) mapFrame.src = mapFrame.dataset.mapSrc!;
+    };
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            loadMap();
+            observer.disconnect();
+          }
+        },
+        { rootMargin: '0px' }
+      );
+      observer.observe(mapFrame);
+    } else {
+      loadMap();
+    }
+  }
+
+  const form = document.getElementById('contact-form') as HTMLFormElement;
+  const fieldsContainer = document.getElementById('cf-fields') as HTMLDivElement;
+  const successMsg = document.getElementById('cf-success') as HTMLDivElement;
+  const errorMsg = document.getElementById('cf-error') as HTMLDivElement;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    errorMsg.classList.add('hidden');
+
+    const data = {
+      name: (form.elements.namedItem('name') as HTMLInputElement).value.trim(),
+      phone: (form.elements.namedItem('phone') as HTMLInputElement).value.trim(),
+      email: (form.elements.namedItem('email') as HTMLInputElement).value.trim(),
+      field: (form.elements.namedItem('field') as HTMLSelectElement).value,
+      subject: (form.elements.namedItem('subject') as HTMLInputElement).value.trim(),
+      message: (form.elements.namedItem('message') as HTMLTextAreaElement).value.trim(),
+    };
+
+    if (!data.name || !data.phone || !data.field || !data.message) {
+      errorMsg.textContent = 'Vui lòng điền đầy đủ các trường bắt buộc (*)';
+      errorMsg.classList.remove('hidden');
+      return;
+    }
+
+
+    const to = form.dataset.email || '';
+    const subject = `[CNN Legal] ${data.field}${data.subject ? ' – ' + data.subject : ''} – ${data.name}`;
+    const bodyLines = [
+      `Họ tên: ${data.name}`,
+      `Điện thoại: ${data.phone}`,
+      data.email ? `Email: ${data.email}` : null,
+      `Lĩnh vực: ${data.field}`,
+      data.subject ? `Tiêu đề: ${data.subject}` : null,
+      '',
+      'Nội dung:',
+      data.message,
+    ].filter((line): line is string => line !== null);
+
+    window.location.href =
+      `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
+
+    form.reset();
+    fieldsContainer.classList.add('hidden');
+    successMsg.classList.remove('hidden');
+  });
+</script>
