@@ -256,8 +256,8 @@ export const notableCases: readonly NotableCase[] = [
     slug: "hanh-chinh-cuong-che-van-phong-quan-3",
     title: "Vụ án hành chính - Quyết định cưỡng chế phá dỡ Tòa nhà văn phòng tại Quận 3",
     court: "",
-    date: "",
-    year: 2019,
+    date: "12/01/2017",
+    year: 2017,
     role: "",
     defendant: "",
     charge: "",
@@ -265,7 +265,7 @@ export const notableCases: readonly NotableCase[] = [
     summary:
       "Vụ việc hành chính liên quan đến chỉ tiêu kiến trúc và giấy phép xây dựng công trình nhà liên kế tại đường Trương Định, Quận 3, Thành phố Hồ Chí Minh. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ việc này.",
     body: `<h2>Nội dung vụ việc</h2>
-<p>Công trình tại số 8 Trương Định, Quận 3 được cấp Giấy phép xây dựng số 10/GPXD ngày 12/01/2017. Chủ đầu tư cho rằng giấy phép có sự bất cập giữa các văn bản pháp luật và văn bản hành chính của Ủy ban nhân dân Thành phố Hồ Chí Minh, liên quan đến cả ba tiêu chí: chiều cao công trình, mật độ xây dựng và hệ số sử dụng đất.</p>
+<p>Vụ việc bắt đầu từ ngày 12/01/2017, khi công trình tại số 8 Trương Định, Quận 3 được cấp Giấy phép xây dựng số 10/GPXD. Chủ đầu tư cho rằng giấy phép có sự bất cập giữa các văn bản pháp luật và văn bản hành chính của Ủy ban nhân dân Thành phố Hồ Chí Minh, liên quan đến cả ba tiêu chí: chiều cao công trình, mật độ xây dựng và hệ số sử dụng đất.</p>
 
 <h2>Vướng mắc về chỉ tiêu kiến trúc</h2>
 <p>Theo tiêu chuẩn áp dụng, công trình chỉ được xây 5 tầng với chiều cao khoảng 18m; muốn xây 8 tầng cao 27m thì phải mở lỗ thông tầng (giếng trời) qua các tầng. Trên diện tích sàn 79m², lỗ thông tầng chiếm 15,9m² ở các tầng 2, 3, 4 và lên tới 36,9m² ở các tầng 5 đến 8 — khiến diện tích sử dụng chính mỗi tầng chỉ còn lần lượt khoảng 23,94m² và 12,6m². Giấy phép đồng thời không cho lắp thang máy, không có tum thang và không được lợp mái sân thượng.</p>`,
