@@ -66,9 +66,17 @@ const structuredData = [
 
 
         {/* Không còn ô "Thời gian" ở đây — ngày đã hiện ngay dưới tiêu đề, để
-            lại là lặp thông tin. Cả khối tự biến mất khi không còn gì để hiện,
-            nên không để lại khoảng trống thừa. */}
-        {(caseItem.role || caseItem.defendant || caseItem.charge) && (
+            lại là lặp thông tin. Ô "Tội danh" cũng đã bỏ: nó là thứ duy nhất còn
+            dữ liệu nên khối này chỉ hiện được đúng một ô lẻ loi giữa một hộp
+            rộng bốn cột.
+
+            `charge` vẫn được giữ trong src/data/cases.ts vì search-index dùng nó
+            làm mô tả dự phòng khi vụ án không có `summary`.
+
+            Điều kiện dưới đây phải bỏ luôn `charge`, nếu không hai vụ án còn
+            trường đó vẫn dựng ra một hộp viền rỗng không chữ nào. Cả khối tự
+            biến mất khi không còn gì để hiện. */}
+        {(caseItem.role || caseItem.defendant) && (
           <div class="mt-8 grid gap-4 rounded-xl border border-border-soft bg-surface-subtle p-5 sm:grid-cols-2 lg:grid-cols-4">
             {caseItem.role && <div>
               <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Vai trò</p>
@@ -77,10 +85,6 @@ const structuredData = [
             {caseItem.defendant && <div>
               <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Bị cáo</p>
               <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.defendant}</p>
-            </div>}
-            {caseItem.charge && <div>
-              <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Tội danh</p>
-              <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.charge}</p>
             </div>}
           </div>
         )}

@@ -38,16 +38,14 @@ export const notableCases: readonly NotableCase[] = [
     category: "Hình sự",
     summary:
       "Luật sư Đặng Kim Chinh là người bào chữa cho bị cáo Kwok Hakman Oliver — nguyên Tổng Giám đốc kiêm người đại diện theo pháp luật Công ty Cổ phần Tập đoàn Đầu tư An Đông — tại cấp phúc thẩm. Ngày 21/4/2025, Hội đồng xét xử phúc thẩm tuyên phạt bị cáo 3 năm 6 tháng tù, giảm 2 năm so với bản án sơ thẩm.",
-    body: `<p>Bào chữa cho bị cáo Kwok Hakman Oliver, nguyên Tổng Giám đốc kiêm người đại diện theo pháp luật Công ty Cổ phần Tập đoàn Đầu tư An Đông</p>
-
-<h2>Bối cảnh tố tụng</h2>
+    body: `<h2>Bối cảnh tố tụng</h2>
 <p>Giai đoạn 2 vụ án tập trung vào hành vi phát hành trái phiếu doanh nghiệp. Tại bản án sơ thẩm ngày 17/10/2024, Tòa án nhân dân Thành phố Hồ Chí Minh tuyên phạt bị cáo Kwok Hakman Oliver (71 tuổi, quốc tịch Úc) 5 năm 6 tháng tù về tội "Lừa đảo chiếm đoạt tài sản". Bị cáo bị xác định đã ký toàn bộ hồ sơ, tài liệu hợp thức việc phát hành trái phiếu của Công ty An Đông năm 2018 với tư cách người đại diện theo pháp luật, giúp sức phát hành ba gói trái phiếu, chiếm đoạt 24.900 tỷ đồng của các bị hại. Bị cáo kháng cáo xin giảm nhẹ hình phạt.</p>
 
 <h2>Phạm vi tham gia</h2>
 <p>Luật sư Đặng Kim Chinh là người bào chữa cho bị cáo Kwok Hakman Oliver tại phiên phúc thẩm của Tòa án nhân dân Cấp cao tại Thành phố Hồ Chí Minh, trình bày phần bào chữa ngày 04/4/2025. Trước đó, ngày 03/4/2025, luật sư trực tiếp thẩm vấn bị cáo để làm rõ vị trí, vai trò, nhận thức và hoàn cảnh phạm tội.</p>
 
 <h2>Nội dung bào chữa</h2>
-<p>Luận điểm được ghi nhận rộng rãi nhất là đề nghị áp dụng tình tiết giảm nhẹ "phạm tội do lạc hậu" theo khoản 1 Điều 51 Bộ luật Hình sự — một tình tiết hiếm khi được viện dẫn đối với bị cáo là người nước ngoài. Luật sư lập luận rằng "lạc hậu" ở đây được hiểu là sự tụt hậu về nhận thức pháp luật: bị cáo sinh sống phần lớn cuộc đời ở nước ngoài, không tiếp thu kịp kiến thức pháp luật Việt Nam, đặc biệt là pháp luật chuyên ngành về phát hành trái phiếu doanh nghiệp — lĩnh vực mà hành vi sai phạm đã trở thành hành vi giúp sức trong chuỗi hành vi cấu thành tội lừa đảo chiếm đoạt tài sản bị quy kết.</p>
+<p>Luật sư Đặng Kim Chinh cũng trình bày trước Hội đồng xét xử rằng, bị cáo Kwok Hakman Oliver là người nước ngoài (quốc tịch Úc), theo lý lịch trong hồ sơ vụ án, bị cáo đã sinh sống 59 năm ở nước ngoài, chỉ khi tuổi già bị cáo mới đến Việt Nam làm việc và sinh sống. Với những khác biệt về ngôn ngữ, văn hoá, môi trường kinh doanh và pháp luật giữa Việt Nam và Úc nên bị cáo bị hạn chế khả năng nhận thức về pháp luật Việt Nam. Bị cáo thực hiện hành vi giúp sức cho các bị cáo khác mà không biết đó chính là hành vi phạm tội tại Việt Nam, mặc dù nguyên tắc của pháp luật hình sự Việt Nam buộc bị cáo phải biết.</p>
 <p>Song song, luật sư đề nghị đánh giá lại vai trò của bị cáo trong vụ án đồng phạm: bị cáo phạm tội lần đầu, chỉ điều hành hoạt động thường nhật của Công ty Windsor và An Đông Plaza, không quản lý, điều hành hoạt động tài chính của Công ty An Đông, do đó có vai trò hạn chế trong việc phát hành trái phiếu. Về tình tiết giảm nhẹ mới phát sinh tại cấp phúc thẩm, luật sư trình bày việc bị cáo chủ động nộp thêm 500 triệu đồng (sau khi đã nộp 1 tỷ đồng ở cấp sơ thẩm), tham gia công tác phòng, chống dịch COVID-19 tại Thành phố Hồ Chí Minh và đóng góp xây dựng công trình phúc lợi, nhà tình thương.</p>
 
 <h2>Kết quả tố tụng</h2>
@@ -74,10 +72,10 @@ export const notableCases: readonly NotableCase[] = [
         publishedAt: "05/04/2025",
       },
       {
-        name: "Báo VnExpress",
-        url: "https://vnexpress.net/ba-truong-my-lan-duoc-giam-an-chung-than-xuong-30-nam-tu-4876576.html",
-        title: "Bà Trương Mỹ Lan được giảm án chung thân xuống 30 năm tù",
-        publishedAt: "21/04/2025",
+        name: "Báo Tuổi trẻ",
+        url: "https://tuoitre.vn/plo/luat-su-cua-1-bi-cao-nguoi-nuoc-ngoai-de-nghi-cho-than-chu-huong-tinh-tiet-pham-toi-do-lac-hau-109842526.htm",
+        title: "Luật sư của 1 bị cáo người nước ngoài đề nghị cho thân chủ hưởng tình tiết “phạm tội do lạc hậu”",
+        publishedAt: "04/04/2025",
       },
     ],
   },
@@ -93,9 +91,7 @@ export const notableCases: readonly NotableCase[] = [
     category: "Hình sự",
     summary:
       "Luật sư Đặng Kim Chinh là người bào chữa cho bị cáo Lê Khánh Hiền — nguyên Tổng Giám đốc Ngân hàng TMCP Sài Gòn (SCB) — tại cấp phúc thẩm. Ngày 03/12/2024, Hội đồng xét xử phúc thẩm tuyên phạt bị cáo 3 năm tù, giảm 2 năm so với bản án sơ thẩm.",
-    body: `<p>Bào chữa cho bị cáo Lê Khánh Hiền, nguyên Tổng Giám đốc Ngân hàng TMCP Sài Gòn (SCB)</p>
-
-<h2>Bối cảnh tố tụng</h2>
+    body: `<h2>Bối cảnh tố tụng</h2>
 <p>Giai đoạn 1 vụ án xảy ra tại Tập đoàn Vạn Thịnh Phát và Ngân hàng SCB được Tòa án nhân dân Thành phố Hồ Chí Minh xét xử sơ thẩm từ ngày 05/3 đến ngày 11/4/2024 đối với 86 bị cáo. Bị cáo Lê Khánh Hiền bị Hội đồng xét xử sơ thẩm tuyên phạt 5 năm tù về tội "Vi phạm quy định về cho vay trong hoạt động của các tổ chức tín dụng". Bị cáo kháng cáo xin giảm nhẹ hình phạt. Tòa án nhân dân Cấp cao tại Thành phố Hồ Chí Minh mở phiên phúc thẩm vào tháng 11/2024.</p>
 
 <h2>Phạm vi tham gia</h2>
@@ -142,10 +138,7 @@ export const notableCases: readonly NotableCase[] = [
 <p>Luật sư Đặng Kim Chinh tham gia bào chữa tại phiên tòa phúc thẩm này.</p>
 
 <h2>Diễn biến tố tụng về sau</h2>
-<p>Năm 2024, Hội đồng Thẩm phán Tòa án nhân dân Tối cao xét xử giám đốc thẩm, nhận định việc hai cấp tòa chỉ áp dụng hình phạt tiền là hình phạt chính đối với 10 bị cáo là chủ doanh nghiệp — trong khi những người giúp sức có vai trò nhẹ hơn lại bị áp dụng hình phạt tù — là sai lầm trong việc áp dụng pháp luật, chưa bảo đảm nguyên tắc phân hóa trách nhiệm hình sự trong đồng phạm. Trên cơ sở đó, Hội đồng giám đốc thẩm hủy một phần bản án phúc thẩm và một phần bản án sơ thẩm để xét xử sơ thẩm lại theo hướng không áp dụng hình phạt chính là phạt tiền.</p>
-
-<h2>Phạm vi thông tin</h2>
-<p>Việc Luật sư Đặng Kim Chinh tham gia bào chữa tại phiên phúc thẩm tháng 3/2023 được ghi nhận trong hồ sơ nghề nghiệp của luật sư. Phiên tòa có 43 luật sư tham gia bào chữa; các bài báo tường thuật hiện tiếp cận được không nêu tên từng người bào chữa, do đó danh tính bị cáo được luật sư bào chữa trong vụ án này chưa được xác định qua nguồn công khai. Nội dung quan điểm bào chữa vì vậy không được trình bày tại bài viết này.</p>`,
+<p>Năm 2024, Hội đồng Thẩm phán Tòa án nhân dân Tối cao xét xử giám đốc thẩm, nhận định việc hai cấp tòa chỉ áp dụng hình phạt tiền là hình phạt chính đối với 10 bị cáo là chủ doanh nghiệp — trong khi những người giúp sức có vai trò nhẹ hơn lại bị áp dụng hình phạt tù — là sai lầm trong việc áp dụng pháp luật, chưa bảo đảm nguyên tắc phân hóa trách nhiệm hình sự trong đồng phạm. Trên cơ sở đó, Hội đồng giám đốc thẩm hủy một phần bản án phúc thẩm và một phần bản án sơ thẩm để xét xử sơ thẩm lại theo hướng không áp dụng hình phạt chính là phạt tiền.</p>`,
     keyArguments: [],
     sources: [
       {
@@ -172,10 +165,7 @@ export const notableCases: readonly NotableCase[] = [
 <p>Sau giai đoạn 1 về hành vi buôn lậu xăng dầu, cơ quan tố tụng tiếp tục xử lý giai đoạn 2 đối với nhóm doanh nghiệp và cá nhân tiêu thụ nguồn xăng nhập lậu. Ngày 01/4/2024, Tòa án nhân dân tỉnh Đồng Nai tuyên án đối với 32 bị cáo về tội "Trốn thuế", với tổng số tiền trốn thuế được xác định là hơn 15,2 tỷ đồng.</p>
 
 <h2>Kết quả xét xử</h2>
-<p>Hội đồng xét xử tuyên phạt bị cáo Nguyễn Đức Dần 24 tháng tù và bị cáo Nguyễn Đức Chuyên 16 tháng tù. Bị cáo Mai Thị Dần bị áp dụng hình phạt tiền 01 tỷ đồng. 29 bị cáo còn lại bị áp dụng hình phạt tiền hoặc hình phạt tù bằng thời hạn tạm giam.</p>
-
-<h2>Phạm vi thông tin</h2>
-<p>Bài báo tường thuật phiên tòa không nêu tên người bào chữa của từng bị cáo. Do yêu cầu bảo mật thông tin khách hàng và do nguồn công khai không xác định danh tính người được bào chữa, nội dung quan điểm bào chữa không được trình bày tại bài viết này.</p>`,
+<p>Hội đồng xét xử tuyên phạt bị cáo Nguyễn Đức Dần 24 tháng tù và bị cáo Nguyễn Đức Chuyên 16 tháng tù. Bị cáo Mai Thị Dần bị áp dụng hình phạt tiền 01 tỷ đồng. 29 bị cáo còn lại bị áp dụng hình phạt tiền hoặc hình phạt tù bằng thời hạn tạm giam.</p>`,
     keyArguments: [],
     sources: [
       {
@@ -203,10 +193,7 @@ export const notableCases: readonly NotableCase[] = [
 <p>Rạng sáng ngày 21/01/2024, lực lượng công an kiểm tra hành chính quán bar Phương Lâm tại quận Tân Phú, Thành phố Hồ Chí Minh. Tại thời điểm kiểm tra, quán có hơn 200 người; cơ quan chức năng ghi nhận 25 bàn có chất ma túy và 79 người có kết quả dương tính với chất ma túy.</p>
 
 <h2>Diễn biến tố tụng</h2>
-<p>Tòa án nhân dân Thành phố Hồ Chí Minh mở phiên tòa từ ngày 20/01/2025, xét xử 23 bị cáo gồm người quản lý, nhân viên và khách của quán về các tội "Mua bán trái phép chất ma túy", "Tàng trữ trái phép chất ma túy", "Tổ chức sử dụng trái phép chất ma túy" và "Chứa chấp việc sử dụng trái phép chất ma túy".</p>
-
-<h2>Phạm vi thông tin</h2>
-<p>Bài báo tường thuật phiên tòa không nêu tên người bào chữa của từng bị cáo. Do yêu cầu bảo mật thông tin khách hàng và do nguồn công khai không xác định danh tính người được bào chữa, nội dung quan điểm bào chữa không được trình bày tại bài viết này.</p>`,
+<p>Tòa án nhân dân Thành phố Hồ Chí Minh mở phiên tòa từ ngày 20/01/2025, xét xử 23 bị cáo gồm người quản lý, nhân viên và khách của quán về các tội "Mua bán trái phép chất ma túy", "Tàng trữ trái phép chất ma túy", "Tổ chức sử dụng trái phép chất ma túy" và "Chứa chấp việc sử dụng trái phép chất ma túy".</p>`,
     keyArguments: [],
     sources: [
       {
@@ -239,10 +226,7 @@ export const notableCases: readonly NotableCase[] = [
 <p>Vụ việc liên quan đến yêu cầu tuyên bố vô hiệu hợp đồng chuyển nhượng quyền sử dụng đất, quyền sở hữu nhà ở và tài sản khác gắn liền với đất đối với bất động sản trên đường Quang Trung, quận Gò Vấp (nay thuộc phường An Hội Tây), Thành phố Hồ Chí Minh.</p>
 
 <h2>Kết quả phúc thẩm</h2>
-<p>Ngày 08/01/2026, Tòa án nhân dân Thành phố Hồ Chí Minh xét xử phúc thẩm và tuyên hủy bản án sơ thẩm, trả hồ sơ để xét xử lại. Hội đồng xét xử phúc thẩm nhận định cả hai hợp đồng chuyển nhượng đều đã được công chứng, chứng thực theo quy định của pháp luật; đồng thời cấp sơ thẩm chưa xác minh và đưa những người có quyền lợi, nghĩa vụ liên quan vào tham gia tố tụng.</p>
-
-<h2>Phạm vi thông tin</h2>
-<p>Do yêu cầu bảo mật thông tin khách hàng, bài viết không nêu danh tính các đương sự và không trình bày nội dung quan điểm bảo vệ trong vụ việc.</p>`,
+<p>Ngày 08/01/2026, Tòa án nhân dân Thành phố Hồ Chí Minh xét xử phúc thẩm và tuyên hủy bản án sơ thẩm, trả hồ sơ để xét xử lại. Hội đồng xét xử phúc thẩm nhận định cả hai hợp đồng chuyển nhượng đều đã được công chứng, chứng thực theo quy định của pháp luật; đồng thời cấp sơ thẩm chưa xác minh và đưa những người có quyền lợi, nghĩa vụ liên quan vào tham gia tố tụng.</p>`,
     keyArguments: [],
     sources: [
       {
@@ -287,13 +271,7 @@ export const notableCases: readonly NotableCase[] = [
 <p>Công trình tại số 8 Trương Định, Quận 3 được cấp Giấy phép xây dựng số 10/GPXD ngày 12/01/2017. Chủ đầu tư cho rằng giấy phép có sự bất cập giữa các văn bản pháp luật và văn bản hành chính của Ủy ban nhân dân Thành phố Hồ Chí Minh, liên quan đến cả ba tiêu chí: chiều cao công trình, mật độ xây dựng và hệ số sử dụng đất.</p>
 
 <h2>Vướng mắc về chỉ tiêu kiến trúc</h2>
-<p>Theo tiêu chuẩn áp dụng, công trình chỉ được xây 5 tầng với chiều cao khoảng 18m; muốn xây 8 tầng cao 27m thì phải mở lỗ thông tầng (giếng trời) qua các tầng. Trên diện tích sàn 79m², lỗ thông tầng chiếm 15,9m² ở các tầng 2, 3, 4 và lên tới 36,9m² ở các tầng 5 đến 8 — khiến diện tích sử dụng chính mỗi tầng chỉ còn lần lượt khoảng 23,94m² và 12,6m². Giấy phép đồng thời không cho lắp thang máy, không có tum thang và không được lợp mái sân thượng.</p>
-
-<h2>Quá trình khiếu nại</h2>
-<p>Chủ đầu tư đã dừng thi công và gửi đơn đến Sở Quy hoạch – Kiến trúc, Sở Xây dựng đề nghị điều chỉnh chỉ tiêu kiến trúc nhưng không được chấp nhận; văn bản xin hướng dẫn áp dụng quy định pháp luật cũng không được trả lời. Chủ đầu tư tiếp tục gửi đơn cứu xét đến Chủ tịch Ủy ban nhân dân Thành phố từ tháng 11/2017.</p>
-
-<h2>Phạm vi thông tin</h2>
-<p>Bài báo hiện tiếp cận được (Báo Xây dựng, ngày 13/11/2019) phản ánh giai đoạn tranh chấp về chỉ tiêu kiến trúc và giấy phép xây dựng; bài viết không đề cập quyết định cưỡng chế, việc khởi kiện hay quá trình giải quyết tại Tòa án. Do yêu cầu bảo mật thông tin khách hàng, bài viết cũng không nêu danh tính đương sự và không trình bày nội dung quan điểm bảo vệ trong vụ việc.</p>`,
+<p>Theo tiêu chuẩn áp dụng, công trình chỉ được xây 5 tầng với chiều cao khoảng 18m; muốn xây 8 tầng cao 27m thì phải mở lỗ thông tầng (giếng trời) qua các tầng. Trên diện tích sàn 79m², lỗ thông tầng chiếm 15,9m² ở các tầng 2, 3, 4 và lên tới 36,9m² ở các tầng 5 đến 8 — khiến diện tích sử dụng chính mỗi tầng chỉ còn lần lượt khoảng 23,94m² và 12,6m². Giấy phép đồng thời không cho lắp thang máy, không có tum thang và không được lợp mái sân thượng.</p>`,
     keyArguments: [],
     sources: [
       {
