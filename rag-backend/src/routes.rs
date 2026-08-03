@@ -20,24 +20,16 @@ const MAX_SLUG_CHARS: usize = 200;
 const MAX_RETRIES: u32 = 5;
 const BUSY_MSG: &str = "Xin lỗi hệ thống đang bận, vui lòng thử lại sau.";
 
-
 const MAX_HISTORY_TURNS: usize = 6;
 const MAX_HISTORY_CHARS: usize = 4000;
-/// Trả lời sẵn cho câu hỏi vô nghĩa — không gọi embedding, không gọi LLM.
 const VO_NGHIA_MSG: &str =
     "Mình chưa hiểu câu hỏi. Bạn thử hỏi rõ hơn về một vụ án hoặc bài viết trên trang nhé.";
 
-/// Câu hỏi không mang thông tin nào thì đừng tiêu tiền vào nó.
-///
-/// Mỗi lượt hỏi tốn một lần gọi embedding cộng một lần gọi LLM. Một ký tự gõ
-/// nhầm ("d", "bbbb", "...") cũng đang kích hoạt trọn bộ đó.
 fn cau_hoi_vo_nghia(q: &str) -> bool {
     let chu: Vec<char> = q.chars().filter(|c| c.is_alphanumeric()).collect();
-    // Quá ít ký tự có nghĩa.
     if chu.len() < 3 {
         return true;
     }
-    // Chỉ một ký tự lặp lại: "bbbb", "aaaaaa".
     let dau = chu[0].to_lowercase().next().unwrap_or(chu[0]);
     if chu
         .iter()
@@ -66,11 +58,9 @@ pub struct ChatBody {
     #[serde(default)]
     pub slug: Option<String>,
 
-
     #[serde(default)]
     pub history: Vec<ChatTurn>,
 }
-
 
 fn sanitize_history(raw: Vec<ChatTurn>) -> Vec<(&'static str, String)> {
     let mut out: Vec<(&'static str, String)> = Vec::new();
@@ -122,8 +112,6 @@ pub async fn chat(
                 .all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
     });
 
-    // Chặn TRƯỚC khi truy xuất: `prepare_messages` gọi embedding, cũng tính tiền.
-    // `None` = câu hỏi vô nghĩa, luồng bên dưới trả câu mặc định rồi dừng.
     let messages = if cau_hoi_vo_nghia(&question) {
         tracing::info!(cau_hoi = %question, "bỏ qua câu hỏi vô nghĩa, không gọi API");
         None
@@ -192,7 +180,6 @@ pub async fn chat(
     Ok(Sse::new(stream).keep_alive(KeepAlive::default()))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -203,7 +190,6 @@ mod tests {
             content: content.into(),
         }
     }
-
 
     #[test]
     fn bo_vai_tro_la_va_noi_dung_rong() {

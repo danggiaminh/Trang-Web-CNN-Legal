@@ -14,7 +14,6 @@ pub struct IngestDoc {
     pub url: String,
     pub updated_at: String,
 
-
     pub markdown: String,
     pub chunks: Vec<Chunk>,
 }
@@ -48,7 +47,6 @@ pub enum StoreOutcome {
     Skipped,
     Empty,
 }
-
 
 fn should_skip(stored: &str, incoming: &str) -> bool {
     if is_timestamp(stored) && is_timestamp(incoming) {
@@ -105,7 +103,6 @@ pub async fn store_doc(
     if doc.chunks.is_empty() {
         return Ok(StoreOutcome::Empty);
     }
-
 
     let to_embed: Vec<String> = doc
         .chunks

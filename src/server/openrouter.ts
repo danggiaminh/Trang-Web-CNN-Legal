@@ -1,7 +1,3 @@
-/**
- * Gọi OpenRouter và giải mã luồng trả về.
- * Bản chuyển từ `rag-backend/src/openrouter.rs`, giữ nguyên các chốt chặn tốn tiền.
- */
 import {
   OPENROUTER_API_KEY,
   OPENROUTER_MAX_TOKENS,
@@ -14,16 +10,11 @@ import type { ChatMessage } from "./prompt";
 
 const BASE_URL = "https://openrouter.ai/api/v1/chat/completions";
 
-// Những số này là quyết định đã chốt bên rag-backend/src/config.rs chứ không
-// phải cấu hình triển khai, nên để thẳng ở đây thay vì mở thêm biến môi trường.
-// `temperature` thấp cùng hai hình phạt lặp là thứ chặn model rơi vào vòng lặp
-// lặp chữ và đốt sạch max_tokens cho một câu trả lời rác.
 const TEMPERATURE = 0.2;
 const TOP_P = 0.9;
 const FREQUENCY_PENALTY = 0.4;
 const PRESENCE_PENALTY = 0.2;
 
-/** Chốt cứng: vượt số ký tự này thì ngắt luồng, không chờ model tự dừng. */
 export const MAX_ANSWER_CHARS = 4000;
 
 export function hasApiKey(): boolean {
@@ -39,7 +30,6 @@ export function callOpenRouter(
     Authorization: `Bearer ${OPENROUTER_API_KEY ?? ""}`,
     "Content-Type": "application/json",
   };
-  // OpenRouter dùng hai header này để ghi nhận nguồn gọi trên bảng thống kê.
   if (OPENROUTER_REFERER.trim()) headers["HTTP-Referer"] = OPENROUTER_REFERER.trim();
   if (OPENROUTER_TITLE.trim()) headers["X-Title"] = OPENROUTER_TITLE.trim();
 
@@ -49,8 +39,6 @@ export function callOpenRouter(
     signal,
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
-      // Ghim nhà cung cấp và tắt dự phòng để giá mỗi token không đổi sau lưng.
-      // Bỏ trống biến thì để OpenRouter tự chọn.
       ...(provider ? { provider: { order: [provider], allow_fallbacks: false } } : {}),
       stream: true,
       reasoning: { enabled: false },
@@ -64,17 +52,12 @@ export function callOpenRouter(
   });
 }
 
-/** Trùng `retry_after_ms`: tôn trọng header nhưng chặn trên 3 giây. */
 export function retryAfterMs(res: Response, attempt: number): number {
   const raw = res.headers.get("retry-after");
   const secs = raw ? Number.parseInt(raw, 10) : Number.NaN;
   return Number.isFinite(secs) ? Math.min(secs, 3) * 1000 : 400 + attempt * 200;
 }
 
-/**
- * Phát hiện model rơi vào vòng lặp lặp chữ ("d d d d…", "bbbb…").
- * Trùng `la_lap_vo_nghia` ở openrouter.rs.
- */
 export function isJunkRepetition(tail: string): boolean {
   const THRESHOLD = 12;
   const ch = [...tail];
@@ -107,12 +90,6 @@ function parseSseLine(line: string): string | typeof DONE | null {
   }
 }
 
-/**
- * Bóc từng mẩu chữ ra khỏi luồng SSE của OpenRouter.
- *
- * `TextDecoder` ở chế độ stream tự giữ lại byte dở dang, nên ký tự tiếng Việt bị
- * cắt ngang giữa hai gói mạng vẫn ghép đúng.
- */
 export async function* streamContent(
   res: Response,
   maxChars: number,
@@ -141,15 +118,11 @@ export async function* streamContent(
         produced += parsed;
         yield parsed;
 
-        // Cắt sớm khi câu trả lời quá dài hoặc đã hỏng — mỗi token sau đó đều
-        // là tiền bỏ đi.
         if (produced.length >= maxChars) return;
         if (produced.length >= 120 && isJunkRepetition(produced.slice(-160))) return;
       }
     }
   } finally {
-    // Đóng kết nối tới OpenRouter khi thoát sớm, nếu không phần token còn lại
-    // vẫn sinh ra và vẫn bị tính tiền.
     await reader.cancel().catch(() => {});
   }
 }

@@ -17,7 +17,6 @@ function toIso(d) {
   return m2 ? `${m2[1]}-01-01` : null;
 }
 
-
 function stamp(rawDate, body) {
   return toIso(rawDate) ?? `sha256:${createHash("sha256").update(body).digest("hex").slice(0, 16)}`;
 }
@@ -32,7 +31,6 @@ function frontmatter({ title, slug, category, updatedAt, url }) {
     `title: ${yamlEscape(title)}`,
     `slug: ${yamlEscape(slug)}`,
     `category: ${yamlEscape(category || "Pháp luật")}`,
-
 
     `url: ${yamlEscape(url)}`,
     `updatedAt: ${yamlEscape(updatedAt)}`,
@@ -85,7 +83,6 @@ function strip(t) {
   return String(t).replace(/<[^>]+>/g, "").trim();
 }
 
-/** Bài đăng báo ngoài không có slug riêng — lấy từ đoạn cuối đường dẫn cho ổn định. */
 function slugFromUrl(url) {
   const last = new URL(url).pathname.split("/").filter(Boolean).pop() || "";
   return last
@@ -134,9 +131,6 @@ for (const c of notableCases) {
   count++;
 }
 
-// Bài đăng trên báo ngoài: trang web chỉ giới thiệu chứ không đăng lại toàn văn,
-// nên phần đưa vào kho tri thức cũng chỉ là tóm tắt. Ghi rõ điều đó trong nội dung
-// để trợ lý không trả lời như thể đã đọc trọn bài.
 for (const a of externalArticles ?? []) {
   const slug = slugFromUrl(a.sourceUrl);
   const body = `${a.summary}\n\nĐây là phần giới thiệu ngắn. Toàn văn bài viết đăng trên ${a.sourceName}.\n`;
@@ -153,8 +147,6 @@ for (const a of externalArticles ?? []) {
   count++;
 }
 
-// Dọn file của bài đã gỡ khỏi dữ liệu — để sót thì `ingest --prune` không thấy,
-// và trợ lý sẽ tiếp tục trích dẫn đường dẫn đã chết.
 let removed = 0;
 for (const name of await readdir(outDir)) {
   if (!name.endsWith(".md") || written.has(name)) continue;

@@ -26,8 +26,6 @@ const dateIso = article.publishedAt !== "Đang cập nhật"
   ? article.publishedAt.split("/").reverse().join("-")
   : undefined;
 
-// Ảnh đầu tiên trong thân bài nằm ngay dưới đoạn mở — đó là phần tử LCP.
-// Để `loading="lazy"` là trì hoãn đúng thứ cần vẽ sớm nhất. Các ảnh sau vẫn lazy.
 const firstImageIndex = article.blocks?.findIndex((b) => b.type === "image") ?? -1;
 
 const structuredData = [
@@ -91,7 +89,6 @@ const structuredData = [
         </p>
       </div>
     </div>
-
 
     <div class="section-shell py-10 md:py-14">
       <div class="mx-auto max-w-3xl">

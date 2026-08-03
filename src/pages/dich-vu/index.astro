@@ -57,7 +57,6 @@ const structuredData = [
       <div class="absolute inset-0 bg-black/40"></div>
     </div>
 
-
     <div class="section-shell relative z-10">
       <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Dịch vụ" }]} />
 
@@ -73,9 +72,7 @@ const structuredData = [
 
   <section class="bg-warm-ivory">
     <div class="section-shell pb-16 pt-10 md:pb-20 md:pt-12">
-      {/* Đúng 4 dịch vụ nên khoá 2 cột: 2 ô trên, 2 ô dưới. Dùng 3 cột thì
-          hàng dưới trơ lại một ô lệch. Thẻ không phải liên kết — bấm vào không
-          mở trang nào, theo yêu cầu của khách hàng. */}
+      
       <div class="grid gap-5 md:grid-cols-2">
         {services.map((service) => (
           <div class="rounded-xl border border-border-soft bg-surface-white p-7">

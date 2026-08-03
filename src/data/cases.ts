@@ -1,10 +1,7 @@
 export type CaseSource = {
-  /** Tên cơ quan báo chí. */
   readonly name: string;
   readonly url: string;
-  /** Tiêu đề bài báo — hiển thị làm chữ của liên kết, giống trang Bài viết. */
   readonly title: string;
-  /** Ngày đăng dạng dd/mm/yyyy. Để trống nếu nguồn không công bố. */
   readonly publishedAt: string;
 };
 

@@ -1,17 +1,3 @@
-/**
- * GET /api/v1/health — một lệnh curl là biết biến môi trường trên Vercel đã vào
- * hay chưa:
- *
- *   curl -s https://cnnlegal.vn/api/v1/health
- *   {"ok":true,"keyPresent":true,"docs":33,"sections":112}
- *
- * `keyPresent` chỉ nói có hay không, không bao giờ trả giá trị khoá. Tên model
- * và nhà cung cấp cũng không trả: system prompt của trợ lý đã cấm tiết lộ thông
- * tin hệ thống, endpoint công khai này không nên đi ngược điều đó. Cần biết
- * model nào đang chạy thì xem trong bảng Environment Variables của Vercel.
- *
- * `docs` bằng 0 nghĩa là kho tri thức rỗng — trợ lý sẽ trả lời chung chung.
- */
 export const prerender = false;
 
 import type { APIRoute } from "astro";

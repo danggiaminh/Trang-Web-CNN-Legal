@@ -1,8 +1,3 @@
-/**
- * Dựng chuỗi tin nhắn gửi model. Bản chuyển từ `rag-backend/src/rag.rs` và
- * `SYSTEM_PROMPT_TEMPLATE` trong `rag-backend/src/lib.rs` — sửa prompt ở đây thì
- * sửa cả bên đó, nếu không hai backend sẽ trả lời khác giọng nhau.
- */
 import type { Passage } from "./retrieval";
 
 export interface ChatMessage {
@@ -30,7 +25,6 @@ GIỚI HẠN:
 TÀI LIỆU THAM KHẢO:
 {{retrieved_chunks}}`;
 
-/** Trùng `render_chunks` ở rag.rs: không bịa đường dẫn khi bài không có url. */
 function renderPassages(passages: readonly Passage[]): string {
   if (!passages.length) {
     return "(Không tìm thấy tài liệu liên quan trong dữ liệu hiện có.)";
@@ -63,8 +57,6 @@ export function buildMessages(
   currentTitle: string | null,
   history: readonly ChatMessage[],
 ): ChatMessage[] {
-  // Thay bằng hàm chứ không bằng chuỗi: dạng chuỗi khiến `$&`, `` $` ``, `$'`
-  // trong nội dung bài bị diễn giải thành mẫu thay thế và làm hỏng prompt.
   const system = SYSTEM_PROMPT_TEMPLATE.replace("{{current_page}}", () =>
     currentTitle ? currentPageNote(currentTitle) : "",
   ).replace("{{retrieved_chunks}}", () => renderPassages(passages));

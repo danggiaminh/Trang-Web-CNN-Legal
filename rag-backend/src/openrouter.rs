@@ -121,14 +121,12 @@ fn parse_sse_line(line: &str) -> Option<SseLine> {
     }
 }
 
-
 #[derive(Default)]
 struct SseDecoder {
     buf: Vec<u8>,
 }
 
 impl SseDecoder {
-
 
     fn push(&mut self, chunk: &[u8]) -> (Vec<String>, bool) {
         self.buf.extend_from_slice(chunk);
@@ -147,12 +145,6 @@ impl SseDecoder {
     }
 }
 
-/// Phát hiện model rơi vào vòng lặp lặp chữ ("d d d d…", "bbbb…").
-///
-/// Xét phần đuôi câu trả lời: nếu nó là một đoạn ngắn (1–8 ký tự) lặp lại liên
-/// tiếp từ `NGUONG_LAP` lần trở lên thì coi là hỏng. Không có chốt này, model
-/// lặp cho tới hết `max_tokens` và khách hàng bị tính tiền trọn gói cho một câu
-/// trả lời rác.
 fn la_lap_vo_nghia(duoi: &str) -> bool {
     const NGUONG_LAP: usize = 12;
     let ky_tu: Vec<char> = duoi.chars().collect();
@@ -190,8 +182,6 @@ pub fn stream_content(
                 da_ra.push_str(&tok);
                 yield tok;
 
-                // Cắt sớm khi câu trả lời hỏng hoặc quá dài — mỗi token sau đó
-                // đều là tiền bỏ đi.
                 if da_ra.chars().count() >= gioi_han_ky_tu {
                     tracing::warn!(
                         da_ra = da_ra.chars().count(),
@@ -237,7 +227,6 @@ mod tests {
                     Hội đồng xét xử đã tuyên phạt bị cáo ba năm tù, giảm hai năm so với bản án sơ thẩm.";
         assert!(!la_lap_vo_nghia(that));
         assert!(!la_lap_vo_nghia("Vụ án hành chính tại Quận 3 liên quan chỉ tiêu kiến trúc."));
-        // Lặp ít lần thì không tính là hỏng.
         assert!(!la_lap_vo_nghia("ha ha ha"));
     }
 
@@ -252,7 +241,6 @@ mod tests {
             serde_json::json!({ "choices": [{ "delta": { "content": content } }] })
         )
     }
-
 
     #[test]
     fn khong_vo_chu_khi_chunk_cat_giua_ky_tu() {
@@ -296,7 +284,6 @@ mod tests {
         assert!(!done);
         assert!(toks.is_empty());
     }
-
 
     #[test]
     fn giu_lai_dong_do_dang() {

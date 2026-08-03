@@ -11,7 +11,6 @@ interface SitemapEntry {
 
 const today = new Date().toISOString().split("T")[0];
 
-
 function toIsoDate(input: string | undefined): string {
   const s = (input ?? "").trim();
   const dmy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);

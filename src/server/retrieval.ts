@@ -1,28 +1,11 @@
-/**
- * Chọn ngữ cảnh gửi kèm câu hỏi.
- *
- * Bản Rust chạy truy xuất lai: vector (sqlite-vec) hợp nhất với BM25 (FTS5).
- * Trên serverless không có SQLite lẫn sqlite-vec, và quan trọng hơn: đo lại kho
- * bài thì 27/33 bài chỉ dài dưới 2.900 ký tự — nhỏ hơn cả ngân sách truy xuất
- * 5.000 ký tự mà bản Rust vốn đã gửi đi. Với những bài đó, gửi nguyên bài vừa rẻ
- * hơn vừa không bao giờ trượt đoạn cần tìm, nên nhánh embedding bị bỏ hẳn: đỡ
- * một lần gọi API tính tiền cho mỗi câu hỏi.
- *
- * Chỉ 6 bài dài (11K–32K ký tự) mới cần chọn lọc, và đó là việc của BM25 dưới
- * đây. Ngưỡng 6.000 nằm gọn trong khoảng trống 2.9K–11.3K của kho bài nên nội
- * dung có xê dịch cũng không đổi hành vi.
- */
 import { allDocs, getDoc, type Doc, type Section } from "./knowledge";
 
 const WHOLE_DOC_CHARS = 6000;
-/** Trùng `RETRIEVED_MAX_CHARS` trong rag-backend/src/rag.rs. */
 const RETRIEVED_MAX_CHARS = 5000;
 const OUTLINE_SECTION_CHARS = 450;
 const OUTLINE_MAX_CHARS = 6000;
-/** Trùng `RAG_TOP_K` mặc định. */
 const TOP_K = 4;
 
-/** Trùng `WHOLE_DOC_HINTS` trong rag.rs. */
 const WHOLE_DOC_HINTS = [
   "tóm tắt",
   "tóm lược",
@@ -47,11 +30,9 @@ export interface Passage {
 
 export interface Context {
   readonly passages: readonly Passage[];
-  /** Tên bài người dùng đang mở, nếu xác định được từ slug. */
   readonly currentTitle: string | null;
 }
 
-/** Đưa câu hỏi về chuỗi từ có khoảng trắng hai đầu, để dò cụm theo trọn từ. */
 function normalizedWords(text: string): string {
   const spaced = text.replace(/[^\p{L}\p{N}]+/gu, " ");
   return ` ${spaced.toLowerCase().split(/\s+/).filter(Boolean).join(" ")} `;
@@ -62,13 +43,6 @@ function wantsWholeDoc(question: string): boolean {
   return WHOLE_DOC_HINTS.some((h) => q.includes(` ${h} `));
 }
 
-/**
- * Tách từ cho BM25, kèm cụm hai âm tiết liền nhau.
- *
- * Tiếng Việt viết rời từng âm tiết nên nếu chỉ đếm âm tiết đơn thì "thu hồi
- * đất" và "đất thu hồi" cho điểm y hệt nhau. Đánh chỉ mục thêm cụm đôi
- * ("thu_hồi", "hồi_đất") lấy lại được trật tự từ mà không cần từ điển tách từ.
- */
 function tokenize(text: string): string[] {
   const words = text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
   const out = words.slice();
@@ -90,8 +64,6 @@ interface Index {
 }
 
 function toEntry(doc: Doc, section: Section): Entry {
-  // Tiêu đề bài và đường dẫn mục được tính vào phần đếm từ: chúng là tín hiệu
-  // mạnh, mục "Kết quả tố tụng" nên ăn điểm với câu hỏi "kết quả thế nào".
   const tokens = tokenize(`${doc.title}\n${section.headingPath}\n${section.content}`);
   const tf = new Map<string, number>();
   for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
@@ -167,12 +139,6 @@ function rank(pool: readonly Entry[], question: string, idx: Index, topK: number
     .map((r) => r.entry.passage);
 }
 
-/**
- * Cắt theo ngân sách ký tự rồi xếp lại theo mạch bài.
- *
- * Cổng `!out.length` giữ lại đoạn điểm cao nhất kể cả khi nó vượt ngân sách —
- * thà gửi một đoạn dài còn hơn gửi ngữ cảnh rỗng. Trùng `within_budget` ở rag.rs.
- */
 function withinBudget(hits: readonly Passage[], budget: number): Passage[] {
   const out: Passage[] = [];
   let used = 0;
@@ -207,7 +173,6 @@ function wholeDoc(doc: Doc): Passage[] {
       ];
 }
 
-/** Mục đầu tiên của mỗi tiêu đề cấp 2, cắt ngắn — trùng `fetch_outline` ở db.rs. */
 function outline(doc: Doc): Passage[] {
   const out: Passage[] = [];
   const seen = new Set<string>();
@@ -240,7 +205,6 @@ export async function selectContext(question: string, slug: string | null): Prom
   const doc = slug ? await getDoc(slug) : null;
   const idx = await getIndex();
 
-  // Không xác định được bài đang mở — tìm khắp kho.
   if (!doc) {
     return {
       passages: withinBudget(rank(idx.entries, question, idx, TOP_K), RETRIEVED_MAX_CHARS),
@@ -248,12 +212,10 @@ export async function selectContext(question: string, slug: string | null): Prom
     };
   }
 
-  // Bài ngắn: gửi trọn, khỏi truy xuất.
   if (doc.chars <= WHOLE_DOC_CHARS) {
     return { passages: wholeDoc(doc), currentTitle: doc.title };
   }
 
-  // Bài dài mà người dùng hỏi tóm tắt: gửi dàn ý thay vì vài đoạn rời rạc.
   if (wantsWholeDoc(question)) {
     const sketch = outline(doc);
     if (sketch.length) return { passages: sketch, currentTitle: doc.title };
@@ -261,8 +223,6 @@ export async function selectContext(question: string, slug: string | null): Prom
 
   const pool = idx.byDoc.get(doc.slug) ?? [];
   const hits = rank(pool, question, idx, TOP_K);
-  // Câu hỏi không khớp từ nào trong bài dài thì vẫn phải có ngữ cảnh để bám —
-  // lấy dàn ý làm phương án lui.
   const passages = hits.length ? withinBudget(hits, RETRIEVED_MAX_CHARS) : outline(doc);
   return { passages, currentTitle: doc.title };
 }

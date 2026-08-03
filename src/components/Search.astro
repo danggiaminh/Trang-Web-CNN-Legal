@@ -1,11 +1,6 @@
 ---
 ---
 
-{/*
-  Một nút duy nhất cho mọi bề ngang. Bỏ chữ "Tìm kiếm" thì mất đi phần gợi ý
-  nhìn thấy được, nên `aria-label` (cho trình đọc màn hình) và `title` (tooltip
-  khi rê chuột, có nhắc phím tắt) là hai thứ bù lại — đừng gỡ.
-*/}
 <button
   type="button"
   class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-dark transition-colors hover:bg-[#f1f3f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-dark lg:h-10 lg:w-10"
@@ -85,18 +80,10 @@
     background: var(--color-surface-subtle);
   }
 
-  /* Từ khoá dài hơn ô nhập thì cắt bằng dấu … thay vì cụt giữa chữ.
-     (Placeholder do JS tự rút gọn — xem `fitHint`.) */
   [data-search-input] {
     text-overflow: ellipsis;
   }
 
-  /* Kích thước hộp thoại phải theo CHIỀU CAO khung hình, không theo bề ngang.
-     Màn 1280×720 vẫn rộng nên breakpoint `lg:` của Tailwind kích hoạt, giữ ô
-     nhập quá cao so với 720px chiều cao.
-
-     Mốc cao nhất đặt 3.25rem: 64px của lớp `h-16` khiến ô nhập cao gấp rưỡi một
-     dòng kết quả bên dưới, nhìn nặng nề ngay cả trên màn 1080p. */
   [data-search-input] {
     height: 3.25rem;
     font-size: 1rem;
@@ -117,11 +104,9 @@
   }
 </style>
 
-
 <script>
   type Entry = { t: string; d: string; u: string; g: string; k: string };
 
-  /** Nút trong cây điều hướng: có `u` là đích đến, có `c` là nhánh mở tiếp. */
   type Node = { t: string; d?: string; g?: string; u?: string; c?: Node[] };
 
   const overlay = document.querySelector<HTMLElement>("[data-search-overlay]");
@@ -154,13 +139,6 @@
     const esc = (s: string) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-    /**
-     * Ưu tiên trường `k`, thiếu thì suy từ ĐƯỜNG DẪN.
-     * Bài đăng báo ngoài có `u` là http(s) tuyệt đối nên không suy được từ tiền
-     * tố — bắt buộc phải đọc `k`. Ngược lại, chỉ mục cũ còn trong cache trình
-     * duyệt lại không có `k`; chỉ dựa vào nó thì mọi nhánh rỗng và menu hỏng
-     * câm lặng. Giữ cả hai đường mới an toàn.
-     */
     const kindOf = (e: Entry): string => {
       if (e.k) return e.k;
       const u = e.u || "";
@@ -170,13 +148,9 @@
       return "Trang";
     };
 
-    /** Dựng cây điều hướng từ chỉ mục phẳng. */
     const buildTree = (docs: Entry[]): Node[] => {
       const of = (kind: string): Node[] =>
         docs.filter((e) => kindOf(e) === kind).map((e) => ({ t: e.t, d: e.d, g: e.g, u: e.u }));
-      // Thứ tự và tên nhánh phải khớp thanh điều hướng của trang. Mỗi nhánh mở
-      // đầu bằng chính trang danh sách để người dùng tới được trang tổng hợp,
-      // vì một nút vừa là nhánh vừa là liên kết thì không biểu diễn được.
       return [
         { t: "Giới thiệu", u: "/tong-quan/" },
         {
@@ -198,12 +172,6 @@
       ];
     };
 
-    /**
-     * Trải phẳng mọi lá MỘT LẦN lúc nạp, kèm `p` là đường dẫn nhánh chứa nó.
-     * Nhờ `p`, việc thu hẹp tìm kiếm về một nhánh chỉ là phép lọc chuỗi — không
-     * phải chạy lại normalize() và escape cho từng mục ở mỗi lần gõ phím.
-     * Dùng ký tự NUL (\u0000) làm dấu ngăn vì ký tự này không thể xuất hiện trong tiêu đề.
-     */
     const flatten = (nodes: Node[], trail: string[] = []): Flat[] =>
       nodes.flatMap((n) =>
         n.c
@@ -238,7 +206,6 @@
       return loading;
     };
 
-    /** Nhánh đang mở theo `path`; rỗng = gốc. */
     const currentNodes = (): Node[] => {
       let nodes = tree || [];
       for (const seg of path) {
@@ -285,7 +252,6 @@
     const paint = (label: string, items: Node[]) => {
       hits = items;
       active = items.length ? 0 : -1;
-      // Nhánh rỗng phải nói rõ, đừng để lại mỗi tiêu đề trơ trọi.
       list.innerHTML =
         heading(label) +
         (items.length
@@ -296,9 +262,6 @@
       else input.removeAttribute("aria-activedescendant");
     };
 
-    /* Placeholder dài hơn ô nhập thì trình duyệt cắt cụt ngay giữa chữ
-       ("…, dịch" trên màn 320px). Tự đo rồi bỏ bớt từ cuối, kết bằng "…" để
-       câu vẫn đọc được: "Tìm bài viết, vụ án, dịch…". */
     const gauge = document.createElement("canvas").getContext("2d");
     let fullHint = "Tìm bài viết, vụ án, dịch vụ…";
 
@@ -323,7 +286,6 @@
           return;
         }
       }
-      // Đến một từ vẫn tràn (ô quá hẹp) thì đành cắt theo ký tự.
       let s = words[0];
       while (s.length > 1 && gauge.measureText(s + "…").width > box) s = s.slice(0, -1);
       input.placeholder = s + "…";
@@ -359,13 +321,11 @@
       const raw = input.value.trim();
       const q = fold(raw);
 
-      // Chưa gõ gì: hiện đúng một tầng của cây.
       if (!q) {
         paint(path.length ? path[path.length - 1] : "Điều hướng", currentNodes());
         return;
       }
 
-      // Đang ở trong một nhánh thì chỉ tìm trong nhánh đó.
       const prefix = path.join("\u0000");
       const pool = path.length
         ? flat.filter((e) => e.p === prefix || e.p.startsWith(prefix + "\u0000"))
@@ -401,7 +361,6 @@
       input.setAttribute("aria-activedescendant", `search-hit-${active}`);
     };
 
-    /** Chọn một dòng: nhánh thì mở sâu thêm, lá thì điều hướng. */
     const choose = (n: Node | undefined) => {
       if (!n) return;
       if (n.c) {
@@ -410,8 +369,6 @@
         render();
         input.focus({ preventScroll: true });
       } else if (n.u) {
-        // Bài đăng báo ngoài mở tab mới, giống cách trang Bài viết đang làm —
-        // đang tìm kiếm mà bị đá khỏi trang thì mất hết ngữ cảnh.
         if (/^https?:\/\//.test(n.u)) window.open(n.u, "_blank", "noopener,noreferrer");
         else window.location.href = n.u;
       }
@@ -449,7 +406,6 @@
 
     openers.forEach((b) => b.addEventListener("click", open));
     input.addEventListener("input", render);
-    // Xoay ngang/dọc hay đổi cỡ cửa sổ thì đo lại cho vừa.
     window.addEventListener("resize", () => {
       if (overlay.hasAttribute("data-open")) fitHint();
     });
@@ -493,7 +449,6 @@
         event.preventDefault();
         choose(hits[active]);
       } else if (event.key === "Backspace" && !input.value && path.length) {
-        // Xoá lùi khi ô trống = lùi ra một tầng, giống thao tác gỡ chip.
         event.preventDefault();
         popCrumb();
       } else if (event.key === "Tab") {

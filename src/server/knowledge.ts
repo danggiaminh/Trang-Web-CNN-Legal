@@ -1,33 +1,13 @@
-/**
- * Kho tri thức của trợ lý, dựng thẳng từ `src/data/*.ts`.
- *
- * Không đọc `src/content/articles/` — thư mục đó nằm trong .gitignore vì được
- * sinh ra bởi `rag-backend/scripts/export-content.mjs`, nên trên Vercel nó không
- * tồn tại. Lấy trực tiếp từ `src/data` cũng là lấy đúng nguồn mà các trang đang
- * hiển thị, khỏi lo hai bên lệch nhau.
- *
- * Cách dựng văn bản dưới đây bám theo `export-content.mjs` để ngữ cảnh gửi cho
- * model trùng với những gì backend Rust đã nạp.
- *
- * Chỉ import từ mã chạy trên máy chủ (`src/pages/api/**`). Module này kéo theo
- * toàn bộ nội dung bài viết; lỡ import vào một component giao diện là ném thêm
- * vài trăm KB vào bundle của trang đó.
- */
 import { getAllArticles, externalArticles, type ArticleBlock } from "../data/articles";
 import { notableCases } from "../data/cases";
 
-/** Trùng `TARGET_CHARS` trong rag-backend/src/chunk.rs. */
 const TARGET_CHARS = 1800;
-/** Trùng `MIN_CHARS` — mục ngắn hơn ngần này thì gộp vào mục trước. */
 const MIN_CHARS = 200;
-/** Trùng `HEADING_SEP` — dấu phân cấp tiêu đề khi in nguồn cho model. */
 const HEADING_SEP = " › ";
 
 export interface Section {
-  /** Đường dẫn tiêu đề, ví dụ "Bối cảnh tố tụng › Giai đoạn sơ thẩm". */
   readonly headingPath: string;
   readonly content: string;
-  /** Thứ tự trong bài — dùng để xếp lại ngữ cảnh theo mạch đọc. */
   readonly ord: number;
 }
 
@@ -72,7 +52,6 @@ function stripTags(t: string): string {
   return String(t).replace(/<[^>]+>/g, "").trim();
 }
 
-/** Thân vụ án trong `cases.ts` là HTML — hạ về văn bản giữ lại cấp tiêu đề. */
 function htmlToText(html: string): string {
   return String(html)
     .replace(/<h2>(.*?)<\/h2>/gis, (_, t) => `\n## ${stripTags(t)}\n`)
@@ -84,7 +63,6 @@ function htmlToText(html: string): string {
     .trim();
 }
 
-/** Bài đăng báo ngoài không có slug riêng — lấy từ đoạn cuối đường dẫn. */
 function slugFromUrl(url: string): string {
   const last = new URL(url).pathname.split("/").filter(Boolean).pop() ?? "";
   return last
@@ -93,11 +71,6 @@ function slugFromUrl(url: string): string {
     .slice(0, 90);
 }
 
-/**
- * Cắt bài thành mục theo tiêu đề, mục quá dài thì cắt tiếp ở ranh giới đoạn.
- *
- * Chỉ H2/H3 mở mục mới; H4 trở xuống coi như văn bản thường, giống `chunk.rs`.
- */
 function toSections(markdown: string): Section[] {
   const raw: { path: string; parts: string[] }[] = [];
   let h2 = "";
@@ -131,7 +104,6 @@ function toSections(markdown: string): Section[] {
     current!.parts.push(text);
   }
 
-  // Nội dung dài thì tách ở ranh giới đoạn, không cắt giữa câu.
   const out: Section[] = [];
   for (const sec of raw) {
     let buf: string[] = [];
@@ -150,8 +122,6 @@ function toSections(markdown: string): Section[] {
     flush();
   }
 
-  // Mẩu quá ngắn gộp ngược vào mục trước cùng tiêu đề — mảnh vụn vừa tốn chỗ
-  // vừa nhiễu điểm xếp hạng.
   const merged: Section[] = [];
   for (const sec of out) {
     const last = merged[merged.length - 1];
@@ -222,8 +192,6 @@ async function buildCorpus(): Promise<Map<string, Doc>> {
     );
   }
 
-  // Bài đăng báo ngoài: trang chỉ giới thiệu chứ không đăng lại toàn văn, nên
-  // ghi rõ điều đó để trợ lý không trả lời như thể đã đọc trọn bài.
   for (const a of externalArticles ?? []) {
     const slug = slugFromUrl(a.sourceUrl);
     add(
@@ -240,8 +208,6 @@ async function buildCorpus(): Promise<Map<string, Doc>> {
   return docs;
 }
 
-// Dựng một lần cho mỗi instance rồi giữ lại: lần gọi nguội trả tiền, các lần
-// sau dùng chung.
 let corpus: Promise<Map<string, Doc>> | null = null;
 
 export function getCorpus(): Promise<Map<string, Doc>> {

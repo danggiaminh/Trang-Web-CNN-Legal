@@ -31,7 +31,6 @@ async fn main() -> anyhow::Result<()> {
     let cfg = Config::from_env()?;
     tracing::info!(config = ?cfg, "khởi động CNN Legal RAG");
 
-
     let http = reqwest::Client::builder()
         .pool_max_idle_per_host(16)
         .connect_timeout(std::time::Duration::from_secs(10))
@@ -69,11 +68,9 @@ async fn main() -> anyhow::Result<()> {
             .expect("cấu hình governor không hợp lệ"),
     );
 
-
     let chat_routes = Router::new()
         .route("/api/chat", post(chat))
         .layer(GovernorLayer { config: governor });
-
 
     let origins: Vec<_> = cfg
         .allowed_origins

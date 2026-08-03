@@ -1,9 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-// Trang này được dựng sẵn thành 404.html. Nếu thiếu nó, adapter Vercel sẽ trỏ
-// route bắt-tất-cả về serverless function, và mọi URL sai — phần lớn do bot quét
-// — đều tốn một lượt gọi function. Có file tĩnh thì Vercel trả thẳng từ CDN.
 const title = "Không tìm thấy trang | CNN Legal";
 const description = "Đường dẫn bạn truy cập không tồn tại hoặc đã được thay đổi.";
 ---
