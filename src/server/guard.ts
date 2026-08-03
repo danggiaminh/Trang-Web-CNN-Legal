@@ -13,14 +13,34 @@ const allowedOrigins = new Set(
     .filter(Boolean),
 );
 
+function selfHost(request: Request): string | null {
+  const header = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (header) return header.split(",")[0]!.trim().toLowerCase();
+  try {
+    return new URL(request.url).host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function accepted(request: Request, origin: string | null): boolean {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+  try {
+    const host = selfHost(request);
+    return host !== null && new URL(origin).host.toLowerCase() === host;
+  } catch {
+    return false;
+  }
+}
+
 export function originAllowed(request: Request): boolean {
-  const origin = request.headers.get("origin");
-  return !origin || allowedOrigins.has(origin);
+  return accepted(request, request.headers.get("origin"));
 }
 
 export function corsHeaders(request: Request): Record<string, string> {
   const origin = request.headers.get("origin");
-  if (!origin || !allowedOrigins.has(origin)) return {};
+  if (!origin || !accepted(request, origin)) return {};
   return {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
