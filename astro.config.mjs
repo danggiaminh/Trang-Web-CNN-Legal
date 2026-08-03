@@ -1,11 +1,53 @@
-import { defineConfig } from "astro/config";
+import { defineConfig, envField } from "astro/config";
+import vercel from "@astrojs/vercel";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   output: "static",
+  adapter: vercel({
+  }),
   image: {
 
     domains: ["img.lsvn.vn"],
+  },
+  env: {
+    schema: {
+      OPENROUTER_API_KEY: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      OPENROUTER_MODEL: envField.string({
+        context: "server",
+        access: "public",
+        default: "deepseek/deepseek-v4-flash",
+      }),
+      OPENROUTER_PROVIDER: envField.string({
+        context: "server",
+        access: "public",
+        default: "parasail",
+      }),
+      OPENROUTER_MAX_TOKENS: envField.number({
+        context: "server",
+        access: "public",
+        default: 1200,
+      }),
+      OPENROUTER_REFERER: envField.string({
+        context: "server",
+        access: "public",
+        default: "https://cnnlegal.vn",
+      }),
+      OPENROUTER_TITLE: envField.string({
+        context: "server",
+        access: "public",
+        default: "CNN Legal Assistant",
+      }),
+      CHAT_ALLOWED_ORIGINS: envField.string({
+        context: "server",
+        access: "public",
+        default: "https://cnnlegal.vn,https://www.cnnlegal.vn,http://localhost:4321",
+      }),
+    },
   },
   vite: {
     plugins: [tailwindcss()],
@@ -16,12 +58,6 @@ export default defineConfig({
     server: {
       watch: {
         ignored: ["!**/src/data/**"],
-      },
-      proxy: {
-        "/api/chat": {
-          target: "http://127.0.0.1:8787",
-          changeOrigin: true,
-        },
       },
     },
   },

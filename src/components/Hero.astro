@@ -10,7 +10,6 @@ import carousel3 from "../assets/images/carousel-3.jpg";
 
   <div class="grid h-full lg:grid-cols-[2fr_3fr]">
 
-
     <div class="relative order-1 lg:order-1">
       <div class="relative h-full bg-[#0a1929] overflow-hidden">
 
@@ -27,7 +26,6 @@ import carousel3 from "../assets/images/carousel-3.jpg";
           />
         </div>
 
-
         <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
           <Image
             class="absolute inset-0 h-full w-full object-cover"
@@ -40,7 +38,6 @@ import carousel3 from "../assets/images/carousel-3.jpg";
             fetchpriority="low"
           />
         </div>
-
 
         <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
           <Image
@@ -55,9 +52,7 @@ import carousel3 from "../assets/images/carousel-3.jpg";
           />
         </div>
 
-
         <div class="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-[#0a1929]/30 to-transparent pointer-events-none z-10"></div>
-
 
         <div class="absolute bottom-8 left-8 flex gap-2 z-30">
           <button
@@ -88,10 +83,8 @@ import carousel3 from "../assets/images/carousel-3.jpg";
       </div>
     </div>
 
-
     <div class="relative order-2 bg-ink-black lg:order-2 z-10">
       <div class="hero-copy flex h-full flex-col justify-start px-6 pt-20 pb-12 sm:px-10 sm:pt-24 md:px-16 md:pt-28 lg:pt-32 xl:px-20 xl:pt-36">
-
 
         <h1 class="hero-title font-sans font-semibold leading-[1.2] tracking-[-0.02em] text-white">
           {site.sloganLines.map((line) => (
@@ -104,26 +97,15 @@ import carousel3 from "../assets/images/carousel-3.jpg";
 </section>
 
 <style>
-  /* Khẩu hiệu là hai câu đối nhau nên mỗi câu phải nằm trọn một dòng — rớt
-     chữ "lý" xuống dòng riêng là hỏng ý. Đặt cỡ chữ cứng theo breakpoint
-     không giải quyết được vì cột chữ rộng 60vw, mỗi bề ngang màn hình lại
-     cho một khoảng trống khác nhau. Cho cỡ chữ bám thẳng vào bề ngang thật
-     của cột (đã trừ padding) bằng đơn vị container query. */
   .hero-copy {
     container-type: inline-size;
   }
 
   .hero-title {
-    font-size: 2rem; /* dự phòng cho trình duyệt chưa hỗ trợ cqi */
-    /* Câu dài nhất rộng ≈ 13.5× cỡ chữ; lấy 7cqi để chừa ~5% hao cho font
-       thay thế lúc chưa tải xong Inter. Sàn phải đủ thấp để 7cqi luôn là giá
-       trị quyết định trên mọi màn điện thoại — đặt sàn cao hơn thì máy hẹp bị
-       ép ngắt dòng, làm gãy cặp câu đối. */
+    font-size: 2rem;
     font-size: clamp(1.125rem, 7cqi, 3.5rem);
   }
 
-  /* Màn quá hẹp thì buộc phải xuống dòng — cho ngắt cân hai bên thay vì
-     bỏ lại một chữ trơ trọi. */
   .hero-title span {
     text-wrap: balance;
   }
@@ -137,28 +119,22 @@ import carousel3 from "../assets/images/carousel-3.jpg";
     opacity: 1;
   }
 
-
   .hero-bg-image img {
 
     image-rendering: -webkit-optimize-contrast;
     image-rendering: auto;
     image-rendering: high-quality;
 
-
     transform: translateZ(0);
     backface-visibility: hidden;
 
-
     filter: blur(0);
-
 
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
-
     will-change: opacity;
   }
-
 
   .progress-indicator.active .progress-fill {
     animation: fillProgress 3s linear forwards;
@@ -172,7 +148,6 @@ import carousel3 from "../assets/images/carousel-3.jpg";
       width: 100%;
     }
   }
-
 
   .progress-indicator:not(.active) .progress-fill {
     width: 0%;
@@ -216,7 +191,6 @@ import carousel3 from "../assets/images/carousel-3.jpg";
           }
         });
 
-
         bgImages[index].classList.add('active');
         indicators[index].classList.add('active');
       }
@@ -233,7 +207,6 @@ import carousel3 from "../assets/images/carousel-3.jpg";
         window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
       }
 
-
       indicators.forEach(function(ind, idx) {
         ind.onclick = function() {
           currentIndex = idx;
@@ -242,13 +215,10 @@ import carousel3 from "../assets/images/carousel-3.jpg";
         };
       });
 
-
       showSlide(0);
-
 
       window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
     }
-
 
     window.addEventListener('pageshow', function(event) {
 

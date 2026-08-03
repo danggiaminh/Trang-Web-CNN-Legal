@@ -8,15 +8,12 @@ import articleHero from "../../assets/images/article-hero.jpg";
 
 const articles = await getAllArticles();
 
-/** "dd/mm/yyyy" -> số so sánh được. Bài thiếu ngày xếp cuối. */
 const mocThoiGian = (d: string) => {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec((d ?? "").trim());
   return m ? Number(`${m[3]}${m[2]}${m[1]}`) : 0;
 };
 
 const allItems = [
-  // Bài đăng toàn văn trên website mở trang chi tiết; bài chỉ giới thiệu thì
-  // dẫn thẳng sang báo gốc.
   ...articles.map((a) => ({
     href: `/bai-viet/${a.slug}/`,
     external: false,
@@ -33,7 +30,6 @@ const allItems = [
     date: a.publishedAt,
     source: a.sourceName,
   })),
-  // Ba yêu cầu bài đăng mới nhất nằm trên đầu.
 ].sort((a, b) => mocThoiGian(b.date) - mocThoiGian(a.date));
 
 const categories = [
@@ -118,7 +114,6 @@ const structuredData = [
               <button
                 class:list={[
                   "filter-btn px-4 py-4 text-center text-[0.875rem] transition-all border border-text-dark/20 rounded-xl hover:scale-105",
-                  // Ba yêu cầu bôi đậm riêng chữ "Tất cả".
                   cat === "Tất cả"
                     ? "bg-ink-black font-bold text-white"
                     : "bg-surface-white font-medium text-text-dark",
@@ -158,7 +153,6 @@ const structuredData = [
     </div>
   </section>
 </BaseLayout>
-
 
 <script>
   const buttons = document.querySelectorAll<HTMLButtonElement>(".filter-btn");

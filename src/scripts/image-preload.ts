@@ -15,7 +15,6 @@ async function preloadPageImages(rawHref: string): Promise<void> {
 
   try {
 
-
     const res = await fetch(url.href, {
       cache: "force-cache",
       signal: AbortSignal.timeout(5000),
@@ -23,7 +22,6 @@ async function preloadPageImages(rawHref: string): Promise<void> {
     if (!res.ok) return;
 
     const html = await res.text();
-
 
     whenIdle(() => {
       const doc = new DOMParser().parseFromString(html, "text/html");

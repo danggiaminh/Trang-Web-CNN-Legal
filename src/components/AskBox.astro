@@ -164,7 +164,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       border-radius 200ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-
   :global(body[data-ask-panel-open]) {
     overflow: hidden;
   }
@@ -240,9 +239,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   const panelHint = document.querySelector<HTMLElement>("[data-ask-panel-hint]");
 
   if (form && input && submit && panel && panelForm && panelInput && panelSubmit && messages) {
-    // Đọc vị trí cuộn TRƯỚC mọi thao tác ghi DOM bên dưới. Đọc sau khi ghi sẽ
-    // buộc trình duyệt tính lại layout đồng bộ (forced reflow) — kể cả khi bọc
-    // trong requestAnimationFrame, vì rAF chạy trước bước layout của khung hình.
     const initialScroll = window.scrollY;
 
     const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
@@ -259,12 +255,10 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 
     const shell = document.querySelector<HTMLElement>("[data-app-shell]");
 
-
     const shellIsScroller = window.matchMedia("(min-width: 640px)");
     let savedScroll = 0;
 
     const openPanel = () => {
-
 
       if (panel.hasAttribute("data-open")) {
         panelInput.focus({ preventScroll: true });
@@ -282,7 +276,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     };
 
     const closePanel = () => {
-
 
       const target =
         shell && shellIsScroller.matches ? shell.scrollTop : savedScroll;
@@ -363,7 +356,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       return answer;
     };
 
-
     const MAX_HISTORY = 6;
     const history: { role: "user" | "assistant"; content: string }[] = [];
 
@@ -374,7 +366,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 
     const askQuestion = async (question: string) => {
 
-
       inFlight?.abort();
       const controller = new AbortController();
       inFlight = controller;
@@ -383,7 +374,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       messages.querySelector("[data-ask-disclaimer]")?.remove();
       addUserMessage(question);
       const answer = addAssistantMessage();
-
 
       answer.setAttribute("aria-live", "off");
       scrollToEnd();
@@ -405,7 +395,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       let raw = "";
       let finalShown = false;
 
-
       let frame = 0;
       const flush = () => {
         frame = 0;
@@ -417,7 +406,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       };
 
       try {
-        const res = await fetch("/api/chat", {
+        const res = await fetch("/api/v1/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,

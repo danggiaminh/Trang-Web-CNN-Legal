@@ -7,16 +7,12 @@ use crate::{
 };
 use anyhow::Result;
 
-
 const SHORT_DOC_CHARS: usize = 3000;
-
 
 const RETRIEVED_MAX_CHARS: usize = 5000;
 
-
 const OUTLINE_SECTION_CHARS: usize = 450;
 const OUTLINE_MAX_CHARS: usize = 6000;
-
 
 const WHOLE_DOC_HINTS: &[&str] = &[
     "tóm tắt",
@@ -30,7 +26,6 @@ const WHOLE_DOC_HINTS: &[&str] = &[
     "viết về gì",
     "đại ý",
 ];
-
 
 fn normalized_words(question: &str) -> String {
     let spaced: String = question
@@ -55,7 +50,6 @@ pub async fn build_rag_context(
     top_k: usize,
     slug: Option<&str>,
 ) -> Result<(Vec<Retrieved>, Option<String>)> {
-
 
     let stats = match slug {
         Some(slug) => {
@@ -83,7 +77,6 @@ pub async fn build_rag_context(
         return Ok((hits, None));
     };
 
-
     if char_len <= SHORT_DOC_CHARS {
         let pool = pool.clone();
         let slug_owned = slug.unwrap_or_default().to_string();
@@ -94,7 +87,6 @@ pub async fn build_rag_context(
         .await??;
         return Ok((doc.chunks, Some(title)));
     }
-
 
     if wants_whole_doc(question) {
         let pool = pool.clone();
@@ -114,7 +106,6 @@ pub async fn build_rag_context(
         }
     }
 
-
     let q_emb = embedder.embed_one(question).await?;
     let pool = pool.clone();
     let q_text = question.to_string();
@@ -127,7 +118,6 @@ pub async fn build_rag_context(
 
     Ok((within_budget(hits, RETRIEVED_MAX_CHARS), Some(title)))
 }
-
 
 fn within_budget(hits: Vec<Retrieved>, budget: usize) -> Vec<Retrieved> {
     let mut out: Vec<Retrieved> = Vec::new();
@@ -150,7 +140,6 @@ fn render_chunks(chunks: &[Retrieved]) -> String {
     }
     let mut s = String::new();
     for (i, c) in chunks.iter().enumerate() {
-
 
         let src = match (c.url.trim(), c.heading_path.as_str()) {
             ("", "") => c.title.clone(),
@@ -178,7 +167,6 @@ pub fn build_prompt(
     current_title: Option<&str>,
     history: &[(&'static str, String)],
 ) -> Vec<ChatMessage> {
-
 
     let system = SYSTEM_PROMPT_TEMPLATE
         .replace(

@@ -7,9 +7,7 @@ type Entry = {
   t: string;
   d: string;
   u: string;
-  /** Nhãn lĩnh vực hiện bên phải mỗi dòng (Hình sự, Dân sự…). */
   g: string;
-  /** Loại nội dung, dùng để gom nhóm trong menu. */
   k: "Dịch vụ" | "Bài viết" | "Vụ án";
 };
 
@@ -19,14 +17,10 @@ const trim = (s: string, n = 120) => {
 };
 
 export const GET: APIRoute = () => {
-  // Chỉ mục chỉ chứa NỘI DUNG. Các mục điều hướng (Giới thiệu, Liên hệ, trang
-  // danh sách của từng nhánh) do `buildTree` trong Search.astro dựng cứng, nên
-  // đưa vào đây chỉ làm phình tệp mà không bao giờ hiển thị.
   const entries: Entry[] = [
     ...services.map((s) => ({
       t: s.title,
       d: trim(s.summary),
-      // Không còn trang chi tiết dịch vụ nên trỏ chung về trang Dịch vụ.
       u: "/dich-vu/",
       g: "Dịch vụ",
       k: "Dịch vụ" as const,
@@ -40,9 +34,6 @@ export const GET: APIRoute = () => {
       k: "Bài viết" as const,
     })),
 
-    // Bài đăng báo ngoài: `u` là đường dẫn tuyệt đối nên `kindOf` không suy được
-    // loại từ tiền tố — phải dựa vào `k`. Ghi tên báo vào mô tả để người dùng
-    // biết trước là sẽ rời khỏi trang.
     ...externalArticles.map((a) => ({
       t: a.title,
       d: trim(`${a.sourceName} · ${a.summary}`),
@@ -63,9 +54,6 @@ export const GET: APIRoute = () => {
   return new Response(JSON.stringify(entries), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      // Chỉ mục đổi theo mỗi lần deploy. Đặt max-age dài sẽ khiến trình duyệt
-      // giữ bản cũ tới hàng giờ — đổi cấu trúc dữ liệu là menu hỏng câm lặng.
-      // no-cache vẫn cho phép cache nhưng buộc kiểm lại; khớp ETag thì trả 304.
       "Cache-Control": "no-cache",
     },
   });

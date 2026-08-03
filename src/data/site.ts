@@ -1,7 +1,5 @@
 export const site = {
   name: "CNN Legal",
-  // Khẩu hiệu là cặp câu đối nhau: `sloganLines` để hiển thị hai dòng,
-  // `slogan` là bản gộp một dòng dùng cho <title> và thẻ og.
   sloganLines: ["Tối ưu giải pháp pháp lý", "Tối đa quyền lợi khách hàng"],
   slogan: "Tối ưu giải pháp pháp lý – Tối đa quyền lợi khách hàng",
   description:
@@ -14,7 +12,6 @@ export const site = {
   publicPhone: "08.59618686",
   publicPhoneHref: "tel:0859618686",
 
-
   address: {
     streetAddress: "T3.18 Tòa nhà La Astoria Plaza, số 383 Nguyễn Duy Trinh",
     addressLocality: "Phường Bình Trưng",
@@ -25,8 +22,6 @@ export const site = {
     "T3.18 Tòa nhà La Astoria Plaza, số 383 Nguyễn Duy Trinh, P. Bình Trưng, TP. Hồ Chí Minh",
   geo: { latitude: 10.7836, longitude: 106.7675 },
   areaServed: "Thành phố Hồ Chí Minh, Việt Nam",
-  // Nghỉ trưa nên phải tách hai ca; `workingHours` để dựng schema.org,
-  // `workingHoursLines` để hiển thị.
   workingHoursDisplay: "Thứ Hai – Thứ Sáu: 08:00 – 12:00 và 13:30 – 17:30",
   workingHoursLines: [
     "Từ thứ Hai đến thứ Sáu hàng tuần",

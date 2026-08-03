@@ -47,9 +47,7 @@ const structuredData = [
     <div class="section-shell py-12 md:py-16">
       <div class="mx-auto max-w-3xl">
 
-
-        {/* Hiện ngày tháng năm đầy đủ. Vụ việc không có ngày xét xử cụ thể
-            (như vụ hành chính Quận 3) thì lùi về hiển thị năm — không bịa ngày. */}
+        
         <div class="flex flex-wrap items-center gap-2 text-[0.8125rem] font-medium text-text-muted">
           <span>{caseItem.date || caseItem.year}</span>
           {caseItem.court && (
@@ -64,11 +62,8 @@ const structuredData = [
           {caseItem.title}
         </h1>
 
-
-        {/* Không còn ô "Thời gian" ở đây — ngày đã hiện ngay dưới tiêu đề, để
-            lại là lặp thông tin. Cả khối tự biến mất khi không còn gì để hiện,
-            nên không để lại khoảng trống thừa. */}
-        {(caseItem.role || caseItem.defendant || caseItem.charge) && (
+        
+        {(caseItem.role || caseItem.defendant) && (
           <div class="mt-8 grid gap-4 rounded-xl border border-border-soft bg-surface-subtle p-5 sm:grid-cols-2 lg:grid-cols-4">
             {caseItem.role && <div>
               <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Vai trò</p>
@@ -78,16 +73,10 @@ const structuredData = [
               <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Bị cáo</p>
               <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.defendant}</p>
             </div>}
-            {caseItem.charge && <div>
-              <p class="text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-text-muted">Tội danh</p>
-              <p class="mt-1 text-[0.8125rem] font-medium text-text-dark">{caseItem.charge}</p>
-            </div>}
           </div>
         )}
 
-
         <div class="prose-legal mt-10 text-[0.9375rem] leading-[1.85] text-text-dark" set:html={caseItem.body} />
-
 
         {caseItem.keyArguments.length > 0 && (
           <div class="mt-10">
@@ -103,7 +92,6 @@ const structuredData = [
           </div>
         )}
 
-
         {caseItem.result && (
           <div class="mt-10 flex items-center gap-3 rounded-xl border border-green-100 bg-green-50 px-6 py-4">
             <svg class="h-5 w-5 shrink-0 text-green-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -116,13 +104,10 @@ const structuredData = [
           </div>
         )}
 
-
         {caseItem.sources.length > 0 && (
           <div class="mt-10 border-t border-border-soft pt-8">
             <h2 class="text-[1rem] font-bold text-text-dark">Nguồn tham khảo</h2>
-            {/* Trình bày giống danh sách ở trang Bài viết: tiêu đề bài là liên
-                kết, bên dưới là tên báo — ngày đăng. Trước đây chỉ hiện tên báo
-                nên không biết bài nào. */}
+            
             <ul class="mt-4 space-y-4">
               {caseItem.sources.map((source) => (
                 <li>
@@ -142,7 +127,6 @@ const structuredData = [
             </ul>
           </div>
         )}
-
 
         <div class="mt-10 border-t border-border-soft pt-8">
           <a

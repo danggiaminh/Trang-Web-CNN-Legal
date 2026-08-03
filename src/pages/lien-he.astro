@@ -98,26 +98,26 @@ const structuredData = [
           </div>
 
           <div>
-            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Email</p>
+            <p class="font-semibold">Email</p>
             <a class="mt-1 block text-[1rem] leading-[1.85] text-text-dark hover:text-deep-blue-navy" href={`${site.publicEmailHref}?subject=${encodeURIComponent('Yêu cầu tư vấn pháp lý – CNN Legal')}`}>
               {site.publicEmail}
             </a>
           </div>
 
           <div>
-            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Số điện thoại</p>
+            <p class="font-semibold">Số điện thoại</p>
             <a class="mt-1 block text-[1rem] leading-[1.85] text-text-dark hover:text-deep-blue-navy" href={site.publicPhoneHref}>
               {site.publicPhone}
             </a>
           </div>
 
           <div>
-            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Địa chỉ</p>
+            <p class="font-semibold">Địa chỉ</p>
             <p class="mt-1 text-[1rem] leading-[1.85] text-text-dark">{site.addressDisplay}</p>
           </div>
 
           <div>
-            <p class="text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-text-dark">Thời gian làm việc</p>
+            <p class="font-semibold">Thời gian làm việc</p>
             {site.workingHoursLines.map((line) => (
               <p class="mt-1 text-[1rem] leading-[1.85] text-text-dark">{line}</p>
             ))}
@@ -258,7 +258,7 @@ const structuredData = [
             />
             <div class="relative z-10 max-w-md">
               <p class="font-sans text-[34px] font-[657] leading-tight tracking-[-0.02em] text-white">Ứng dụng email của bạn sẽ mở ra.</p>
-              <p class="mt-4 font-sans text-[19px] leading-relaxed text-white">Nội dung đã được soạn sẵn — vui lòng nhấn <strong>Gửi</strong> trong ứng dụng email để hoàn tất. Nếu không mở được, bạn gửi trực tiếp tới {site.publicEmail} hoặc gọi {site.publicPhone}.</p>
+              <p class="prose-justify mt-4 font-sans text-[19px] leading-relaxed text-white">Nội dung đã được soạn sẵn — vui lòng nhấn <strong>Gửi</strong> trong ứng dụng email để hoàn tất. Nếu không mở được, bạn gửi trực tiếp tới {site.publicEmail} hoặc gọi {site.publicPhone}.</p>
             </div>
           </div>
           </form>
@@ -315,7 +315,6 @@ const structuredData = [
       errorMsg.classList.remove('hidden');
       return;
     }
-
 
     const to = form.dataset.email || '';
     const subject = `[CNN Legal] ${data.field}${data.subject ? ' – ' + data.subject : ''} – ${data.name}`;

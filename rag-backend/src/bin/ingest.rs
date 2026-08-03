@@ -10,7 +10,6 @@ use cnn_legal_rag::{
 use std::collections::HashSet;
 use walkdir::WalkDir;
 
-
 #[derive(Parser)]
 #[command(about = "Ingest bài viết CNN Legal (.md cục bộ) vào vector store")]
 struct Args {

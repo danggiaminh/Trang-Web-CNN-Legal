@@ -939,8 +939,6 @@ export const articles: readonly Article[] = [
   },
 ];
 
-/** Bài đăng trên báo, tạp chí ngoài — chỉ giới thiệu và dẫn sang nguồn gốc,
- *  không đăng lại toàn văn. */
 export type ExternalArticle = {
   readonly title: string;
   readonly sourceName: string;

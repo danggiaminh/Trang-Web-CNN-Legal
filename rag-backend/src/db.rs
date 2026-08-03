@@ -11,7 +11,6 @@ pub type Pool = r2d2::Pool<SqliteConnectionManager>;
 
 static VEC_INIT: Once = Once::new();
 
-
 pub const SCHEMA_VERSION: i64 = 2;
 
 pub fn register_sqlite_vec() {
@@ -41,7 +40,6 @@ pub fn build_pool(db_path: &str) -> Result<Pool> {
         .context("không tạo được SQLite pool")?;
     Ok(pool)
 }
-
 
 pub fn init_schema(conn: &Connection, embed_dim: usize, rebuild: bool) -> Result<()> {
     let found: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
@@ -103,7 +101,6 @@ pub fn init_schema(conn: &Connection, embed_dim: usize, rebuild: bool) -> Result
         );"
     ))?;
 
-
     conn.execute_batch(
         "CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
             content,
@@ -146,7 +143,6 @@ pub fn delete_doc(conn: &Connection, slug: &str) -> Result<()> {
     conn.execute("DELETE FROM documents WHERE slug = ?1", [slug])?;
     Ok(())
 }
-
 
 pub fn replace_doc(
     conn: &mut Connection,
@@ -247,7 +243,6 @@ pub struct DocChunks {
     pub truncated: bool,
 }
 
-
 pub fn doc_stats(conn: &Connection, slug: &str) -> Result<Option<(String, usize)>> {
     Ok(conn
         .query_row(
@@ -299,7 +294,6 @@ pub fn fetch_doc_chunks(conn: &Connection, slug: &str, max_chars: usize) -> Resu
     })
 }
 
-
 pub fn fetch_outline(
     conn: &Connection,
     slug: &str,
@@ -345,7 +339,6 @@ pub enum Scope {
     Doc(String),
 }
 
-
 pub fn fts_query(question: &str) -> Option<String> {
     let mut terms: Vec<String> = Vec::new();
     for word in question.split_whitespace() {
@@ -367,7 +360,6 @@ pub fn fts_query(question: &str) -> Option<String> {
 
 const RRF_K: f64 = 60.0;
 
-
 fn rrf_fuse(lists: &[Vec<i64>]) -> Vec<(i64, f64)> {
     let mut acc: HashMap<i64, f64> = HashMap::new();
     for list in lists {
@@ -382,7 +374,6 @@ fn rrf_fuse(lists: &[Vec<i64>]) -> Vec<(i64, f64)> {
 
 fn knn_ids(conn: &Connection, q_emb: &[f32], k: usize, scope: &Scope) -> Result<Vec<i64>> {
     let ids = match scope {
-
 
         Scope::Doc(slug) => {
             let mut s = conn.prepare(
@@ -460,7 +451,6 @@ fn hydrate(conn: &Connection, scored: &[(i64, f64)]) -> Result<Vec<Retrieved>> {
         })
         .collect())
 }
-
 
 pub fn search_hybrid(
     conn: &Connection,
@@ -549,7 +539,6 @@ mod tests {
         assert!(fts_query("?  !  *").is_none());
     }
 
-
     #[test]
     fn bm25_bat_dung_dinh_danh_phap_ly() {
         let mut conn = mem_db();
@@ -571,14 +560,12 @@ mod tests {
         assert!(top[0].content.contains("226/2025/QH15"));
     }
 
-
     #[test]
     fn knn_loc_slug_ngay_trong_truy_van() {
         let mut conn = mem_db();
         seed(&mut conn, "bai-a", &[("", "nội dung a1", [1.0, 0.0, 0.0, 0.0]),
                                     ("", "nội dung a2", [0.9, 0.1, 0.0, 0.0])]);
         seed(&mut conn, "bai-b", &[("", "nội dung b1", [0.0, 0.0, 0.0, 1.0])]);
-
 
         let ids = knn_ids(&conn, &emb([0.0, 0.0, 0.0, 1.0]), 2, &Scope::Doc("bai-a".into())).unwrap();
         assert_eq!(ids.len(), 2, "lọc sau KNN sẽ chỉ còn 0-1 kết quả");

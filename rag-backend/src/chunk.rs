@@ -25,9 +25,7 @@ pub struct Frontmatter {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Chunk {
 
-
     pub heading_path: String,
-
 
     pub content: String,
 }
@@ -79,7 +77,6 @@ struct RawSection {
     heading_path: String,
     text: String,
 }
-
 
 fn heading_rank(level: HeadingLevel) -> Option<u8> {
     match level {
@@ -137,7 +134,6 @@ fn extract_sections(markdown: &str) -> Vec<RawSection> {
                 let text = heading_buf.trim().to_string();
                 match heading_rank_open.take() {
                     Some(rank) if !text.is_empty() => {
-
 
                         stack.retain(|(lv, _)| *lv < rank);
                         stack.push((rank, text));
@@ -269,7 +265,6 @@ fn merge_tiny(chunks: Vec<Chunk>) -> Vec<Chunk> {
     out
 }
 
-
 pub fn embed_text(title: &str, heading_path: &str, content: &str) -> String {
     let mut s = String::with_capacity(title.len() + heading_path.len() + content.len() + 2);
     if !title.is_empty() {
@@ -307,14 +302,12 @@ mod tests {
         );
     }
 
-
     #[test]
     fn cung_cap_thi_thay_the_khong_chong_them() {
         let md = "## A\n\nx.\n\n### A1\n\ny.\n\n### A2\n\nz.\n";
         let c = chunks_from_markdown(md);
         assert_eq!(c.last().unwrap().heading_path, "A › A2");
     }
-
 
     #[test]
     fn content_khong_chua_tieu_de() {

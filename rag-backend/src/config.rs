@@ -14,18 +14,12 @@ pub struct Config {
 
     pub openrouter_reasoning: String,
 
-
     pub openrouter_max_tokens: u32,
 
-    /// Không đặt `temperature` thì nhà cung cấp dùng mặc định (thường 1.0),
-    /// khiến câu trả lời dao động mạnh và đôi khi lan man vô nghĩa.
     pub openrouter_temperature: f32,
     pub openrouter_top_p: f32,
-    /// Hai hình phạt này chặn vòng lặp lặp chữ — thủ phạm chính làm đốt hết
-    /// `max_tokens` cho một câu trả lời rác.
     pub openrouter_frequency_penalty: f32,
     pub openrouter_presence_penalty: f32,
-    /// Chốt cứng: vượt số ký tự này thì ngắt luồng, không chờ model tự dừng.
     pub max_answer_chars: usize,
 
     pub embed_base_url: String,
@@ -39,7 +33,6 @@ pub struct Config {
     pub top_k: usize,
     pub rate_limit_per_second: u64,
     pub rate_limit_burst: u32,
-
 
     pub allowed_origins: Vec<String>,
 }
