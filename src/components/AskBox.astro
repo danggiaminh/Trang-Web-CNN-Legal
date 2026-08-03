@@ -417,7 +417,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       };
 
       try {
-        const res = await fetch("/api/chat", {
+        const res = await fetch("/api/v1/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           signal: controller.signal,

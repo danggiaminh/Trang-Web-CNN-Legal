@@ -1,0 +1,41 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+// Trang này được dựng sẵn thành 404.html. Nếu thiếu nó, adapter Vercel sẽ trỏ
+// route bắt-tất-cả về serverless function, và mọi URL sai — phần lớn do bot quét
+// — đều tốn một lượt gọi function. Có file tĩnh thì Vercel trả thẳng từ CDN.
+const title = "Không tìm thấy trang | CNN Legal";
+const description = "Đường dẫn bạn truy cập không tồn tại hoặc đã được thay đổi.";
+---
+
+<BaseLayout title={title} description={description} noindex>
+  <section class="mx-auto flex min-h-[34rem] max-w-2xl flex-col items-center justify-center px-6 py-20 text-center">
+    <p class="font-sans text-[0.875rem] font-medium uppercase tracking-[0.08em] text-text-muted">
+      Lỗi 404
+    </p>
+
+    <h1 class="mt-4 text-balance font-sans text-[2rem] font-semibold leading-[1.14] tracking-[-0.01em] text-text-dark md:text-[2.75rem]">
+      Không tìm thấy trang bạn cần
+    </h1>
+
+    <p class="mt-5 max-w-md font-sans text-[1rem] leading-[1.8] text-text-muted">
+      Đường dẫn này không tồn tại hoặc đã được thay đổi. Bạn thử quay lại trang chủ
+      hoặc xem mục Bài viết nhé.
+    </p>
+
+    <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+      <a
+        href="/"
+        class="inline-flex items-center gap-2 rounded-full bg-ink-black px-7 py-3 text-[0.9375rem] font-medium text-white transition-colors hover:bg-ink-hover active:scale-[0.97]"
+      >
+        Về trang chủ
+      </a>
+      <a
+        href="/bai-viet/"
+        class="inline-flex items-center gap-2 rounded-full border border-border-soft px-7 py-3 text-[0.9375rem] font-medium text-text-dark transition-colors hover:bg-surface-subtle active:scale-[0.97]"
+      >
+        Xem bài viết
+      </a>
+    </div>
+  </section>
+</BaseLayout>
