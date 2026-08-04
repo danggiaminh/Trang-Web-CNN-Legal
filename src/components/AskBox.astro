@@ -49,8 +49,9 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   </form>
 </div>
 
+<div class="pointer-events-none fixed inset-0 z-[60] overflow-hidden">
 <aside
-  class="fixed inset-0 z-[60] flex w-full translate-x-[calc(100%+1.5rem)] flex-col border-border-soft bg-surface-white transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-y-3 sm:left-auto sm:right-3 sm:w-[23rem] sm:rounded-2xl sm:border sm:shadow-[0_8px_30px_-8px_rgba(15,25,35,0.25)]"
+  class="pointer-events-auto absolute inset-0 flex w-full translate-x-[calc(100%+1.5rem)] flex-col border-border-soft bg-surface-white transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-y-3 sm:left-auto sm:right-3 sm:w-[23rem] sm:rounded-2xl sm:border sm:shadow-[0_8px_30px_-8px_rgba(15,25,35,0.25)]"
   aria-label="Trợ lý hỏi đáp"
   aria-hidden="true"
   inert
@@ -131,6 +132,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     </form>
   </div>
 </aside>
+</div>
 
 <style>
   [data-has-text] [data-ask-hint] {
