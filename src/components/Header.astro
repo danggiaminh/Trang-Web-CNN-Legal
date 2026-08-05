@@ -139,4 +139,51 @@ const isActive = (item: NavigationItem) =>
   </div>
 </header>
 
+<style>
+  @media (min-width: 1280px) {
+    header :global(.section-shell) {
+      font-size: 16px;
+      width: min(100% - 2em, 73em);
+      height: 3.75em;
+      gap: 1.5em;
+    }
+
+    header :global([data-search-overlay]) {
+      font-size: 1rem;
+    }
+
+    header :global(a[aria-label="CNN Legal trang chủ"] span) {
+      font-size: 1.25em;
+    }
+
+    header :global(nav) {
+      gap: 0.125em;
+    }
+
+    header :global(nav a) {
+      font-size: 0.9375em;
+      padding: 0.5em 0.75em;
+    }
+
+    header :global(.ml-auto) {
+      gap: 0.75em;
+    }
+
+    header :global(a[href="/lien-he/"]) {
+      font-size: 0.9375em;
+      padding: 0.5em 1.25em;
+    }
+
+    header :global([data-search-open]) {
+      height: 2.5em;
+      width: 2.5em;
+    }
+
+    header :global([data-search-open] svg) {
+      height: 1.375em;
+      width: 1.375em;
+    }
+  }
+</style>
+
 <script src="../scripts/navigation.ts"></script>

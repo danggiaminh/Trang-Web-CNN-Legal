@@ -3,6 +3,7 @@ export const prerender = false;
 import type { APIRoute } from "astro";
 import { allDocs } from "../../../server/knowledge";
 import { hasApiKey } from "../../../server/openrouter";
+import { hasResendKey } from "../../../server/contact";
 
 export const GET: APIRoute = async () => {
   let docs = 0;
@@ -18,7 +19,16 @@ export const GET: APIRoute = async () => {
     ok = false;
   }
 
-  return new Response(JSON.stringify({ ok, keyPresent: hasApiKey(), docs, sections }), {
+  const body = {
+    ok,
+    keyPresent: hasApiKey(),
+
+    resendKeyPresent: hasResendKey(),
+    docs,
+    sections,
+  };
+
+  return new Response(JSON.stringify(body), {
     status: ok ? 200 : 500,
     headers: {
       "Content-Type": "application/json; charset=utf-8",

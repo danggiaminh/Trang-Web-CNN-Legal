@@ -45,6 +45,20 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  :root {
+    --nav-h: 3.75rem;
+  }
+
+  @media (min-width: 1280px) {
+    html {
+      font-size: clamp(1rem, 1.25vw, 2rem);
+    }
+
+    :root {
+      --nav-h: 60px;
+    }
+  }
+
   body {
     min-width: 320px;
     min-height: 100dvh;

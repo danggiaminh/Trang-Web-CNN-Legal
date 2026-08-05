@@ -20,6 +20,7 @@ npm-debug.log*
 .env.*
 !.env.example
 *.env
-!rag-backend/.env
 
 src/content/articles/
+
+rag-backend/.env

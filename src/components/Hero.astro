@@ -6,7 +6,7 @@ import carousel1 from "../assets/images/carousel-1.jpg";
 import carousel3 from "../assets/images/carousel-3.jpg";
 ---
 
-<section class="relative h-[calc(100vh-3.75rem)] overflow-hidden">
+<section class="relative h-[calc(100vh-var(--nav-h))] overflow-hidden">
 
   <div class="grid h-full lg:grid-cols-[2fr_3fr]">
 
@@ -155,7 +155,7 @@ import carousel3 from "../assets/images/carousel-3.jpg";
   }
 </style>
 
-<script is:inline>
+<script>
 
   (function() {
 
@@ -163,13 +163,15 @@ import carousel3 from "../assets/images/carousel-3.jpg";
       history.scrollRestoration = 'manual';
     }
 
+    let rotationTimer = 0;
+
     function initSlider() {
-      if (window.heroRotationInterval) {
-        clearInterval(window.heroRotationInterval);
+      if (rotationTimer) {
+        clearInterval(rotationTimer);
       }
 
-      const bgImages = document.querySelectorAll('.hero-bg-image');
-      const indicators = document.querySelectorAll('.progress-indicator');
+      const bgImages = document.querySelectorAll<HTMLElement>('.hero-bg-image');
+      const indicators = document.querySelectorAll<HTMLElement>('.progress-indicator');
 
       if (bgImages.length === 0 || indicators.length === 0) {
         return;
@@ -179,12 +181,12 @@ import carousel3 from "../assets/images/carousel-3.jpg";
       const totalSlides = Math.min(bgImages.length, indicators.length);
       const rotationInterval = 3000;
 
-      function showSlide(index) {
+      function showSlide(index: number) {
 
         bgImages.forEach(function(img) { img.classList.remove('active'); });
         indicators.forEach(function(ind) {
           ind.classList.remove('active');
-          const fill = ind.querySelector('.progress-fill');
+          const fill = ind.querySelector<HTMLElement>('.progress-fill');
           if (fill) {
 
             void fill.offsetWidth;
@@ -201,10 +203,10 @@ import carousel3 from "../assets/images/carousel-3.jpg";
       }
 
       function resetRotation() {
-        if (window.heroRotationInterval) {
-          clearInterval(window.heroRotationInterval);
+        if (rotationTimer) {
+          clearInterval(rotationTimer);
         }
-        window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
+        rotationTimer = window.setInterval(nextSlide, rotationInterval);
       }
 
       indicators.forEach(function(ind, idx) {
@@ -217,7 +219,7 @@ import carousel3 from "../assets/images/carousel-3.jpg";
 
       showSlide(0);
 
-      window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
+      rotationTimer = window.setInterval(nextSlide, rotationInterval);
     }
 
     window.addEventListener('pageshow', function(event) {

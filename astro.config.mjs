@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   output: "static",
   adapter: vercel({
+
   }),
   image: {
 
@@ -74,6 +75,25 @@ export default defineConfig({
       watch: {
         ignored: ["!**/src/data/**"],
       },
+    },
+  },
+  security: {
+
+    csp: {
+
+      directives: [
+        "default-src 'self'",
+        "base-uri 'self'",
+        "object-src 'none'",
+        "form-action 'self'",
+        "connect-src 'self'",
+        "font-src 'self'",
+
+        "img-src 'self' data: https://img.lsvn.vn",
+
+        "frame-src https://www.google.com",
+        "upgrade-insecure-requests",
+      ],
     },
   },
   compressHTML: true,
