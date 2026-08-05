@@ -14,32 +14,36 @@ const isActive = (item: NavigationItem) =>
 <header
   class="sticky top-0 z-50 border-b border-border-soft bg-surface-white"
 >
-  <div class="section-shell flex h-[3.75rem] items-center gap-6">
+  <div class="section-shell grid h-[3.75rem] grid-cols-[1fr_auto_1fr] items-center gap-6">
 
-    <a href="/" class="shrink-0" aria-label="CNN Legal trang chủ">
+    <a href="/" class="col-start-1 shrink-0 justify-self-start" aria-label="CNN Legal trang chủ">
       <span class="font-sans text-[1.25rem] font-bold tracking-tight text-text-dark">
         CNN Legal
       </span>
     </a>
 
     <nav
-      class="hidden flex-1 items-center gap-0.5 lg:flex"
+      class="col-start-2 hidden items-center gap-0.5 rounded-full bg-surface-subtle p-1 lg:flex"
       aria-label="Điều hướng chính"
+      data-primary-nav
     >
       {navigationItems.map((item) => (
         <a
           class:list={[
-            "rounded-md px-3 py-2 text-[0.9375rem] font-medium leading-none transition-all",
-            isActive(item) ? "text-text-dark" : "text-text-muted hover:text-text-dark",
+            "rounded-full px-3.5 py-1.5 text-[0.9375rem] leading-none transition-all",
+            isActive(item)
+              ? "bg-surface-white font-semibold text-deep-blue-navy shadow-sm"
+              : "font-medium text-text-muted hover:text-text-dark",
           ]}
           href={item.href}
+          aria-current={isActive(item) ? "page" : undefined}
         >
           {item.label}
         </a>
       ))}
     </nav>
 
-    <div class="ml-auto flex shrink-0 items-center gap-3">
+    <div class="col-start-3 flex shrink-0 items-center justify-self-end gap-3">
       <Search />
       <a
         href="/lien-he/"
@@ -156,16 +160,17 @@ const isActive = (item: NavigationItem) =>
       font-size: 1.25em;
     }
 
-    header :global(nav) {
+    header :global([data-primary-nav]) {
       gap: 0.125em;
+      padding: 0.25em;
     }
 
-    header :global(nav a) {
+    header :global([data-primary-nav] a) {
       font-size: 0.9375em;
-      padding: 0.5em 0.75em;
+      padding: 0.375em 0.875em;
     }
 
-    header :global(.ml-auto) {
+    header :global(.col-start-3) {
       gap: 0.75em;
     }
 
