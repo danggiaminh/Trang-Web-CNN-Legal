@@ -12,18 +12,22 @@ const isActive = (item: NavigationItem) =>
 ---
 
 <header
-  class="sticky top-0 z-50 border-b border-border-soft bg-surface-white"
+  class="sticky top-0 z-50 -mb-[var(--nav-h)]"
 >
-  <div class="section-shell grid h-[3.75rem] grid-cols-[1fr_auto_1fr] items-center gap-6">
+  <div class="section-shell grid h-[var(--nav-h)] grid-cols-[1fr_auto_1fr] items-center gap-6">
 
-    <a href="/" class="col-start-1 shrink-0 justify-self-start" aria-label="CNN Legal trang chủ">
-      <span class="font-sans text-[1.25rem] font-bold tracking-tight text-text-dark">
+    <a
+      href="/"
+      class="glass-pill col-start-1 shrink-0 justify-self-start px-4 py-2"
+      aria-label="CNN Legal trang chủ"
+    >
+      <span class="font-sans text-[1.5rem] font-bold tracking-tight text-white">
         CNN Legal
       </span>
     </a>
 
     <nav
-      class="col-start-2 hidden items-center gap-0.5 rounded-full bg-surface-subtle p-1 lg:flex"
+      class="glass-pill col-start-2 hidden items-center gap-0.5 p-1 lg:flex"
       aria-label="Điều hướng chính"
       data-primary-nav
     >
@@ -32,8 +36,8 @@ const isActive = (item: NavigationItem) =>
           class:list={[
             "rounded-full px-3.5 py-1.5 text-[0.9375rem] leading-none transition-all",
             isActive(item)
-              ? "bg-surface-white font-semibold text-deep-blue-navy shadow-sm"
-              : "font-medium text-text-muted hover:text-text-dark",
+              ? "bg-white/20 font-semibold text-white"
+              : "font-medium text-white/75 hover:bg-white/10 hover:text-white",
           ]}
           href={item.href}
           aria-current={isActive(item) ? "page" : undefined}
@@ -47,12 +51,12 @@ const isActive = (item: NavigationItem) =>
       <Search />
       <a
         href="/lien-he/"
-        class="hidden rounded-full bg-ink-black px-5 py-2 text-[0.9375rem] font-medium text-white shadow-sm transition-colors hover:bg-ink-hover active:scale-[0.97] lg:inline-flex"
+        class="glass-pill glass-pill-strong hidden px-5 py-2 text-[0.9375rem] font-medium text-white transition-all active:scale-[0.97] lg:inline-flex"
       >
         Liên hệ
       </a>
       <button
-        class="inline-flex h-9 w-9 items-center justify-center rounded text-text-dark hover:bg-surface-subtle lg:hidden"
+        class="glass-pill inline-flex h-9 w-9 items-center justify-center text-white lg:hidden"
         type="button"
         aria-controls="mobile-menu"
         aria-expanded="false"
@@ -157,7 +161,7 @@ const isActive = (item: NavigationItem) =>
     }
 
     header :global(a[aria-label="CNN Legal trang chủ"] span) {
-      font-size: 1.25em;
+      font-size: 1.5em;
     }
 
     header :global([data-primary-nav]) {

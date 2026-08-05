@@ -104,6 +104,43 @@
     width: min(100% - 2rem, 73rem);
   }
 
+  /* Nút kính nổi trên header trong suốt. Nền đen mờ nên chữ trắng đọc được
+     trên cả hero tối lẫn nền ivory sáng của trang bài viết. */
+  .glass-pill {
+    border-radius: 9999px;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    background: color-mix(in srgb, var(--color-ink-black) 78%, transparent);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.12),
+      0 6px 20px rgb(15 25 35 / 0.22);
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .glass-pill-strong {
+    background: color-mix(in srgb, var(--color-ink-black) 90%, transparent);
+  }
+
+  a.glass-pill:hover,
+  button.glass-pill:hover {
+    border-color: rgb(255 255 255 / 0.24);
+    background: color-mix(in srgb, var(--color-ink-black) 88%, transparent);
+  }
+
+  a.glass-pill-strong:hover {
+    background: var(--color-ink-hover);
+  }
+
+  /* Trình duyệt không hỗ trợ backdrop-filter thì đổ nền đặc để giữ tương phản. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .glass-pill {
+      background: color-mix(in srgb, var(--color-ink-black) 92%, transparent);
+    }
+  }
+
   .secondary-button {
     display: inline-flex;
     align-items: center;
