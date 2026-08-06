@@ -3,7 +3,7 @@ import { Image } from "astro:assets";
 import HeroBreadcrumb from "../components/HeroBreadcrumb.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { site } from "../data/site";
-import lienHeHero from "../assets/images/lien-he-hero.png";
+import lienHeHero from "../assets/images/lien-he-hero.jpg";
 import contactSuccessBg from "../assets/images/contact-success-bg.avif";
 
 const title = `Liên hệ | ${site.name}`;
@@ -63,7 +63,7 @@ const structuredData = [
 <BaseLayout title={title} description={description} canonicalPath={pagePath} structuredData={structuredData}>
 
   <section class="relative overflow-hidden py-24 md:py-32 lg:py-40">
-    <div class="absolute inset-0 z-0 bg-ink-black">
+    <div class="absolute inset-0 z-0" style="background-color:#b4ac9e">
       <Image
         src={lienHeHero}
         alt="Liên hệ với chúng tôi"
@@ -263,8 +263,8 @@ const structuredData = [
               quality={80}
             />
             <div class="relative z-10 max-w-md">
-              <p class="font-sans text-[34px] font-[657] leading-tight tracking-[-0.02em] text-white">Đã gửi yêu cầu của bạn.</p>
-              <p class="prose-justify mt-4 font-sans text-[19px] leading-relaxed text-white">CNN Legal đã nhận được thông tin và sẽ liên hệ lại trong thời gian sớm nhất. Nếu cần trao đổi gấp, bạn gọi trực tiếp {site.publicPhone} hoặc gửi email tới {site.publicEmail}.</p>
+              <p class="font-sans text-[2.125rem] font-[657] leading-tight tracking-[-0.02em] text-white">Đã gửi yêu cầu của bạn.</p>
+              <p class="prose-justify mt-4 font-sans text-[1.1875rem] leading-relaxed text-white">CNN Legal đã nhận được thông tin và sẽ liên hệ lại trong thời gian sớm nhất. Nếu cần trao đổi gấp, bạn gọi trực tiếp {site.publicPhone} hoặc gửi email tới {site.publicEmail}.</p>
             </div>
           </div>
           </form>
