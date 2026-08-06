@@ -17,7 +17,7 @@ export default defineConfig({
         access: "secret",
         optional: true,
       }),
-      RESEND_API_KEY: envField.string({
+      BREVO_API_KEY: envField.string({
         context: "server",
         access: "secret",
         optional: true,
@@ -25,12 +25,12 @@ export default defineConfig({
       CONTACT_TO_EMAIL: envField.string({
         context: "server",
         access: "public",
-        default: "danggiaminhmicrosoft@gmail.com",
+        default: "cnnlegal.vn@gmail.com",
       }),
       CONTACT_FROM_EMAIL: envField.string({
         context: "server",
         access: "public",
-        default: "onboarding@resend.dev",
+        default: "no-reply@cnnlegal.vn",
       }),
       OPENROUTER_MODEL: envField.string({
         context: "server",

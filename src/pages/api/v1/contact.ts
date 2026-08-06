@@ -4,7 +4,7 @@ import type { APIRoute } from "astro";
 import { corsHeaders, originAllowed, withinRateLimit } from "../../../server/guard";
 import {
   MAX_CONTACT_BYTES,
-  hasResendKey,
+  hasBrevoKey,
   parseContact,
   sendContactEmail,
 } from "../../../server/contact";
@@ -66,20 +66,20 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     });
   }
 
-  if (!hasResendKey()) {
-    console.error("[api/v1/contact] thiếu RESEND_API_KEY — kiểm tra biến môi trường trên Vercel");
+  if (!hasBrevoKey()) {
+    console.error("[api/v1/contact] thiếu BREVO_API_KEY — kiểm tra biến môi trường trên Vercel");
     return json(503, { error: BUSY_MSG }, cors);
   }
 
   try {
     const result = await sendContactEmail(parsed.data, request.signal);
     if (!result.ok) {
-      console.error(`[api/v1/contact] Resend trả lỗi HTTP ${result.status}`);
+      console.error(`[api/v1/contact] Brevo trả lỗi HTTP ${result.status}`);
       return json(502, { error: BUSY_MSG }, cors);
     }
   } catch (err) {
     if (request.signal.aborted) return json(499, { error: BUSY_MSG }, cors);
-    console.error("[api/v1/contact] gọi Resend thất bại", err);
+    console.error("[api/v1/contact] gọi Brevo thất bại", err);
     return json(502, { error: BUSY_MSG }, cors);
   }
 

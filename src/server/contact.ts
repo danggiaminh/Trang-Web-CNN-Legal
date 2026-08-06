@@ -1,10 +1,11 @@
 import {
+  BREVO_API_KEY,
   CONTACT_FROM_EMAIL,
   CONTACT_TO_EMAIL,
-  RESEND_API_KEY,
 } from "astro:env/server";
 
-const RESEND_URL = "https://api.resend.com/emails";
+const BREVO_URL = "https://api.brevo.com/v3/smtp/email";
+const SENDER_NAME = "CNN Legal";
 
 export const MAX_CONTACT_BYTES = 24 * 1024;
 
@@ -46,8 +47,8 @@ function multiLine(value: unknown, max: number): string {
   return value.replace(/\r\n?/g, "\n").trim().slice(0, max);
 }
 
-export function hasResendKey(): boolean {
-  return Boolean(RESEND_API_KEY?.trim());
+export function hasBrevoKey(): boolean {
+  return Boolean(BREVO_API_KEY?.trim());
 }
 
 export type ParseResult =
@@ -136,20 +137,22 @@ export async function sendContactEmail(
   signal: AbortSignal,
 ): Promise<{ ok: boolean; status: number }> {
   const payload: Record<string, unknown> = {
-    from: CONTACT_FROM_EMAIL.trim(),
-    to: [CONTACT_TO_EMAIL.trim()],
+    sender: { email: CONTACT_FROM_EMAIL.trim(), name: SENDER_NAME },
+    to: [{ email: CONTACT_TO_EMAIL.trim() }],
     subject: buildSubject(data),
-    html: buildHtml(data),
-    text: buildText(data),
+    htmlContent: buildHtml(data),
+    textContent: buildText(data),
   };
-  if (data.email) payload.reply_to = data.email;
+  // Brevo giới hạn trường name tối đa 70 ký tự, cắt bớt để tránh lỗi 400.
+  if (data.email) payload.replyTo = { email: data.email, name: data.name.slice(0, 70) };
 
-  const res = await fetch(RESEND_URL, {
+  const res = await fetch(BREVO_URL, {
     method: "POST",
     signal,
     headers: {
-      Authorization: `Bearer ${RESEND_API_KEY?.trim() ?? ""}`,
+      "api-key": BREVO_API_KEY?.trim() ?? "",
       "Content-Type": "application/json",
+      Accept: "application/json",
     },
     body: JSON.stringify(payload),
   });
