@@ -3,7 +3,7 @@
 
 <button
   type="button"
-  class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-dark transition-colors hover:bg-[#f1f3f5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-dark lg:h-10 lg:w-10"
+  class="search-trigger inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-dark lg:h-10 lg:w-10"
   aria-label="Tìm kiếm nội dung"
   title="Tìm kiếm nội dung (Ctrl + K)"
   data-search-open
@@ -70,6 +70,25 @@
 </div>
 
 <style>
+  .search-trigger svg {
+    transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .search-trigger:hover svg,
+  .search-trigger:focus-visible svg {
+    transform: scale(1.12);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .search-trigger svg {
+      transition: none;
+    }
+    .search-trigger:hover svg,
+    .search-trigger:focus-visible svg {
+      transform: none;
+    }
+  }
+
   [data-search-overlay][data-open] {
     display: flex;
   }

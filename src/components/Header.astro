@@ -17,7 +17,7 @@ const isActive = (item: NavigationItem) =>
   <div class="section-shell flex h-[3.75rem] items-center gap-6">
 
     <a href="/" class="shrink-0" aria-label="CNN Legal trang chủ">
-      <span class="font-sans text-[1.25rem] font-bold tracking-tight text-text-dark">
+      <span class="font-sans text-[1.5rem] font-bold tracking-tight text-text-dark">
         CNN Legal
       </span>
     </a>
@@ -29,7 +29,7 @@ const isActive = (item: NavigationItem) =>
       {navigationItems.map((item) => (
         <a
           class:list={[
-            "rounded-md px-3 py-2 text-[0.9375rem] font-medium leading-none transition-all",
+            "rounded-md px-3 py-2 text-[1rem] font-medium leading-none transition-all",
             isActive(item) ? "text-text-dark" : "text-text-muted hover:text-text-dark",
           ]}
           href={item.href}
@@ -138,5 +138,20 @@ const isActive = (item: NavigationItem) =>
   </aside>
   </div>
 </header>
+
+<style>
+  @media (min-width: 1024px) {
+    header :global(.section-shell) {
+      position: relative;
+    }
+
+    header :global(nav[aria-label="Điều hướng chính"]) {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+
+</style>
 
 <script src="../scripts/navigation.ts"></script>
