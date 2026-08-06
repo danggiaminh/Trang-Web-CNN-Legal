@@ -185,6 +185,43 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     }
   }
 
+  :global(.ask-copy) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.125rem;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+    color: var(--color-text-muted);
+    transition: color 150ms ease-out, transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  :global(.ask-copy svg) {
+    width: 1.0625rem;
+    height: 1.0625rem;
+  }
+
+  :global(.ask-copy:hover),
+  :global(.ask-copy:focus-visible) {
+    color: var(--color-text-dark);
+    transform: scale(1.08);
+  }
+
+  :global(.ask-copy[data-copied]) {
+    color: var(--color-text-dark);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.ask-copy) {
+      transition: none;
+    }
+    :global(.ask-copy:hover),
+    :global(.ask-copy:focus-visible) {
+      transform: none;
+    }
+  }
+
   :global(.ask-answer p) {
     margin-bottom: 0.5rem;
   }
@@ -358,6 +395,43 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       return answer;
     };
 
+    const ICON_COPY =
+      '<path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/>';
+    const ICON_DONE =
+      '<path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l9 -9"/>';
+
+    const addCopyButton = (afterEl: HTMLElement, getText: () => string) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ask-copy";
+      btn.setAttribute("aria-label", "Sao chép câu trả lời");
+      btn.title = "Sao chép câu trả lời";
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_COPY}</svg>`;
+
+      let timer = 0;
+      btn.addEventListener("click", async () => {
+        const text = getText();
+        if (!text) return;
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          return;
+        }
+        const svg = btn.firstElementChild!;
+        svg.innerHTML = ICON_DONE;
+        btn.setAttribute("data-copied", "");
+        btn.title = "Đã sao chép";
+        clearTimeout(timer);
+        timer = window.setTimeout(() => {
+          svg.innerHTML = ICON_COPY;
+          btn.removeAttribute("data-copied");
+          btn.title = "Sao chép câu trả lời";
+        }, 1600);
+      });
+
+      afterEl.insertAdjacentElement("afterend", btn);
+    };
+
     const MAX_HISTORY = 6;
     const history: { role: "user" | "assistant"; content: string }[] = [];
 
@@ -460,6 +534,8 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
         if (raw) {
           answer.setAttribute("aria-live", "polite");
           flush();
+          const copied = raw;
+          addCopyButton(answer, () => copied);
           history.push({ role: "user", content: question });
           history.push({ role: "assistant", content: raw });
           while (history.length > MAX_HISTORY) history.shift();
