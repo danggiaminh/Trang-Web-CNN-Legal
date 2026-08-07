@@ -30,7 +30,7 @@ export default defineConfig({
       CONTACT_FROM_EMAIL: envField.string({
         context: "server",
         access: "public",
-        default: "lienhe@cnnlegal.vn",
+        default: "cnnlegal.vn@gmail.com",
       }),
       OPENROUTER_MODEL: envField.string({
         context: "server",

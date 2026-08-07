@@ -135,7 +135,7 @@ export function buildText(data: ContactData): string {
 export async function sendContactEmail(
   data: ContactData,
   signal: AbortSignal,
-): Promise<{ ok: boolean; status: number }> {
+): Promise<{ ok: boolean; status: number; messageId: string | null; detail: string | null }> {
   const payload: Record<string, unknown> = {
     sender: { email: CONTACT_FROM_EMAIL.trim(), name: SENDER_NAME },
     to: [{ email: CONTACT_TO_EMAIL.trim() }],
@@ -156,6 +156,84 @@ export async function sendContactEmail(
     },
     body: JSON.stringify(payload),
   });
-  await res.body?.cancel().catch(() => {});
-  return { ok: res.ok, status: res.status };
+  // Brevo tra 201 ngay ca khi thu bi tu choi sau do (vi du nguoi gui chua xac minh).
+  // Giu lai messageId de con tra cuu trong Brevo > Logs khi thu khong toi noi.
+  const raw = await res.text().catch(() => "");
+  let messageId: string | null = null;
+  let detail: string | null = null;
+  try {
+    const body = JSON.parse(raw) as { messageId?: unknown; message?: unknown };
+    if (typeof body?.messageId === "string") messageId = body.messageId;
+    if (typeof body?.message === "string") detail = body.message.slice(0, 300);
+  } catch {
+    // Than tra ve khong phai JSON - status va detail rong da du de ghi log.
+  }
+  return { ok: res.ok, status: res.status, messageId, detail };
+}
+
+const SENDERS_URL = "https://api.brevo.com/v3/senders";
+const DOMAINS_URL = "https://api.brevo.com/v3/senders/domains";
+
+export interface SenderStatus {
+  readonly from: string;
+  readonly valid: boolean;
+  readonly reason: string;
+}
+
+// Trang thai nguoi gui gan nhu khong doi. Nho lai de /health khong bien thanh
+// duong khuech dai: moi lan goi la 2 request ra Brevo, ton quota cua chinh minh.
+const SENDER_TTL_MS = 5 * 60 * 1000;
+let senderCache: { at: number; value: SenderStatus } | null = null;
+
+/**
+ * Kiem tra CONTACT_FROM_EMAIL co thuc su gui duoc khong.
+ * Brevo chap nhan request (201) roi moi tu choi khong dong bo neu nguoi gui
+ * chua hop le, nen khong the phat hien luc gui - phai hoi truoc bang duong nay.
+ */
+export async function checkSender(signal?: AbortSignal): Promise<SenderStatus> {
+  if (senderCache && Date.now() - senderCache.at < SENDER_TTL_MS) return senderCache.value;
+
+  const status = await fetchSenderStatus(signal);
+  // Chi nho ket qua chac chan; loi mang tam thoi thi lan sau hoi lai.
+  if (status.reason !== "Không kiểm tra được trạng thái người gửi.") {
+    senderCache = { at: Date.now(), value: status };
+  }
+  return status;
+}
+
+async function fetchSenderStatus(signal?: AbortSignal): Promise<SenderStatus> {
+  const from = CONTACT_FROM_EMAIL.trim();
+  const key = BREVO_API_KEY?.trim() ?? "";
+  if (!key) return { from, valid: false, reason: "Thiếu BREVO_API_KEY." };
+
+  const init = { signal, headers: { "api-key": key, Accept: "application/json" } };
+
+  try {
+    const res = await fetch(SENDERS_URL, init);
+    if (res.ok) {
+      const body = (await res.json()) as { senders?: { email?: string; active?: boolean }[] };
+      const hit = body.senders?.find((s) => s.email?.toLowerCase() === from.toLowerCase());
+      if (hit?.active) return { from, valid: true, reason: "Người gửi đã được xác minh." };
+    } else {
+      await res.body?.cancel().catch(() => {});
+    }
+
+    const domain = from.split("@")[1]?.toLowerCase() ?? "";
+    const dRes = await fetch(DOMAINS_URL, init);
+    if (dRes.ok) {
+      const body = (await dRes.json()) as { domains?: { domain_name?: string; authenticated?: boolean }[] };
+      const hit = body.domains?.find((d) => d.domain_name?.toLowerCase() === domain);
+      if (hit?.authenticated) return { from, valid: true, reason: `Domain ${domain} đã xác thực.` };
+    } else {
+      await dRes.body?.cancel().catch(() => {});
+    }
+
+    return {
+      from,
+      valid: false,
+      reason: `${from} chưa được xác minh và domain ${domain} chưa xác thực — thư sẽ bị Brevo từ chối sau khi nhận.`,
+    };
+  } catch {
+    return { from, valid: false, reason: "Không kiểm tra được trạng thái người gửi." };
+  }
 }

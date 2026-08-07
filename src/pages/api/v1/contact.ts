@@ -74,9 +74,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
   try {
     const result = await sendContactEmail(parsed.data, request.signal);
     if (!result.ok) {
-      console.error(`[api/v1/contact] Brevo trả lỗi HTTP ${result.status}`);
+      console.error(
+        `[api/v1/contact] Brevo trả lỗi HTTP ${result.status}${result.detail ? ` — ${result.detail}` : ""}`,
+      );
       return json(502, { error: BUSY_MSG }, cors);
     }
+    // Brevo nhận thư rồi vẫn có thể từ chối sau. Ghi messageId để tra trong Brevo > Logs
+    // nếu khách báo đã gửi mà không thấy thư về.
+    console.log(`[api/v1/contact] Brevo nhận thư, messageId=${result.messageId ?? "(không có)"}`);
   } catch (err) {
     if (request.signal.aborted) return json(499, { error: BUSY_MSG }, cors);
     console.error("[api/v1/contact] gọi Brevo thất bại", err);
