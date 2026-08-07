@@ -39,8 +39,13 @@ export function callOpenRouter(
     signal,
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
-      ...(provider ? { provider: { order: [provider], allow_fallbacks: false } } : {}),
+      // Ưu tiên nhà cung cấp đã đo là giữ cache tốt nhất, nhưng vẫn cho phép
+      // chuyển sang nhà khác khi họ lỗi: câu trả lời không cache còn hơn không
+      // có câu trả lời. Ghim cứng một nhà là cả trợ lý chết theo họ.
+      ...(provider ? { provider: { order: [provider], allow_fallbacks: true } } : {}),
       stream: true,
+      // Để OpenRouter trả về thống kê token, nhờ đó đo được tỉ lệ trúng cache.
+      usage: { include: true },
       reasoning: { enabled: false },
       max_tokens: OPENROUTER_MAX_TOKENS,
       temperature: TEMPERATURE,
@@ -77,6 +82,27 @@ export function isJunkRepetition(tail: string): boolean {
 
 const DONE = Symbol("done");
 
+export interface UsageStats {
+  readonly promptTokens: number;
+  readonly cachedTokens: number;
+  readonly completionTokens: number;
+  readonly cost: number;
+}
+
+function parseUsage(raw: unknown): UsageStats | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const u = raw as Record<string, unknown>;
+  const promptTokens = typeof u.prompt_tokens === "number" ? u.prompt_tokens : 0;
+  if (!promptTokens) return null;
+  const details = u.prompt_tokens_details as { cached_tokens?: unknown } | undefined;
+  return {
+    promptTokens,
+    cachedTokens: typeof details?.cached_tokens === "number" ? details.cached_tokens : 0,
+    completionTokens: typeof u.completion_tokens === "number" ? u.completion_tokens : 0,
+    cost: typeof u.cost === "number" ? u.cost : 0,
+  };
+}
+
 function parseSseLine(line: string): string | typeof DONE | null {
   if (!line.startsWith("data:")) return null;
   const data = line.slice(5).trim();
@@ -90,9 +116,23 @@ function parseSseLine(line: string): string | typeof DONE | null {
   }
 }
 
+// Gói usage đi kèm ở một khung SSE riêng gần cuối luồng, tách khỏi các khung
+// chứa nội dung, nên phải soi song song với việc đọc token.
+function usageFromLine(line: string): UsageStats | null {
+  if (!line.startsWith("data:")) return null;
+  const data = line.slice(5).trim();
+  if (!data || data === "[DONE]") return null;
+  try {
+    return parseUsage(JSON.parse(data)?.usage);
+  } catch {
+    return null;
+  }
+}
+
 export async function* streamContent(
   res: Response,
   maxChars: number,
+  onUsage?: (usage: UsageStats) => void,
 ): AsyncGenerator<string, void, void> {
   if (!res.body) return;
   const reader = res.body.getReader();
@@ -110,6 +150,11 @@ export async function* streamContent(
       while ((nl = buf.indexOf("\n")) >= 0) {
         const line = buf.slice(0, nl).replace(/\r$/, "");
         buf = buf.slice(nl + 1);
+
+        if (onUsage) {
+          const usage = usageFromLine(line);
+          if (usage) onUsage(usage);
+        }
 
         const parsed = parseSseLine(line);
         if (parsed === DONE) return;

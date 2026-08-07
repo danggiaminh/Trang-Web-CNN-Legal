@@ -17,6 +17,7 @@ import {
   hasApiKey,
   retryAfterMs,
   streamContent,
+  type UsageStats,
 } from "../../../server/openrouter";
 import { buildMessages } from "../../../server/prompt";
 import { selectContext } from "../../../server/retrieval";
@@ -120,7 +121,14 @@ async function* answer(
 
     if (res.ok) {
       try {
-        for await (const token of streamContent(res, MAX_ANSWER_CHARS)) yield { t: token };
+        const logUsage = (u: UsageStats) => {
+          const pct = u.promptTokens ? Math.round((u.cachedTokens / u.promptTokens) * 100) : 0;
+          console.log(
+            `[api/v1/chat] token vào=${u.promptTokens} trúng cache=${u.cachedTokens} (${pct}%) ` +
+              `ra=${u.completionTokens} chi phí=$${u.cost.toFixed(7)}`,
+          );
+        };
+        for await (const token of streamContent(res, MAX_ANSWER_CHARS, logUsage)) yield { t: token };
       } catch (err) {
         if (signal.aborted) return;
         console.error("[api/v1/chat] lỗi khi đọc luồng từ OpenRouter", err);

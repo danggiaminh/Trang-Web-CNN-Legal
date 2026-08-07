@@ -40,7 +40,7 @@ export default defineConfig({
       OPENROUTER_PROVIDER: envField.string({
         context: "server",
         access: "public",
-        default: "parasail",
+        default: "cloudflare",
       }),
       OPENROUTER_MAX_TOKENS: envField.number({
         context: "server",

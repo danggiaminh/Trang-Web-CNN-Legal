@@ -1,6 +1,14 @@
 import { allDocs, getDoc, type Doc, type Section } from "./knowledge";
 
-const WHOLE_DOC_CHARS = 6000;
+// Khi người đọc đang mở một bài, gửi NGUYÊN bài thay vì cắt khúc theo BM25.
+// Hai lý do, cùng một thay đổi:
+//  - Bám sát nội dung: cắt còn 5.000 ký tự làm mất phần lớn 6 bài viết trên
+//    site (10.920–32.203 ký tự), nên trợ lý trả lời trớt quớt.
+//  - Trúng cache: BM25 đổi kết quả theo từng câu hỏi nên tiền tố prompt đổi
+//    theo, không bao giờ cache được. Nguyên bài thì cố định theo trang.
+// Mốc đặt trên bài dài nhất (32.203) để mọi trang đều đi nhánh này; bài dài
+// hơn mốc vẫn rơi về dàn ý như cũ.
+const WHOLE_DOC_CHARS = 40000;
 const RETRIEVED_MAX_CHARS = 5000;
 const OUTLINE_SECTION_CHARS = 450;
 const OUTLINE_MAX_CHARS = 6000;
