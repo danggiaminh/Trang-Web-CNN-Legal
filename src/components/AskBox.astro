@@ -49,7 +49,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   </form>
 </div>
 
-<div class="pointer-events-none fixed inset-0 z-[60] overflow-hidden">
+<div class="pointer-events-none fixed inset-0 z-[60] overflow-hidden" data-ask-panel-wrap>
 <aside
   class="pointer-events-auto absolute inset-0 flex w-full translate-x-[calc(100%+1.5rem)] flex-col border-border-soft bg-surface-white transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-y-3 sm:left-auto sm:right-3 sm:w-[23rem] sm:rounded-2xl sm:border sm:shadow-[0_8px_30px_-8px_rgba(15,25,35,0.25)]"
   aria-label="Trợ lý hỏi đáp"
@@ -226,6 +226,25 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   @media (hover: none) {
     :global(.ask-copy) {
       opacity: 1;
+    }
+  }
+
+  /*
+   * Máy tính bảng dựng đứng thì ẩn trợ lý AI.
+   * Máy tính, máy tính bảng xoay ngang và điện thoại (mọi chiều) đều vẫn có.
+   *
+   * - min-width 600px: tách máy tính bảng khỏi điện thoại. Điện thoại rộng nhất
+   *   khi dựng đứng khoảng 440px, iPad Mini hẹp nhất khoảng 744px.
+   * - pointer: coarse: chỉ thiết bị cảm ứng. Thiếu điều kiện này thì người dùng
+   *   máy tính thu hẹp cửa sổ cho cao và hẹp sẽ bị mất trợ lý oan.
+   *
+   * Script bên dưới dùng lại đúng chuỗi truy vấn này (hằng TABLET_PORTRAIT)
+   * để đóng bảng khi người dùng xoay máy — sửa ở đây thì sửa cả ở đó.
+   */
+  @media (orientation: portrait) and (min-width: 600px) and (pointer: coarse) {
+    [data-ask-box],
+    [data-ask-panel-wrap] {
+      display: none;
     }
   }
 
@@ -612,6 +631,20 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     });
 
     closeBtn?.addEventListener("click", closePanel);
+
+    // Phải khớp đúng media query ẩn trợ lý trong khối <style> bên trên.
+    const TABLET_PORTRAIT = "(orientation: portrait) and (min-width: 600px) and (pointer: coarse)";
+    const tabletPortrait = window.matchMedia(TABLET_PORTRAIT);
+
+    // Xoay máy tính bảng sang dọc trong lúc bảng đang mở: CSS ẩn bảng đi nhưng
+    // body vẫn còn data-ask-panel-open, kéo theo overflow:hidden và khung nội dung
+    // bị ghim position:fixed — trang kẹt cứng, không cuộn nổi mà cũng không còn
+    // nút đóng để thoát. Đóng bảng ngay khi bước vào trạng thái bị ẩn.
+    const closeIfHidden = (matches: boolean) => {
+      if (matches && panel.hasAttribute("data-open")) closePanel();
+    };
+    closeIfHidden(tabletPortrait.matches);
+    tabletPortrait.addEventListener("change", (e) => closeIfHidden(e.matches));
 
     document.addEventListener("keydown", (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "i") {
