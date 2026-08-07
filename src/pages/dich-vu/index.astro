@@ -4,7 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
 import { services } from "../../data/services";
 import { site } from "../../data/site";
-import servicesMosaic from "../../assets/images/services-mosaic.png";
+import servicesMosaic from "../../assets/images/services-mosaic.jpg";
 
 const title = `Dịch vụ pháp lý | ${site.name}`;
 const description =
@@ -42,7 +42,7 @@ const structuredData = [
 <BaseLayout title={title} description={description} canonicalPath="/dich-vu/" structuredData={structuredData}>
   <section class="relative overflow-hidden py-20 md:py-28 lg:py-32">
 
-    <div class="absolute inset-0 z-0 bg-ink-black">
+    <div class="absolute inset-0 z-0" style="background-color:#033082">
       <Image
         class="h-full w-full object-cover object-center"
         src={servicesMosaic}

@@ -27,7 +27,7 @@ export function callOpenRouter(
 ): Promise<Response> {
   const provider = OPENROUTER_PROVIDER.trim();
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${OPENROUTER_API_KEY ?? ""}`,
+    Authorization: `Bearer ${OPENROUTER_API_KEY?.trim() ?? ""}`,
     "Content-Type": "application/json",
   };
   if (OPENROUTER_REFERER.trim()) headers["HTTP-Referer"] = OPENROUTER_REFERER.trim();

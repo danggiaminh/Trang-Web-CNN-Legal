@@ -7,6 +7,8 @@ staged_names=$(git diff --cached --name-only --diff-filter=ACMR)
 
 while IFS= read -r f; do
   [ -z "$f" ] && continue
+  # .env goc duoc track lam mau khai bao bien; noi dung bi kiem tra rieng ben duoi.
+  [ "$f" = ".env" ] && continue
   base=$(basename "$f")
   case "$base" in
     .env.example|*.example|*.sample) ;;
@@ -17,7 +19,22 @@ while IFS= read -r f; do
   esac
 done <<< "$staged_names"
 
-patterns='sk-or-v1-[A-Za-z0-9]{32,}|re_[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}'
+# File .env duoc track chi duoc chua ten bien, moi gia tri bi mat phai de trong.
+if printf '%s\n' "$staged_names" | grep -qx '\.env'; then
+  filled=$(git show :.env 2>/dev/null \
+    | grep -oE '^[A-Za-z_][A-Za-z0-9_]*(KEY|SECRET|TOKEN|PASSWORD|PASSWD|CREDENTIALS|DSN)=[^[:space:]].*' \
+    | cut -d= -f1)
+  if [ -n "$filled" ]; then
+    echo "CHAN COMMIT: file .env duoc track phai de trong moi gia tri bi mat, nhung dang co gia tri o:"
+    while IFS= read -r v; do
+      echo "  $v"
+    done <<< "$filled"
+    echo "  -> Xoa gia tri trong .env, dat khoa that o .env.local hoac tren Vercel."
+    fail=1
+  fi
+fi
+
+patterns='xkeysib-[A-Za-z0-9-]{40,}|xsmtpsib-[A-Za-z0-9-]{40,}|sk-or-v1-[A-Za-z0-9]{32,}|re_[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}'
 
 hits=$(git diff --cached -U0 --diff-filter=ACMR | grep -nE "^\+" | grep -ivE 'your_|replace_with|placeholder|xxxx' | grep -oE "$patterns" | sort -u)
 

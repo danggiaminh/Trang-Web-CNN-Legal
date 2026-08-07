@@ -3,7 +3,6 @@ dist/
 
 node_modules/
 
-.env
 .env.local
 .env.*.local
 
@@ -21,5 +20,9 @@ npm-debug.log*
 !.env.example
 *.env
 !rag-backend/.env
+
+# .env goc duoc track lam mau khai bao bien - moi gia tri bi mat phai de trong.
+# Hook .githooks/pre-commit chan commit neu file nay co bien *_KEY/_SECRET/_TOKEN co gia tri.
+!.env
 
 src/content/articles/
