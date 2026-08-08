@@ -290,7 +290,10 @@ const structuredData = [
             observer.disconnect();
           }
         },
-        { rootMargin: '0px' }
+        // Khởi động sớm 200px. Bản đồ nằm dưới mép màn 340px (Lighthouse mobile)
+        // và 348px (Lighthouse desktop) nên ngưỡng này không bao giờ tự nổ khi
+        // trang chỉ được tải mà không cuộn.
+        { rootMargin: '200px 0px' }
       );
       observer.observe(mapFrame);
     } else {
