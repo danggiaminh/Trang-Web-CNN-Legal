@@ -1,98 +1,102 @@
 ---
-import { Image } from "astro:assets";
+import { Image, Picture } from "astro:assets";
 import { site } from "../data/site";
-import heroRadialLines from "../assets/images/hero-radial-lines.jpg";
+import heroRadialLines from "../assets/images/hero-gradient.jpg";
 import carousel1 from "../assets/images/carousel-1.jpg";
 import carousel3 from "../assets/images/carousel-3.jpg";
 ---
 
-<section class="relative h-[calc(100vh-3.75rem)] overflow-hidden">
+{/* Cao trọn phần <main> của khung khoá cuộn (BaseLayout lockViewport) */}
+<section class="relative h-full overflow-hidden bg-ink-black" data-hero>
 
-  <div class="grid h-full lg:grid-cols-[2fr_3fr]">
+  <div class="hero-bg-image active absolute inset-0 transition-opacity duration-700 ease-in-out">
+    {/* Ảnh LCP: AVIF cho máy hỗ trợ, WebP dự phòng — WebP nén hạt nhiễu của ảnh
+        này kém hơn AVIF tới 5 lần (258 KB so với 50 KB ở 2560w).
+        quality 30 là ngưỡng thấp nhất còn giữ được hạt: xuống 25 là hạt vón mảng.
+        Nguồn đã lật ngang để vùng tối nằm bên trái đỡ chữ trắng, và thu về 2560px
+        để ảnh dự phòng <img src> không thành file 5120w nặng 723 KB. */}
+    <Picture
+      class="absolute inset-0 h-full w-full object-cover"
+      src={heroRadialLines}
+      alt="CNN Legal – Tư vấn pháp lý chuyên nghiệp"
+      formats={["avif"]}
+      fallbackFormat="webp"
+      widths={[640, 960, 1280, 1600, 2048, 2560]}
+      {/* Ảnh 16:9 nhét vào khung hero → object-cover phóng theo CHIỀU CAO khi
+          khung nhìn dựng đứng, nên phải khai theo vh chứ không phải vw, nếu không
+          điện thoại sẽ tải file 640w rồi phóng 2,3 lần. Ngưỡng 5/3 chứ không phải
+          16/9: hero thấp hơn khung nhìn 61px, và 16/9 rơi đúng ranh giới màn 1080p
+          nên chỉ cần thanh cuộn là lật sang nhánh sai. */}
+      sizes="(min-aspect-ratio: 5/3) 105vw, 190vh"
+      quality={30}
+      loading="eager"
+      fetchpriority="high"
+    />
+  </div>
 
-    <div class="relative order-1 lg:order-1">
-      <div class="relative h-full bg-[#0a1929] overflow-hidden">
+  <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
+    <Image
+      class="absolute inset-0 h-full w-full object-cover"
+      src={carousel1}
+      alt="CNN Legal – Dịch vụ pháp lý"
+      widths={[640, 768, 1024, 1280, 1536, 1763]}
+      sizes="105vw"
+      quality={80}
+      loading="eager"
+      fetchpriority="low"
+    />
+  </div>
 
-        <div class="hero-bg-image active absolute inset-0 transition-opacity duration-700 ease-in-out">
-          <Image
-            class="absolute inset-0 h-full w-full object-cover"
-            src={heroRadialLines}
-            alt="CNN Legal – Tư vấn pháp lý chuyên nghiệp"
-            widths={[320, 640, 768, 1024]}
-            sizes="(min-width: 1024px) 40vw, 100vw"
-            quality={80}
-            loading="eager"
-            fetchpriority="high"
-          />
-        </div>
+  <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
+    <Image
+      class="absolute inset-0 h-full w-full object-cover"
+      src={carousel3}
+      alt="CNN Legal – Tư vấn chuyên nghiệp"
+      widths={[640, 768, 1024, 1280, 1536, 1672]}
+      sizes="105vw"
+      quality={80}
+      loading="eager"
+      fetchpriority="low"
+    />
+  </div>
 
-        <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
-          <Image
-            class="absolute inset-0 h-full w-full object-cover"
-            src={carousel1}
-            alt="CNN Legal – Dịch vụ pháp lý"
-            widths={[320, 640, 768, 1024, 1280, 1536]}
-            sizes="(min-width: 1024px) 40vw, 100vw"
-            quality={80}
-            loading="eager"
-            fetchpriority="low"
-          />
-        </div>
+  {/* Lớp phủ tối: giữ chữ trắng đọc được trên cả 3 ảnh, kể cả ảnh sáng nhất */}
+  <div class="hero-scrim pointer-events-none absolute inset-0 z-10"></div>
 
-        <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
-          <Image
-            class="absolute inset-0 h-full w-full object-cover"
-            src={carousel3}
-            alt="CNN Legal – Tư vấn chuyên nghiệp"
-            widths={[320, 640, 768, 1024, 1280, 1536]}
-            sizes="(min-width: 1024px) 40vw, 100vw"
-            quality={80}
-            loading="eager"
-            fetchpriority="low"
-          />
-        </div>
+  <div class="hero-copy relative z-20 flex h-full flex-col justify-start px-6 pt-[24dvh] sm:px-10 md:px-16 xl:px-20">
 
-        <div class="absolute bottom-0 left-0 right-0 h-1/4 bg-gradient-to-t from-[#0a1929]/30 to-transparent pointer-events-none z-10"></div>
+    <h1 class="hero-title font-sans font-semibold leading-[1.15] tracking-[-0.02em] text-white">
+      {site.sloganLines.map((line) => (
+        <span class="block">{line}</span>
+      ))}
+    </h1>
+  </div>
 
-        <div class="absolute bottom-8 left-8 flex gap-2 z-30">
-          <button
-            type="button"
-            class="progress-indicator active h-1 w-16 bg-white/30 rounded-full overflow-hidden focus:outline-none cursor-pointer border-0 p-0"
-            data-index="0"
-            aria-label="Go to slide 1"
-          >
-            <div class="progress-fill h-full bg-white rounded-full w-0"></div>
-          </button>
-          <button
-            type="button"
-            class="progress-indicator h-1 w-16 bg-white/30 rounded-full overflow-hidden focus:outline-none cursor-pointer border-0 p-0"
-            data-index="1"
-            aria-label="Go to slide 2"
-          >
-            <div class="progress-fill h-full bg-white rounded-full w-0"></div>
-          </button>
-          <button
-            type="button"
-            class="progress-indicator h-1 w-16 bg-white/30 rounded-full overflow-hidden focus:outline-none cursor-pointer border-0 p-0"
-            data-index="2"
-            aria-label="Go to slide 3"
-          >
-            <div class="progress-fill h-full bg-white rounded-full w-0"></div>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <div class="relative order-2 bg-ink-black lg:order-2 z-10">
-      <div class="hero-copy flex h-full flex-col justify-start px-6 pt-20 pb-12 sm:px-10 sm:pt-24 md:px-16 md:pt-28 lg:pt-32 xl:px-20 xl:pt-36">
-
-        <h1 class="hero-title font-sans font-semibold leading-[1.2] tracking-[-0.02em] text-white">
-          {site.sloganLines.map((line) => (
-            <span class="block">{line}</span>
-          ))}
-        </h1>
-      </div>
-    </div>
+  <div class="hero-dots absolute bottom-10 left-6 z-30 flex gap-2 pb-[env(safe-area-inset-bottom)] sm:left-10 md:left-16 xl:left-20">
+    <button
+      type="button"
+      class="progress-indicator active relative h-1 w-16 bg-white/45 rounded-full focus:outline-none cursor-pointer border-0 p-0"
+      data-index="0"
+      aria-label="Go to slide 1"
+    >
+      <div class="progress-fill h-full bg-white rounded-full w-0"></div>
+    </button>
+    <button
+      type="button"
+      class="progress-indicator relative h-1 w-16 bg-white/45 rounded-full focus:outline-none cursor-pointer border-0 p-0"
+      data-index="1"
+      aria-label="Go to slide 2"
+    >
+      <div class="progress-fill h-full bg-white rounded-full w-0"></div>
+    </button>
+    <button
+      type="button"
+      class="progress-indicator relative h-1 w-16 bg-white/45 rounded-full focus:outline-none cursor-pointer border-0 p-0"
+      data-index="2"
+      aria-label="Go to slide 3"
+    >
+      <div class="progress-fill h-full bg-white rounded-full w-0"></div>
+    </button>
   </div>
 </section>
 
@@ -103,11 +107,46 @@ import carousel3 from "../assets/images/carousel-3.jpg";
 
   .hero-title {
     font-size: 2rem;
-    font-size: clamp(1.125rem, 6cqi, 6rem);
+    /* Hàm bậc nhất có hệ số tự do: đủ lớn trên màn hẹp mà vẫn không xuống dòng,
+       đồng thời không phình quá cỡ khi khung chữ rộng hết màn hình */
+    font-size: clamp(1.375rem, 0.77rem + 3.41cqi, 3.5rem);
   }
 
   .hero-title span {
     text-wrap: balance;
+  }
+
+  /* Đậm về bên trái nơi đặt tiêu đề, nhạt dần để lộ ảnh bên phải */
+  .hero-scrim {
+    background:
+      linear-gradient(
+        100deg,
+        rgba(15, 25, 35, 0.94) 0%,
+        rgba(15, 25, 35, 0.86) 22%,
+        rgba(15, 25, 35, 0.62) 45%,
+        rgba(15, 25, 35, 0.28) 68%,
+        rgba(15, 25, 35, 0.06) 88%,
+        rgba(15, 25, 35, 0) 100%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(15, 25, 35, 0.3) 0%,
+        rgba(15, 25, 35, 0) 30%,
+        rgba(15, 25, 35, 0) 62%,
+        rgba(15, 25, 35, 0.42) 100%
+      );
+  }
+
+  /* Màn hẹp: chữ chiếm gần hết bề ngang nên phủ đều thay vì dồn trái */
+  @media (max-width: 1023px) {
+    .hero-scrim {
+      background: linear-gradient(
+        180deg,
+        rgba(15, 25, 35, 0.62) 0%,
+        rgba(15, 25, 35, 0.5) 45%,
+        rgba(15, 25, 35, 0.66) 100%
+      );
+    }
   }
 
   .hero-bg-image {
@@ -121,19 +160,34 @@ import carousel3 from "../assets/images/carousel-3.jpg";
 
   .hero-bg-image img {
 
-    image-rendering: -webkit-optimize-contrast;
+    /* Để trình duyệt nội suy trơn. Tránh -webkit-optimize-contrast: Firefox hiểu
+       nó là crisp-edges (lấy mẫu điểm gần nhất) nên ảnh phóng to bị răng cưa. */
     image-rendering: auto;
-    image-rendering: high-quality;
-
-    transform: translateZ(0);
-    backface-visibility: hidden;
-
-    filter: blur(0);
-
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 
     will-change: opacity;
+  }
+
+  /* Chỉ bật hiệu ứng khi thật sự có chuột và người dùng không tắt chuyển động.
+     Nới ảnh rộng hơn khung 5% rồi CHỈ tịnh tiến, không scale: lớp ảnh được
+     dựng đúng tỉ lệ 1:1 nên không bị GPU phóng lại làm nhoè và răng cưa. */
+  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+    [data-hero] .hero-bg-image {
+      inset: -2.5%;
+      will-change: opacity, transform;
+    }
+  }
+
+  /* Vạch dày 4px nên tách khỏi ảnh sáng bằng bóng đổ, khỏi bị chìm */
+  .hero-dots {
+    filter: drop-shadow(0 1px 3px rgba(15, 25, 35, 0.65));
+  }
+
+  /* Nới vùng chạm lên 32px mà không đổi hình dạng nhìn thấy:
+     4px thì không tài nào bấm trúng trên máy cảm ứng */
+  .progress-indicator::after {
+    content: "";
+    position: absolute;
+    inset: -14px -4px;
   }
 
   .progress-indicator.active .progress-fill {
@@ -220,6 +274,73 @@ import carousel3 from "../assets/images/carousel-3.jpg";
       window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
     }
 
+    function initParallax() {
+      const hero = document.querySelector('[data-hero]');
+
+      if (!hero || hero.dataset.parallax) {
+        return;
+      }
+
+      if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
+      hero.dataset.parallax = '1';
+
+      const layers = hero.querySelectorAll('.hero-bg-image');
+      let targetX = 0, targetY = 0, curX = 0, curY = 0;
+      let frame = 0, settledFrames = 0;
+      let box = hero.getBoundingClientRect();
+
+      function tick() {
+
+        curX += (targetX - curX) * 0.075;
+        curY += (targetY - curY) * 0.075;
+
+        const shift = 'translate3d(' + (curX * -0.9).toFixed(3) + '%,' +
+                                       (curY * -0.9).toFixed(3) + '%,0)';
+
+        for (let i = 0; i < layers.length; i++) {
+          layers[i].style.transform = shift;
+        }
+
+        const settled = Math.abs(targetX - curX) < 0.004 && Math.abs(targetY - curY) < 0.004;
+        settledFrames = settled ? settledFrames + 1 : 0;
+
+        if (settledFrames > 4) {
+
+          frame = 0;
+          return;
+        }
+
+        frame = requestAnimationFrame(tick);
+      }
+
+      function kick() {
+        if (!frame) {
+          frame = requestAnimationFrame(tick);
+        }
+      }
+
+      hero.addEventListener('pointermove', function(event) {
+
+        targetX = ((event.clientX - box.left) / box.width) * 2 - 1;
+        targetY = ((event.clientY - box.top) / box.height) * 2 - 1;
+        kick();
+      });
+
+      hero.addEventListener('pointerleave', function() {
+        targetX = 0;
+        targetY = 0;
+        kick();
+      });
+
+      window.addEventListener('resize', function() {
+        box = hero.getBoundingClientRect();
+      });
+    }
+
     window.addEventListener('pageshow', function(event) {
 
       if (!event.persisted) {
@@ -229,6 +350,7 @@ import carousel3 from "../assets/images/carousel-3.jpg";
       }
 
       initSlider();
+      initParallax();
     });
   })();
 </script>

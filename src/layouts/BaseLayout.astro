@@ -13,6 +13,7 @@ interface Props {
   ogImage?: string;
   structuredData?: JsonLd | JsonLd[];
   noindex?: boolean;
+  lockViewport?: boolean;
 }
 
 const {
@@ -23,6 +24,7 @@ const {
   ogImage = "/images/og-default.png",
   structuredData = [],
   noindex = false,
+  lockViewport = false,
 } = Astro.props;
 
 const canonicalUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
@@ -32,7 +34,7 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
 ---
 
 <!doctype html>
-<html lang="vi">
+<html lang="vi" class:list={[lockViewport && "h-dvh overflow-hidden"]}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -83,9 +85,9 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
     {jsonLdItems.map((item) => <script is:inline type="application/ld+json" set:html={jsonLdToString(item)} />)}
   </head>
   <body class="bg-warm-ivory text-text-dark antialiased">
-    <div data-app-shell>
+    <div data-app-shell class:list={[lockViewport && "flex h-dvh flex-col overflow-hidden"]}>
       <Header />
-      <main>
+      <main class:list={[lockViewport && "min-h-0 flex-1"]}>
         <slot />
       </main>
     </div>
