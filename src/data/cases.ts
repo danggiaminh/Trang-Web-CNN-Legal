@@ -157,7 +157,7 @@ export const notableCases: readonly NotableCase[] = [
     charge: "Trốn thuế",
     category: "Hình sự",
     summary:
-      "Giai đoạn 2 của đại án xăng dầu, xét xử 32 bị cáo về tội “Trốn thuế” với tổng số tiền trốn thuế hơn 15,2 tỷ đồng. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ án này.",
+      "Giai đoạn 2 của đại án xăng dầu, xét xử 32 bị cáo về tội “Trốn thuế” với tổng số tiền trốn thuế hơn 15,2 tỷ đồng. Luật sư Đặng Kim Chinh tham gia bảo vệ quyền lợi khách hàng trong vụ án này.",
     body: `<h2>Bối cảnh tố tụng</h2>
 <p>Sau giai đoạn 1 về hành vi buôn lậu xăng dầu, cơ quan tố tụng tiếp tục xử lý giai đoạn 2 đối với nhóm doanh nghiệp và cá nhân tiêu thụ nguồn xăng nhập lậu. Ngày 01/4/2024, Tòa án nhân dân tỉnh Đồng Nai tuyên án đối với 32 bị cáo về tội "Trốn thuế", với tổng số tiền trốn thuế được xác định là hơn 15,2 tỷ đồng.</p>
 
@@ -185,7 +185,7 @@ export const notableCases: readonly NotableCase[] = [
       "Mua bán, tàng trữ, tổ chức và chứa chấp việc sử dụng trái phép chất ma túy",
     category: "Hình sự",
     summary:
-      "Vụ án 23 bị cáo liên quan đến hoạt động ma túy tại một quán bar ở quận Tân Phú, xét xử tại Tòa án nhân dân Thành phố Hồ Chí Minh từ ngày 20/01/2025. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ án này.",
+      "Vụ án 23 bị cáo liên quan đến hoạt động ma túy tại một quán bar ở quận Tân Phú, xét xử tại Tòa án nhân dân Thành phố Hồ Chí Minh từ ngày 20/01/2025. Luật sư Đặng Kim Chinh tham gia bảo vệ quyền lợi khách hàng trong vụ án này.",
     body: `<h2>Bối cảnh vụ việc</h2>
 <p>Rạng sáng ngày 21/01/2024, lực lượng công an kiểm tra hành chính quán bar Phương Lâm tại quận Tân Phú, Thành phố Hồ Chí Minh. Tại thời điểm kiểm tra, quán có hơn 200 người; cơ quan chức năng ghi nhận 25 bàn có chất ma túy và 79 người có kết quả dương tính với chất ma túy.</p>
 
@@ -218,7 +218,7 @@ export const notableCases: readonly NotableCase[] = [
     charge: "",
     category: "Dân sự",
     summary:
-      "Tranh chấp yêu cầu tuyên vô hiệu hợp đồng chuyển nhượng quyền sử dụng đất và tài sản gắn liền với đất tại quận Gò Vấp. Tòa phúc thẩm hủy bản án sơ thẩm, trả hồ sơ để xét xử lại. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ việc này.",
+      "Tranh chấp yêu cầu tuyên vô hiệu hợp đồng chuyển nhượng quyền sử dụng đất và tài sản gắn liền với đất tại quận Gò Vấp. Tòa phúc thẩm hủy bản án sơ thẩm, trả hồ sơ để xét xử lại. Luật sư Đặng Kim Chinh tham gia bảo vệ quyền lợi khách hàng trong vụ việc này.",
     body: `<h2>Nội dung tranh chấp</h2>
 <p>Vụ việc liên quan đến yêu cầu tuyên bố vô hiệu hợp đồng chuyển nhượng quyền sử dụng đất, quyền sở hữu nhà ở và tài sản khác gắn liền với đất đối với bất động sản trên đường Quang Trung, quận Gò Vấp (nay thuộc phường An Hội Tây), Thành phố Hồ Chí Minh.</p>
 
@@ -263,7 +263,7 @@ export const notableCases: readonly NotableCase[] = [
     charge: "",
     category: "Hành chính",
     summary:
-      "Vụ việc hành chính liên quan đến chỉ tiêu kiến trúc và giấy phép xây dựng công trình nhà liên kế tại đường Trương Định, Quận 3, Thành phố Hồ Chí Minh. CNN Legal tham gia bảo vệ quyền lợi khách hàng trong vụ việc này.",
+      "Vụ việc hành chính liên quan đến chỉ tiêu kiến trúc và giấy phép xây dựng công trình nhà liên kế tại đường Trương Định, Quận 3, Thành phố Hồ Chí Minh. Luật sư Đặng Kim Chinh tham gia bảo vệ quyền lợi khách hàng trong vụ việc này.",
     body: `<h2>Nội dung vụ việc</h2>
 <p>Vụ việc bắt đầu từ ngày 12/01/2017, khi công trình tại số 8 Trương Định, Quận 3 được cấp Giấy phép xây dựng số 10/GPXD. Chủ đầu tư cho rằng giấy phép có sự bất cập giữa các văn bản pháp luật và văn bản hành chính của Ủy ban nhân dân Thành phố Hồ Chí Minh, liên quan đến cả ba tiêu chí: chiều cao công trình, mật độ xây dựng và hệ số sử dụng đất.</p>
 
