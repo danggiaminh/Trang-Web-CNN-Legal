@@ -371,6 +371,16 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   :global(.ask-answer strong) {
     font-weight: 600;
   }
+  :global(.ask-answer a) {
+    color: var(--color-deep-blue-navy);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    /* URL nguồn hay rất dài, để nó tự xuống dòng thay vì đội rộng cả bảng. */
+    overflow-wrap: anywhere;
+  }
+  :global(.ask-answer a:hover) {
+    color: var(--color-professional-blue);
+  }
   :global(.ask-answer code) {
     background: var(--color-surface-subtle);
     padding: 0 0.25rem;
@@ -380,6 +390,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 </style>
 
 <script>
+  import { renderMarkdown } from "../scripts/ask-markdown";
   import { fingerprint, readQuota, saveQuota } from "../scripts/ask-web-quota";
 
   function currentSlug(): string | null {
@@ -466,54 +477,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       messages.appendChild(row);
     };
 
-    const escapeHtml = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    const inline = (s: string) =>
-      s
-        .replace(/`([^`]+)`/g, "<code>$1</code>")
-        .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-        .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
-
-    const renderMarkdown = (raw: string) => {
-      const lines = escapeHtml(raw).split("\n");
-      const bullet = /^\s*[-*]\s+/;
-      const ordered = /^\s*\d+\.\s+/;
-      const heading = /^\s*#{1,3}\s+(.*)$/;
-      let html = "";
-      let i = 0;
-      while (i < lines.length) {
-        const line = lines[i];
-        if (bullet.test(line)) {
-          const items: string[] = [];
-          while (i < lines.length && bullet.test(lines[i]))
-            items.push("<li>" + inline(lines[i++].replace(bullet, "")) + "</li>");
-          html += "<ul>" + items.join("") + "</ul>";
-        } else if (ordered.test(line)) {
-          const items: string[] = [];
-          while (i < lines.length && ordered.test(lines[i]))
-            items.push("<li>" + inline(lines[i++].replace(ordered, "")) + "</li>");
-          html += "<ol>" + items.join("") + "</ol>";
-        } else if (heading.test(line)) {
-          html += '<p class="ask-h">' + inline(line.replace(heading, "$1")) + "</p>";
-          i++;
-        } else if (line.trim() === "") {
-          i++;
-        } else {
-          const para: string[] = [];
-          while (
-            i < lines.length &&
-            lines[i].trim() !== "" &&
-            !bullet.test(lines[i]) &&
-            !ordered.test(lines[i]) &&
-            !heading.test(lines[i])
-          )
-            para.push(inline(lines[i++]));
-          html += "<p>" + para.join("<br>") + "</p>";
-        }
-      }
-      return html;
-    };
 
     const addAssistantMessage = () => {
       const answer = document.createElement("div");
