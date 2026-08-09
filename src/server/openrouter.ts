@@ -213,24 +213,31 @@ function usageFromLine(line: string): UsageStats | null {
   }
 }
 
-// Model gần như luôn quyết định gọi công cụ ngay từ khung SSE đầu, khi chưa có
-// chữ nào. Nhưng nếu nó lỡ mở lời ("Để mình tra giúp bạn…") rồi mới gọi công cụ
-// thì phần chữ đó đã bay ra màn hình, không rút lại được. Nên giữ lại vài chục
-// ký tự đầu: gọi công cụ trong khoảng đó thì âm thầm bỏ lời mở đầu, còn quá mốc
-// này mới gọi thì bỏ luôn lời gọi và để lượt đó trả lời thẳng — thà không tìm
-// còn hơn dán kết quả tìm kiếm vào giữa một câu đang dở.
+// Model hay mở lời trước khi gọi công cụ ("Tôi sẽ tìm kiếm…"). Giữ lại vài chục
+// ký tự đầu để những lời mở đầu ngắn bị nuốt gọn, người đọc không thấy chớp.
+// Dài hơn mốc này thì chữ đã bay ra màn hình rồi — lúc đó KHÔNG vứt lời gọi công
+// cụ đi (bản trước làm vậy và để lại lời hứa suông), mà vẫn tra rồi báo cho phía
+// client xoá phần đã hiện.
 const TOOL_HOLD_BACK_CHARS = 48;
 
+export interface TurnResult {
+  readonly call: ToolCall | null;
+  /** Lời mở đầu đã trót phát ra màn hình trước khi model gọi công cụ. */
+  readonly preamble: string;
+}
+
+const NOTHING: TurnResult = { call: null, preamble: "" };
+
 /**
- * Vừa phát chữ ra ngoài, vừa dò lời gọi công cụ. Trả về lời gọi công cụ khi và
- * chỉ khi lượt này chưa phát chữ nào; ngược lại trả về null.
+ * Vừa phát chữ ra ngoài, vừa dò lời gọi công cụ. Luôn trả về lời gọi công cụ nếu
+ * model có gọi, kèm phần chữ đã trót phát ra để người gọi biết mà thu dọn.
  */
 export async function* streamTurn(
   res: Response,
   maxChars: number,
   onUsage?: (usage: UsageStats) => void,
-): AsyncGenerator<string, ToolCall | null, void> {
-  if (!res.body) return null;
+): AsyncGenerator<string, TurnResult, void> {
+  if (!res.body) return NOTHING;
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
@@ -297,11 +304,13 @@ export async function* streamTurn(
     await reader.cancel().catch(() => {});
   }
 
-  if (!flushed && calls.size) {
-    for (const [index, call] of calls) {
-      if (call.name) return { id: call.id || `call_${index}`, name: call.name, args: call.args };
-    }
+  for (const [index, call] of calls) {
+    if (!call.name) continue;
+    return {
+      call: { id: call.id || `call_${index}`, name: call.name, args: call.args },
+      preamble: produced,
+    };
   }
   if (held) yield held;
-  return null;
+  return NOTHING;
 }

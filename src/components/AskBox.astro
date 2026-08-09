@@ -605,6 +605,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
               w?: string;
               s?: number;
               n?: number;
+              x?: number;
             };
             try {
               obj = JSON.parse(line.slice(5).replace(/^ /, ""));
@@ -618,6 +619,15 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
             } else if (typeof obj.r === "number") {
               answer.textContent = `Đang thử lại (${obj.r}/${obj.m ?? 5})`;
               scrollToEnd();
+            } else if (obj.x === 1) {
+              // Model lỡ nói "Tôi sẽ tìm kiếm…" rồi mới quyết định tra mạng.
+              // Bỏ câu đó đi, câu trả lời thật sẽ tới sau khi có kết quả.
+              raw = "";
+              if (frame) {
+                cancelAnimationFrame(frame);
+                frame = 0;
+              }
+              answer.textContent = "";
             } else if (typeof obj.w === "string") {
               // Tavily mất vài giây; đừng để người đọc nhìn bong bóng rỗng.
               answer.textContent = "Đang tìm trên mạng…";

@@ -26,6 +26,7 @@ import {
   streamTurn,
   type CallOptions,
   type ToolCall,
+  type TurnResult,
   type UsageStats,
 } from "../../../server/openrouter";
 import { buildMessages, toolResultMessages, type ChatMessage } from "../../../server/prompt";
@@ -55,13 +56,15 @@ const RETRY_BUDGET_MS = 5000;
 /**
  * t: chữ | r/m: đang thử lại | e: lỗi cuối | w: bắt đầu tìm trên mạng
  * s/n: đã tiêu 1 lượt tìm (đã dùng / tổng) — trình duyệt lấy số này làm chuẩn.
+ * x: xoá sạch phần chữ đã hiện (model lỡ mở lời rồi mới quyết định tra mạng).
  */
 type Payload =
   | { t: string }
   | { r: number; m: number }
   | { e: string }
   | { w: string }
-  | { s: number; n: number };
+  | { s: number; n: number }
+  | { x: 1 };
 
 interface Quota {
   readonly fp: string | null;
@@ -121,26 +124,29 @@ function logUsage(u: UsageStats): void {
 }
 
 /** Đọc luồng của một lượt, đổi token thành payload và trả về lời gọi công cụ (nếu có). */
-async function* tokensOf(res: Response): AsyncGenerator<Payload, ToolCall | null, void> {
+async function* tokensOf(res: Response): AsyncGenerator<Payload, TurnResult, void> {
   const gen = streamTurn(res, MAX_ANSWER_CHARS, logUsage);
   try {
     for (;;) {
       const { value, done } = await gen.next();
-      if (done) return value ?? null;
+      if (done) return value ?? EMPTY_TURN;
       yield { t: value };
     }
   } finally {
     // Người đọc đóng tab giữa chừng: đóng luôn kết nối tới OpenRouter.
-    await gen.return(null).catch(() => {});
+    await gen.return(EMPTY_TURN).catch(() => {});
   }
 }
+
+const EMPTY_TURN: TurnResult = { call: null, preamble: "" };
 
 interface TurnOutcome {
   readonly ok: boolean;
   readonly toolCall: ToolCall | null;
+  readonly preamble: string;
 }
 
-const FAILED: TurnOutcome = { ok: false, toolCall: null };
+const FAILED: TurnOutcome = { ok: false, toolCall: null, preamble: "" };
 
 /** Một lượt gọi model, kèm nguyên vòng thử lại khi dính 429. */
 async function* runTurn(
@@ -166,7 +172,8 @@ async function* runTurn(
 
     if (res.ok) {
       try {
-        return { ok: true, toolCall: yield* tokensOf(res) };
+        const turn = yield* tokensOf(res);
+        return { ok: true, toolCall: turn.call, preamble: turn.preamble };
       } catch (err) {
         if (signal.aborted) return FAILED;
         console.error("[api/v1/chat] lỗi khi đọc luồng từ OpenRouter", err);
@@ -250,6 +257,14 @@ async function* answer(
   const call = first.toolCall;
   const query = call.name === WEB_SEARCH_TOOL_NAME ? parseQuery(call.args) : "";
 
+  // Model đã trót nói "Tôi sẽ tìm kiếm…" trước khi gọi công cụ. Bản trước vứt
+  // luôn lời gọi, để lại lời hứa suông; giờ bảo trình duyệt xoá câu đó đi rồi
+  // tra tiếp như bình thường.
+  if (first.preamble) {
+    console.log(`[api/v1/chat] bỏ lời mở đầu ${first.preamble.length} ký tự trước khi gọi công cụ`);
+    yield { x: 1 };
+  }
+
   // Hết hạn mức mà model vẫn đòi tìm: từ chối tại chỗ, không gọi Tavily, cũng
   // không tốn thêm một lượt gọi model. Đây là chốt chặn chắc chắn, còn lời nhắc
   // trong prompt chỉ để model tự biết đường mà không đòi.
@@ -291,7 +306,7 @@ async function* answer(
   }
 
   yield* runTurn(
-    [...messages, ...toolResultMessages(call, toolResult)],
+    [...messages, ...toolResultMessages(call, toolResult, first.preamble)],
     { withTools: webSearch, allowToolCall: false },
     signal,
   );

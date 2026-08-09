@@ -40,8 +40,10 @@ TÀI LIỆU THAM KHẢO:
 // thể là số lượt còn lại — phải nằm ở tin nhắn đuôi, KHÔNG nhét vào đây.
 const WEB_SEARCH_RULES = `
 TÌM KIẾM TRÊN MẠNG: Bạn có công cụ "tim_kiem_web" để tra Internet.
-- Mặc định KHÔNG dùng. Tài liệu tham khảo bên dưới thường là nguyên văn bài viết người dùng đang đọc; mọi câu hỏi về chính bài đó phải trả lời từ tài liệu.
-- Chỉ gọi công cụ khi câu hỏi cần dữ kiện nằm ngoài tài liệu: tin tức mới, văn bản pháp luật vừa ban hành/sửa đổi, số liệu cập nhật, sự kiện sau thời điểm bài viết.
+- Người dùng bảo bạn tra mạng (vd "tìm trên mạng", "tra trên mạng", "search giúp", "có tin gì mới hơn không") thì GỌI CÔNG CỤ NGAY, kể cả khi họ đang đọc một bài viết. Yêu cầu rõ ràng của họ luôn thắng quy tắc mặc định bên dưới.
+- TUYỆT ĐỐI không viết câu thông báo kiểu "Tôi sẽ tìm kiếm…" rồi mới gọi công cụ. Gọi thẳng, im lặng; chờ có kết quả rồi hãy nói.
+- Ngoài trường hợp trên thì mặc định KHÔNG dùng. Tài liệu tham khảo bên dưới thường là nguyên văn bài viết người dùng đang đọc; câu hỏi về chính bài đó thì trả lời từ tài liệu.
+- Tự ý gọi công cụ khi câu hỏi cần dữ kiện nằm ngoài tài liệu: tin tức mới, văn bản pháp luật vừa ban hành/sửa đổi, số liệu cập nhật, sự kiện sau thời điểm bài viết.
 - Người dùng chỉ có 3 lượt tìm cho cả phiên và mỗi câu hỏi tối đa 1 lượt. Cân nhắc trước khi tiêu.
 - Khi đã có kết quả tìm kiếm, trả lời dựa trên đó và ghi rõ nguồn (tên trang + đường dẫn). Nói rõ đâu là thông tin lấy từ Internet, đâu là từ bài viết.
 `;
@@ -116,11 +118,14 @@ export function buildMessages(
 export function toolResultMessages(
   call: { readonly id: string; readonly name: string; readonly args: string },
   result: string,
+  // Lời mở đầu model đã nói trước khi gọi công cụ. Giữ lại cho đúng mạch hội
+  // thoại, dù phía người đọc nó đã bị xoá khỏi màn hình.
+  preamble = "",
 ): ChatMessage[] {
   return [
     {
       role: "assistant",
-      content: "",
+      content: preamble,
       tool_calls: [
         { id: call.id, type: "function", function: { name: call.name, arguments: call.args } },
       ],
