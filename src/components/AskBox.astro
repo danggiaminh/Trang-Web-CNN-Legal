@@ -280,6 +280,70 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     }
   }
 
+  /*
+   * Dòng trạng thái ("Đang suy nghĩ", "Đang tìm trên mạng") có một dải sáng
+   * lướt ngang chữ. Kỹ thuật: nền gradient + background-clip:text, chữ để trong
+   * suốt rồi cho nền chạy. Vì chữ trong suốt nên nhánh prefers-reduced-motion
+   * BẮT BUỘC trả lại màu đặc, không thì người tắt hiệu ứng thấy chữ tàng hình.
+   */
+  :global(.ask-status) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  /*
+   * Cố ý dùng `flex: none` thay cho thuộc tính co giãn viết tách rời.
+   * Tailwind quét NGUYÊN file này — kể cả comment — và coi mọi chuỗi gạch nối
+   * trông giống tên class là class thật, rồi sinh utility đó vào sheet dùng
+   * chung. Một lần lỡ tay như vậy đã đo được là +27 byte trên cả 20 trang, cho
+   * một utility không trang nào dùng. Nên trong file này đừng viết ra dạng
+   * gạch nối của các thuộc tính trùng tên utility.
+   */
+  :global(.ask-status svg) {
+    width: 0.9375rem;
+    height: 0.9375rem;
+    flex: none;
+    color: var(--color-text-muted);
+  }
+
+  :global(.ask-shimmer) {
+    background: linear-gradient(
+      90deg,
+      var(--color-text-muted) 0%,
+      var(--color-text-muted) 35%,
+      var(--color-text-dark) 50%,
+      var(--color-text-muted) 65%,
+      var(--color-text-muted) 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: ask-shimmer 1.9s linear infinite;
+  }
+
+  @keyframes ask-shimmer {
+    to {
+      background-position: 200% center;
+    }
+  }
+
+  /*
+   * Khối này BẮT BUỘC nằm sau rule mặc định ở trên. Media query không cộng độ
+   * ưu tiên, nên nếu đặt trước thì rule mặc định thắng và người tắt hiệu ứng
+   * vẫn lãnh đủ animation — đã đo trên bản build rồi mới chuyển xuống đây.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    :global(.ask-shimmer) {
+      animation: none;
+      background: none;
+      color: var(--color-text-muted);
+      -webkit-text-fill-color: currentColor;
+    }
+  }
+
   :global(.ask-answer p) {
     margin-bottom: 0.5rem;
   }
@@ -458,6 +522,21 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       return answer;
     };
 
+    const ICON_GLOBE =
+      '<path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0"/><path d="M3.6 9h16.8M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18M12.5 3a17 17 0 0 1 0 18"/>';
+
+    // Nhãn luôn gán bằng textContent, innerHTML chỉ dựng khung tĩnh của mình.
+    const showStatus = (el: HTMLElement, label: string, icon?: string) => {
+      el.innerHTML =
+        '<span class="ask-status">' +
+        (icon
+          ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icon}</svg>`
+          : "") +
+        '<span class="ask-shimmer"></span></span>';
+      const text = el.querySelector<HTMLElement>(".ask-shimmer");
+      if (text) text.textContent = label;
+    };
+
     const ICON_COPY =
       '<path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666"/><path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1"/>';
     const ICON_DONE =
@@ -540,17 +619,11 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       answer.setAttribute("aria-live", "off");
       scrollToEnd();
 
-      let dots = 1;
-      answer.textContent = "Đang suy nghĩ.";
-      const thinking = window.setInterval(() => {
-        dots = (dots % 3) + 1;
-        answer.textContent = "Đang suy nghĩ" + ".".repeat(dots);
-      }, 500);
+      showStatus(answer, "Đang suy nghĩ");
       let thinkingStopped = false;
       const stopThinking = () => {
         if (thinkingStopped) return;
         thinkingStopped = true;
-        clearInterval(thinking);
         answer.textContent = "";
       };
 
@@ -617,7 +690,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
               raw += obj.t;
               scheduleRender();
             } else if (typeof obj.r === "number") {
-              answer.textContent = `Đang thử lại (${obj.r}/${obj.m ?? 5})`;
+              showStatus(answer, `Đang thử lại (${obj.r}/${obj.m ?? 5})`);
               scrollToEnd();
             } else if (obj.x === 1) {
               // Model lỡ nói "Tôi sẽ tìm kiếm…" rồi mới quyết định tra mạng.
@@ -630,7 +703,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
               answer.textContent = "";
             } else if (typeof obj.w === "string") {
               // Tavily mất vài giây; đừng để người đọc nhìn bong bóng rỗng.
-              answer.textContent = "Đang tìm trên mạng…";
+              showStatus(answer, "Đang tìm kiếm thông tin trên mạng", ICON_GLOBE);
               scrollToEnd();
             } else if (typeof obj.s === "number") {
               quota = {
@@ -671,7 +744,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
         }
         answer.textContent = "Không kết nối được máy chủ, thử lại sau nhé.";
       } finally {
-        clearInterval(thinking);
         if (inFlight === controller) inFlight = null;
       }
     };
