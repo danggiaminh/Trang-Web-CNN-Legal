@@ -34,7 +34,7 @@ if printf '%s\n' "$staged_names" | grep -qx '\.env'; then
   fi
 fi
 
-patterns='xkeysib-[A-Za-z0-9-]{40,}|xsmtpsib-[A-Za-z0-9-]{40,}|sk-or-v1-[A-Za-z0-9]{32,}|re_[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}'
+patterns='xkeysib-[A-Za-z0-9-]{40,}|xsmtpsib-[A-Za-z0-9-]{40,}|sk-or-v1-[A-Za-z0-9]{32,}|tvly-[A-Za-z0-9-]{20,}|re_[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{32,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}'
 
 hits=$(git diff --cached -U0 --diff-filter=ACMR | grep -nE "^\+" | grep -ivE 'your_|replace_with|placeholder|xxxx' | grep -oE "$patterns" | sort -u)
 
