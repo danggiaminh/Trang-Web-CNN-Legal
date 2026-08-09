@@ -74,7 +74,12 @@ pub async fn build_rag_context(
             search_hybrid(&conn, &q_emb, &q_text, top_k, Scope::All)
         })
         .await??;
-        return Ok((hits, None));
+        // search_hybrid chỉ cắt theo SỐ LƯỢNG (take(k)), không theo ký tự. Thiếu
+        // within_budget ở đây thì nhánh "không mở bài nào" đi thẳng vào prompt
+        // với top_k chunk nguyên vẹn — vượt xa ngân sách 5.000 ký tự, và thứ tự
+        // chunk chạy theo điểm liên quan nên tiền tố prompt cũng đảo lung tung.
+        // Nhánh có slug bên dưới vốn đã gọi within_budget; đây là chỗ bị sót.
+        return Ok((within_budget(hits, RETRIEVED_MAX_CHARS), None));
     };
 
     if char_len <= SHORT_DOC_CHARS {

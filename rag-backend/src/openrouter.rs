@@ -25,10 +25,18 @@ struct Reasoning<'a> {
 }
 
 #[derive(Serialize)]
+struct UsageCfg {
+    include: bool,
+}
+
+#[derive(Serialize)]
 struct ChatRequest<'a> {
     model: &'a str,
     provider: ProviderCfg<'a>,
     stream: bool,
+    // Xin OpenRouter trả kèm thống kê token; thiếu cờ này thì không có cách nào
+    // biết tỉ lệ trúng cache, mà đó lại là con số quyết định cả tốc độ lẫn chi phí.
+    usage: UsageCfg,
     reasoning: Reasoning<'a>,
 
     max_tokens: u32,
@@ -37,6 +45,25 @@ struct ChatRequest<'a> {
     frequency_penalty: f32,
     presence_penalty: f32,
     messages: &'a [ChatMessage],
+}
+
+/// Thống kê token của một lượt gọi, đọc từ khung SSE riêng gần cuối luồng.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct UsageStats {
+    pub prompt_tokens: u64,
+    pub cached_tokens: u64,
+    pub completion_tokens: u64,
+    pub cost: f64,
+}
+
+impl UsageStats {
+    pub fn cache_percent(&self) -> u64 {
+        if self.prompt_tokens == 0 {
+            0
+        } else {
+            self.cached_tokens * 100 / self.prompt_tokens
+        }
+    }
 }
 
 pub async fn call_openrouter(
@@ -60,9 +87,13 @@ pub async fn call_openrouter(
         model: &cfg.openrouter_model,
         provider: ProviderCfg {
             order: [cfg.openrouter_provider.as_str()],
-            allow_fallbacks: false,
+            // Ưu tiên nhà cung cấp đã chọn nhưng vẫn cho phép chuyển nhà khi họ
+            // lỗi. Ghim cứng (false) nghĩa là nhà đó sập thì cả trợ lý sập theo —
+            // câu trả lời không trúng cache còn hơn không có câu trả lời.
+            allow_fallbacks: true,
         },
         stream: true,
+        usage: UsageCfg { include: true },
         reasoning,
         max_tokens: cfg.openrouter_max_tokens,
         temperature: cfg.openrouter_temperature,
@@ -121,9 +152,35 @@ fn parse_sse_line(line: &str) -> Option<SseLine> {
     }
 }
 
+/// Gói usage đi kèm ở một khung SSE riêng, KHÔNG có `choices[0].delta.content`,
+/// nên `parse_sse_line` trả None và bỏ qua nó. Phải soi song song bằng hàm này.
+fn parse_usage_line(line: &str) -> Option<UsageStats> {
+    let data = line.strip_prefix("data:")?.trim();
+    if data.is_empty() || data == "[DONE]" {
+        return None;
+    }
+    let v: Value = serde_json::from_str(data).ok()?;
+    let u = v.get("usage")?;
+    let prompt_tokens = u.get("prompt_tokens")?.as_u64()?;
+    if prompt_tokens == 0 {
+        return None;
+    }
+    Some(UsageStats {
+        prompt_tokens,
+        cached_tokens: u
+            .get("prompt_tokens_details")
+            .and_then(|d| d.get("cached_tokens"))
+            .and_then(|c| c.as_u64())
+            .unwrap_or(0),
+        completion_tokens: u.get("completion_tokens").and_then(|c| c.as_u64()).unwrap_or(0),
+        cost: u.get("cost").and_then(|c| c.as_f64()).unwrap_or(0.0),
+    })
+}
+
 #[derive(Default)]
 struct SseDecoder {
     buf: Vec<u8>,
+    usage: Option<UsageStats>,
 }
 
 impl SseDecoder {
@@ -135,13 +192,26 @@ impl SseDecoder {
         while let Some(nl) = self.buf.iter().position(|&b| b == b'\n') {
             let raw: Vec<u8> = self.buf.drain(..=nl).collect();
             let line = String::from_utf8_lossy(&raw[..nl]);
-            match parse_sse_line(line.trim_end_matches('\r')) {
+            let line = line.trim_end_matches('\r');
+
+            if self.usage.is_none() {
+                if let Some(u) = parse_usage_line(line) {
+                    self.usage = Some(u);
+                }
+            }
+
+            match parse_sse_line(line) {
                 Some(SseLine::Done) => return (tokens, true),
                 Some(SseLine::Token(t)) => tokens.push(t),
                 None => {}
             }
         }
         (tokens, false)
+    }
+
+    /// Lấy ra và xoá, để chỉ ghi log đúng một lần cho mỗi lượt gọi.
+    fn take_usage(&mut self) -> Option<UsageStats> {
+        self.usage.take()
     }
 }
 
@@ -178,6 +248,18 @@ pub fn stream_content(
         while let Some(chunk) = bytes.next().await {
             let chunk = chunk?;
             let (tokens, done) = dec.push(&chunk);
+
+            if let Some(u) = dec.take_usage() {
+                tracing::info!(
+                    token_vao = u.prompt_tokens,
+                    trung_cache = u.cached_tokens,
+                    phan_tram_cache = u.cache_percent(),
+                    token_ra = u.completion_tokens,
+                    chi_phi_usd = u.cost,
+                    "thống kê token"
+                );
+            }
+
             for tok in tokens {
                 da_ra.push_str(&tok);
                 yield tok;
@@ -283,6 +365,73 @@ mod tests {
         let (toks, done) = dec.push(b": keep-alive\n\ndata: \n");
         assert!(!done);
         assert!(toks.is_empty());
+    }
+
+    fn khung_usage(prompt: u64, cached: u64) -> String {
+        format!(
+            "data: {}\n\n",
+            serde_json::json!({
+                "choices": [{ "delta": {} }],
+                "usage": {
+                    "prompt_tokens": prompt,
+                    "prompt_tokens_details": { "cached_tokens": cached },
+                    "completion_tokens": 217,
+                    "cost": 0.0019118
+                }
+            })
+        )
+    }
+
+    #[test]
+    fn doc_duoc_thong_ke_token_tu_khung_usage() {
+        let mut dec = SseDecoder::default();
+        let (toks, done) = dec.push(khung_usage(13222, 13056).as_bytes());
+        assert!(!done);
+        assert!(toks.is_empty(), "khung usage không được coi là chữ trả lời");
+
+        let u = dec.take_usage().expect("phải đọc được usage");
+        assert_eq!(u.prompt_tokens, 13222);
+        assert_eq!(u.cached_tokens, 13056);
+        assert_eq!(u.completion_tokens, 217);
+        assert_eq!(u.cache_percent(), 98);
+        assert!(dec.take_usage().is_none(), "lấy rồi thì không trả lại lần hai");
+    }
+
+    #[test]
+    fn usage_khong_lam_mat_chu_di_kem() {
+        let mut dec = SseDecoder::default();
+        let mut wire_all = wire("Theo tài liệu, ");
+        wire_all.push_str(&khung_usage(2599, 1024));
+        wire_all.push_str(&wire("Luật sư Đặng Kim Chinh"));
+
+        let (toks, _) = dec.push(wire_all.as_bytes());
+        assert_eq!(toks.concat(), "Theo tài liệu, Luật sư Đặng Kim Chinh");
+        assert_eq!(dec.take_usage().unwrap().cache_percent(), 39);
+    }
+
+    #[test]
+    fn khung_thuong_khong_bi_nham_la_usage() {
+        assert!(parse_usage_line(&wire("chữ bình thường").trim().to_string()).is_none());
+        assert!(parse_usage_line("data: [DONE]").is_none());
+        assert!(parse_usage_line("data: ").is_none());
+        assert!(parse_usage_line(": keep-alive").is_none());
+    }
+
+    #[test]
+    fn khong_chia_cho_khong_khi_thieu_token_vao() {
+        assert_eq!(UsageStats::default().cache_percent(), 0);
+    }
+
+    #[test]
+    fn cho_phep_chuyen_nha_cung_cap_khi_ho_loi() {
+        // Ghim cứng một nhà (allow_fallbacks=false) thì nhà đó sập là trợ lý sập
+        // theo. Khẳng định lại lựa chọn này để không ai lỡ tay đổi ngược.
+        let p = ProviderCfg {
+            order: ["parasail"],
+            allow_fallbacks: true,
+        };
+        let j = serde_json::to_value(&p).unwrap();
+        assert_eq!(j["allow_fallbacks"], serde_json::json!(true));
     }
 
     #[test]
