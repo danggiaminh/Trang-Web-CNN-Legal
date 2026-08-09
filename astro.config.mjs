@@ -17,6 +17,19 @@ export default defineConfig({
         access: "secret",
         optional: true,
       }),
+      TAVILY_API_KEY: envField.string({
+        context: "server",
+        access: "secret",
+        optional: true,
+      }),
+      // Trần tuyệt đối cho số lượt gọi Tavily trong 24 giờ, tính trên toàn site.
+      // Hạn mức 3 lượt/người khoá theo dấu vân tay do client tự khai nên bịa được;
+      // đây mới là thứ chặn được script quay vòng dấu vân tay để đốt credit.
+      TAVILY_DAILY_CAP: envField.number({
+        context: "server",
+        access: "public",
+        default: 200,
+      }),
       BREVO_API_KEY: envField.string({
         context: "server",
         access: "secret",
@@ -40,7 +53,7 @@ export default defineConfig({
       OPENROUTER_PROVIDER: envField.string({
         context: "server",
         access: "public",
-        default: "parasail",
+        default: "cloudflare",
       }),
       OPENROUTER_MAX_TOKENS: envField.number({
         context: "server",

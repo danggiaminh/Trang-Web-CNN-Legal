@@ -1,4 +1,4 @@
-import { CHAT_ALLOWED_ORIGINS } from "astro:env/server";
+import { CHAT_ALLOWED_ORIGINS, TAVILY_DAILY_CAP } from "astro:env/server";
 import type { ChatMessage } from "./prompt";
 
 export const MAX_QUESTION_CHARS = 2000;
@@ -74,6 +74,101 @@ export function withinRateLimit(ip: string): boolean {
   if (bucket.tokens < 1) return false;
   bucket.tokens -= 1;
   return true;
+}
+
+// ---------------------------------------------------------------------------
+// Hạn mức tìm kiếm trên mạng
+//
+// Số lượt do trình duyệt giữ (localStorage + sessionStorage, khoá theo dấu vân
+// tay trình duyệt) và gửi kèm mỗi câu hỏi. Sổ dưới đây là bản sao phía máy chủ,
+// khoá theo ĐÚNG dấu vân tay đó — không đụng tới IP. Nó chỉ vá được trường hợp
+// xoá storage: trên Vercel mỗi instance có sổ riêng và instance nguội thì mất
+// sạch, y hệt bộ đếm chống dồn dập ở trên. Đây là hàng rào mềm, không phải
+// khoá chống gian lận; ai cố ý sửa fingerprint vẫn qua được.
+// ---------------------------------------------------------------------------
+
+export const WEB_SEARCH_LIMIT = 3;
+
+const FINGERPRINT_RE = /^[0-9a-f]{8,32}$/;
+const USE_TTL_MS = 12 * 60 * 60 * 1000;
+const MAX_FINGERPRINTS = 5000;
+
+const searchUse = new Map<string, { used: number; last: number }>();
+
+export function cleanFingerprint(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const fp = raw.trim().toLowerCase();
+  return FINGERPRINT_RE.test(fp) ? fp : null;
+}
+
+function claimedUses(raw: unknown): number {
+  const n = typeof raw === "number" ? raw : Number.NaN;
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(Math.max(Math.trunc(n), 0), WEB_SEARCH_LIMIT);
+}
+
+/** Số lượt đã dùng: lấy con số lớn hơn giữa lời khai của trình duyệt và sổ máy chủ. */
+export function webSearchUsed(fp: string | null, raw: unknown): number {
+  const claimed = claimedUses(raw);
+  if (!fp) return claimed;
+  const rec = searchUse.get(fp);
+  if (!rec || Date.now() - rec.last > USE_TTL_MS) return claimed;
+  return Math.max(claimed, rec.used);
+}
+
+export function noteWebSearch(fp: string | null, used: number): void {
+  if (!fp) return;
+  const now = Date.now();
+
+  // delete rồi set lại đẩy khoá xuống cuối, nhờ vậy thứ tự duyệt Map thành LRU
+  // và dọn chỗ chỉ cần cắt từ đầu.
+  searchUse.delete(fp);
+  if (searchUse.size >= MAX_FINGERPRINTS) {
+    for (const [key, rec] of searchUse) {
+      if (now - rec.last > USE_TTL_MS) searchUse.delete(key);
+    }
+    while (searchUse.size >= MAX_FINGERPRINTS) {
+      const oldest = searchUse.keys().next();
+      if (oldest.done) break;
+      searchUse.delete(oldest.value);
+    }
+  }
+  searchUse.set(fp, { used: Math.min(used, WEB_SEARCH_LIMIT), last: now });
+}
+
+// ---------------------------------------------------------------------------
+// Trần tiêu thụ Tavily cho TOÀN SITE
+//
+// Hạn mức 3 lượt ở trên khoá theo dấu vân tay do trình duyệt gửi lên, mà trường
+// đó thì ai cũng bịa được: đổi `fp` mỗi lần gọi là có lại 3 lượt mới. Endpoint
+// chat lại không có đăng nhập, và header Origin ngoài trình duyệt cũng giả được,
+// nên không có cách nào phân biệt người đọc thật với script. Chốt chặn duy nhất
+// có ý nghĩa là một trần tuyệt đối cho số lần gọi Tavily, không phụ thuộc vào
+// bất cứ thứ gì client khai báo.
+//
+// Cũng như bộ đếm chống dồn dập, biến này nằm trong bộ nhớ từng instance Vercel:
+// nhiều instance thì trần thực tế là cap × số instance. Nó thu hẹp thiệt hại
+// chứ không chặn tuyệt đối — trần cứng phải đặt thêm ở trang quản trị Tavily.
+// ---------------------------------------------------------------------------
+
+const GLOBAL_WINDOW_MS = 24 * 60 * 60 * 1000;
+let windowStart = Date.now();
+let globalUsed = 0;
+
+export function withinGlobalSearchCap(): boolean {
+  const now = Date.now();
+  if (now - windowStart > GLOBAL_WINDOW_MS) {
+    windowStart = now;
+    globalUsed = 0;
+  }
+  return globalUsed < TAVILY_DAILY_CAP;
+}
+
+export function noteGlobalSearch(): void {
+  globalUsed += 1;
+  if (globalUsed === TAVILY_DAILY_CAP) {
+    console.warn(`[guard] đã chạm trần ${TAVILY_DAILY_CAP} lượt tìm kiếm Tavily trong 24 giờ`);
+  }
 }
 
 export function isMeaninglessQuestion(question: string): boolean {

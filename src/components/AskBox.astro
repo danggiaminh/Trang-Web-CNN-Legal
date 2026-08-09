@@ -49,7 +49,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   </form>
 </div>
 
-<div class="pointer-events-none fixed inset-0 z-[60] overflow-hidden">
+<div class="pointer-events-none fixed inset-0 z-[60] overflow-hidden" data-ask-panel-wrap>
 <aside
   class="pointer-events-auto absolute inset-0 flex w-full translate-x-[calc(100%+1.5rem)] flex-col border-border-soft bg-surface-white transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] sm:inset-y-3 sm:left-auto sm:right-3 sm:w-[23rem] sm:rounded-2xl sm:border sm:shadow-[0_8px_30px_-8px_rgba(15,25,35,0.25)]"
   aria-label="Trợ lý hỏi đáp"
@@ -85,6 +85,28 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       </button>
     </div>
   </header>
+
+  <div
+    class="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-4 py-3.5"
+    role="status"
+    hidden
+    data-ask-limit
+  >
+    <p class="text-[0.8125rem] leading-[1.5] text-text-muted" data-ask-limit-text>
+      Bạn đã dùng hết 3 lượt tìm kiếm trên mạng. Trợ lý vẫn trả lời dựa trên nội dung trên trang.
+    </p>
+
+    <button
+      type="button"
+      class="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-dark"
+      aria-label="Đóng thông báo"
+      data-ask-limit-close
+    >
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
 
   <div
     class="flex-1 space-y-5 overflow-y-auto px-4 py-4"
@@ -229,6 +251,25 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     }
   }
 
+  /*
+   * Máy tính bảng dựng đứng thì ẩn trợ lý AI.
+   * Máy tính, máy tính bảng xoay ngang và điện thoại (mọi chiều) đều vẫn có.
+   *
+   * - min-width 600px: tách máy tính bảng khỏi điện thoại. Điện thoại rộng nhất
+   *   khi dựng đứng khoảng 440px, iPad Mini hẹp nhất khoảng 744px.
+   * - pointer: coarse: chỉ thiết bị cảm ứng. Thiếu điều kiện này thì người dùng
+   *   máy tính thu hẹp cửa sổ cho cao và hẹp sẽ bị mất trợ lý oan.
+   *
+   * Script bên dưới dùng lại đúng chuỗi truy vấn này (hằng TABLET_PORTRAIT)
+   * để đóng bảng khi người dùng xoay máy — sửa ở đây thì sửa cả ở đó.
+   */
+  @media (orientation: portrait) and (min-width: 600px) and (pointer: coarse) {
+    [data-ask-box],
+    [data-ask-panel-wrap] {
+      display: none;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     :global(.ask-copy) {
       transition: none;
@@ -275,6 +316,8 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 </style>
 
 <script>
+  import { fingerprint, readQuota, saveQuota } from "../scripts/ask-web-quota";
+
   function currentSlug(): string | null {
     const m = location.pathname.match(/^\/(?:bai-viet|vu-an-tieu-bieu)\/([^/]+)\/?$/);
     return m ? m[1] : null;
@@ -293,6 +336,9 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   const messages = document.querySelector<HTMLElement>("[data-ask-messages]");
   const closeBtn = document.querySelector<HTMLButtonElement>("[data-ask-close]");
   const panelHint = document.querySelector<HTMLElement>("[data-ask-panel-hint]");
+  const limitNotice = document.querySelector<HTMLElement>("[data-ask-limit]");
+  const limitText = document.querySelector<HTMLElement>("[data-ask-limit-text]");
+  const limitClose = document.querySelector<HTMLButtonElement>("[data-ask-limit-close]");
 
   if (form && input && submit && panel && panelForm && panelInput && panelSubmit && messages) {
     const initialScroll = window.scrollY;
@@ -452,6 +498,29 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     const MAX_HISTORY = 6;
     const history: { role: "user" | "assistant"; content: string }[] = [];
 
+    // Hạn mức tìm kiếm trên mạng. Máy chủ mới là bên đếm thật; ở đây chỉ giữ
+    // bản sao để hiện thông báo và để gửi kèm câu hỏi sau.
+    let quota = readQuota();
+
+    const syncLimitNotice = () => {
+      if (!limitNotice) return;
+      const show = quota.used >= quota.limit && !quota.dismissed;
+      if (show && limitText) {
+        limitText.textContent =
+          `Bạn đã dùng hết ${quota.limit} lượt tìm kiếm trên mạng. ` +
+          "Trợ lý vẫn trả lời dựa trên nội dung trên trang.";
+      }
+      limitNotice.toggleAttribute("hidden", !show);
+    };
+
+    limitClose?.addEventListener("click", () => {
+      quota = { ...quota, dismissed: true };
+      saveQuota(quota);
+      syncLimitNotice();
+    });
+
+    syncLimitNotice();
+
     let inFlight: AbortController | null = null;
     const scrollToEnd = () => {
       messages.scrollTop = messages.scrollHeight;
@@ -507,6 +576,8 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
             message: question,
             slug: currentSlug(),
             history: history.slice(-MAX_HISTORY),
+            fp: fingerprint(),
+            used: quota.used,
           }),
         });
         if (!res.ok || !res.body) {
@@ -526,7 +597,15 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
             const line = buf.slice(0, nl).trimEnd();
             buf = buf.slice(nl + 1);
             if (!line.startsWith("data:")) continue;
-            let obj: { t?: string; r?: number; m?: number; e?: string };
+            let obj: {
+              t?: string;
+              r?: number;
+              m?: number;
+              e?: string;
+              w?: string;
+              s?: number;
+              n?: number;
+            };
             try {
               obj = JSON.parse(line.slice(5).replace(/^ /, ""));
             } catch {
@@ -539,6 +618,18 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
             } else if (typeof obj.r === "number") {
               answer.textContent = `Đang thử lại (${obj.r}/${obj.m ?? 5})`;
               scrollToEnd();
+            } else if (typeof obj.w === "string") {
+              // Tavily mất vài giây; đừng để người đọc nhìn bong bóng rỗng.
+              answer.textContent = "Đang tìm trên mạng…";
+              scrollToEnd();
+            } else if (typeof obj.s === "number") {
+              quota = {
+                used: obj.s,
+                limit: typeof obj.n === "number" && obj.n > 0 ? obj.n : quota.limit,
+                dismissed: quota.dismissed,
+              };
+              saveQuota(quota);
+              syncLimitNotice();
             } else if (typeof obj.e === "string") {
               answer.textContent = obj.e;
               finalShown = true;
@@ -612,6 +703,20 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     });
 
     closeBtn?.addEventListener("click", closePanel);
+
+    // Phải khớp đúng media query ẩn trợ lý trong khối <style> bên trên.
+    const TABLET_PORTRAIT = "(orientation: portrait) and (min-width: 600px) and (pointer: coarse)";
+    const tabletPortrait = window.matchMedia(TABLET_PORTRAIT);
+
+    // Xoay máy tính bảng sang dọc trong lúc bảng đang mở: CSS ẩn bảng đi nhưng
+    // body vẫn còn data-ask-panel-open, kéo theo overflow:hidden và khung nội dung
+    // bị ghim position:fixed — trang kẹt cứng, không cuộn nổi mà cũng không còn
+    // nút đóng để thoát. Đóng bảng ngay khi bước vào trạng thái bị ẩn.
+    const closeIfHidden = (matches: boolean) => {
+      if (matches && panel.hasAttribute("data-open")) closePanel();
+    };
+    closeIfHidden(tabletPortrait.matches);
+    tabletPortrait.addEventListener("change", (e) => closeIfHidden(e.matches));
 
     document.addEventListener("keydown", (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "i") {

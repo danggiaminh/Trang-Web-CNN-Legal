@@ -4,31 +4,69 @@ import type { APIRoute } from "astro";
 import {
   MAX_BODY_BYTES,
   MAX_QUESTION_CHARS,
+  WEB_SEARCH_LIMIT,
+  cleanFingerprint,
   cleanSlug,
   corsHeaders,
   isMeaninglessQuestion,
+  noteGlobalSearch,
+  noteWebSearch,
   originAllowed,
   sanitizeHistory,
+  webSearchUsed,
+  withinGlobalSearchCap,
   withinRateLimit,
 } from "../../../server/guard";
 import {
   MAX_ANSWER_CHARS,
+  WEB_SEARCH_TOOL_NAME,
   callOpenRouter,
   hasApiKey,
   retryAfterMs,
-  streamContent,
+  streamTurn,
+  type CallOptions,
+  type ToolCall,
+  type UsageStats,
 } from "../../../server/openrouter";
-import { buildMessages } from "../../../server/prompt";
+import { buildMessages, toolResultMessages, type ChatMessage } from "../../../server/prompt";
 import { selectContext } from "../../../server/retrieval";
+import { MAX_QUERY_CHARS, hasTavilyKey, renderResults, searchWeb } from "../../../server/tavily";
 
 const BUSY_MSG = "Xin lỗi hệ thống đang bận, vui lòng thử lại sau.";
 const VO_NGHIA_MSG =
   "Mình chưa hiểu câu hỏi. Bạn thử hỏi rõ hơn về một vụ án hoặc bài viết trên trang nhé.";
+const LIMIT_MSG =
+  `Bạn đã dùng hết ${WEB_SEARCH_LIMIT}/${WEB_SEARCH_LIMIT} lượt tìm kiếm trên mạng, ` +
+  "nên mình không tra cứu thêm trên Internet được nữa. Mình vẫn trả lời được dựa " +
+  "trên nội dung bài viết trên trang — bạn thử hỏi lại theo hướng đó nhé.";
+const NO_RESULT_NOTE =
+  "Lần tra cứu này không ra kết quả nào (lượt tìm chưa bị trừ). Hãy nói ngắn gọn " +
+  "với người dùng như vậy, rồi trả lời dựa trên TÀI LIỆU THAM KHẢO.";
+const CAP_NOTE =
+  "Chức năng tìm kiếm trên mạng đang tạm nghỉ vì cả trang đã chạm trần tra cứu " +
+  "trong ngày (lượt tìm của người dùng chưa bị trừ). Hãy nói ngắn gọn như vậy, " +
+  "rồi trả lời dựa trên TÀI LIỆU THAM KHẢO.";
+const BAD_TOOL_NOTE =
+  "Công cụ không tồn tại hoặc thiếu tham số. Hãy trả lời dựa trên TÀI LIỆU THAM KHẢO.";
 
 const MAX_RETRIES = 5;
 const RETRY_BUDGET_MS = 5000;
 
-type Payload = { t: string } | { r: number; m: number } | { e: string };
+/**
+ * t: chữ | r/m: đang thử lại | e: lỗi cuối | w: bắt đầu tìm trên mạng
+ * s/n: đã tiêu 1 lượt tìm (đã dùng / tổng) — trình duyệt lấy số này làm chuẩn.
+ */
+type Payload =
+  | { t: string }
+  | { r: number; m: number }
+  | { e: string }
+  | { w: string }
+  | { s: number; n: number };
+
+interface Quota {
+  readonly fp: string | null;
+  readonly used: number;
+}
 
 const SSE_HEADERS = {
   "Content-Type": "text/event-stream; charset=utf-8",
@@ -74,10 +112,104 @@ async function discard(res: Response): Promise<void> {
   await res.body?.cancel().catch(() => {});
 }
 
+function logUsage(u: UsageStats): void {
+  const pct = u.promptTokens ? Math.round((u.cachedTokens / u.promptTokens) * 100) : 0;
+  console.log(
+    `[api/v1/chat] token vào=${u.promptTokens} trúng cache=${u.cachedTokens} (${pct}%) ` +
+      `ra=${u.completionTokens} chi phí=$${u.cost.toFixed(7)}`,
+  );
+}
+
+/** Đọc luồng của một lượt, đổi token thành payload và trả về lời gọi công cụ (nếu có). */
+async function* tokensOf(res: Response): AsyncGenerator<Payload, ToolCall | null, void> {
+  const gen = streamTurn(res, MAX_ANSWER_CHARS, logUsage);
+  try {
+    for (;;) {
+      const { value, done } = await gen.next();
+      if (done) return value ?? null;
+      yield { t: value };
+    }
+  } finally {
+    // Người đọc đóng tab giữa chừng: đóng luôn kết nối tới OpenRouter.
+    await gen.return(null).catch(() => {});
+  }
+}
+
+interface TurnOutcome {
+  readonly ok: boolean;
+  readonly toolCall: ToolCall | null;
+}
+
+const FAILED: TurnOutcome = { ok: false, toolCall: null };
+
+/** Một lượt gọi model, kèm nguyên vòng thử lại khi dính 429. */
+async function* runTurn(
+  messages: readonly ChatMessage[],
+  opts: CallOptions,
+  signal: AbortSignal,
+): AsyncGenerator<Payload, TurnOutcome, void> {
+  const deadline = Date.now() + RETRY_BUDGET_MS;
+  let attempt = 0;
+
+  for (;;) {
+    if (signal.aborted) return FAILED;
+
+    let res: Response;
+    try {
+      res = await callOpenRouter(messages, signal, opts);
+    } catch (err) {
+      if (signal.aborted) return FAILED;
+      console.error("[api/v1/chat] gọi OpenRouter thất bại", err);
+      yield { e: BUSY_MSG };
+      return FAILED;
+    }
+
+    if (res.ok) {
+      try {
+        return { ok: true, toolCall: yield* tokensOf(res) };
+      } catch (err) {
+        if (signal.aborted) return FAILED;
+        console.error("[api/v1/chat] lỗi khi đọc luồng từ OpenRouter", err);
+        yield { e: BUSY_MSG };
+        return FAILED;
+      }
+    }
+
+    if (res.status === 429) {
+      attempt += 1;
+      const wait = retryAfterMs(res, attempt);
+      await discard(res);
+      if (attempt <= MAX_RETRIES && Date.now() + wait <= deadline) {
+        yield { r: attempt, m: MAX_RETRIES };
+        await sleep(wait, signal);
+        continue;
+      }
+      console.error(`[api/v1/chat] OpenRouter 429, dừng sau ${attempt} lần thử`);
+      yield { e: BUSY_MSG };
+      return FAILED;
+    }
+
+    console.error(`[api/v1/chat] OpenRouter trả lỗi HTTP ${res.status}`);
+    await discard(res);
+    yield { e: BUSY_MSG };
+    return FAILED;
+  }
+}
+
+function parseQuery(args: string): string {
+  try {
+    const query = (JSON.parse(args) as { query?: unknown })?.query;
+    return typeof query === "string" ? query.trim().slice(0, MAX_QUERY_CHARS) : "";
+  } catch {
+    return "";
+  }
+}
+
 async function* answer(
   question: string,
   slug: string | null,
   history: ReturnType<typeof sanitizeHistory>,
+  quota: Quota,
   signal: AbortSignal,
 ): AsyncGenerator<Payload, void, void> {
   if (isMeaninglessQuestion(question)) {
@@ -92,62 +224,77 @@ async function* answer(
     return;
   }
 
-  let messages;
+  const webSearch = hasTavilyKey();
+  const exhausted = quota.used >= WEB_SEARCH_LIMIT;
+
+  let messages: ChatMessage[];
   try {
     const context = await selectContext(question, slug);
-    messages = buildMessages(question, context.passages, context.currentTitle, history);
+    messages = buildMessages(question, context.passages, context.currentTitle, history, {
+      webSearch,
+      quotaExhausted: exhausted,
+    });
   } catch (err) {
     console.error("[api/v1/chat] dựng ngữ cảnh thất bại", err);
     yield { e: BUSY_MSG };
     return;
   }
 
-  const deadline = Date.now() + RETRY_BUDGET_MS;
-  let attempt = 0;
+  const first = yield* runTurn(
+    messages,
+    { withTools: webSearch, allowToolCall: webSearch },
+    signal,
+  );
+  if (!first.ok || !first.toolCall) return;
 
-  for (;;) {
-    if (signal.aborted) return;
+  const call = first.toolCall;
+  const query = call.name === WEB_SEARCH_TOOL_NAME ? parseQuery(call.args) : "";
 
-    let res: Response;
-    try {
-      res = await callOpenRouter(messages, signal);
-    } catch (err) {
-      if (signal.aborted) return;
-      console.error("[api/v1/chat] gọi OpenRouter thất bại", err);
-      yield { e: BUSY_MSG };
-      return;
-    }
-
-    if (res.ok) {
-      try {
-        for await (const token of streamContent(res, MAX_ANSWER_CHARS)) yield { t: token };
-      } catch (err) {
-        if (signal.aborted) return;
-        console.error("[api/v1/chat] lỗi khi đọc luồng từ OpenRouter", err);
-        yield { e: BUSY_MSG };
-      }
-      return;
-    }
-
-    if (res.status === 429) {
-      attempt += 1;
-      const wait = retryAfterMs(res, attempt);
-      await discard(res);
-      if (attempt <= MAX_RETRIES && Date.now() + wait <= deadline) {
-        yield { r: attempt, m: MAX_RETRIES };
-        await sleep(wait, signal);
-        continue;
-      }
-      console.error(`[api/v1/chat] OpenRouter 429, dừng sau ${attempt} lần thử`);
-      yield { e: BUSY_MSG };
-      return;
-    }
-
-    console.error(`[api/v1/chat] OpenRouter trả lỗi HTTP ${res.status}`);
-    await discard(res);
-    yield { e: BUSY_MSG };
+  // Hết hạn mức mà model vẫn đòi tìm: từ chối tại chỗ, không gọi Tavily, cũng
+  // không tốn thêm một lượt gọi model. Đây là chốt chặn chắc chắn, còn lời nhắc
+  // trong prompt chỉ để model tự biết đường mà không đòi.
+  if (query && exhausted) {
+    console.log("[api/v1/chat] từ chối tìm kiếm: đã hết hạn mức");
+    // Trình duyệt có thể đang tưởng mình còn lượt (vừa bị xoá storage) trong khi
+    // sổ máy chủ nói hết. Đẩy con số thật về để nó hiện thông báo và các câu sau
+    // khai đúng, thay vì lệch nhau mãi.
+    yield { s: quota.used, n: WEB_SEARCH_LIMIT };
+    yield { t: LIMIT_MSG };
     return;
   }
+
+  let toolResult = BAD_TOOL_NOTE;
+
+  if (query && !withinGlobalSearchCap()) {
+    // Trần toàn site đã chạm: không gọi Tavily, cũng không trừ lượt của người
+    // đọc — họ không có lỗi gì trong chuyện này.
+    console.warn("[api/v1/chat] bỏ qua tìm kiếm: chạm trần Tavily trong ngày");
+    toolResult = CAP_NOTE;
+  } else if (query) {
+    yield { w: query };
+    const results = await searchWeb(query, signal);
+    if (signal.aborted) return;
+
+    if (results) {
+      const used = quota.used + 1;
+      noteWebSearch(quota.fp, used);
+      noteGlobalSearch();
+      // Chỉ trừ lượt khi đã cầm chắc kết quả trong tay.
+      yield { s: used, n: WEB_SEARCH_LIMIT };
+      toolResult = renderResults(query, results);
+      console.log(`[api/v1/chat] tìm trên mạng "${query}" — ${results.length} kết quả, lượt ${used}/${WEB_SEARCH_LIMIT}`);
+    } else {
+      toolResult = NO_RESULT_NOTE;
+    }
+  } else {
+    console.error(`[api/v1/chat] model gọi công cụ lạ hoặc thiếu tham số: ${call.name}`);
+  }
+
+  yield* runTurn(
+    [...messages, ...toolResultMessages(call, toolResult)],
+    { withTools: webSearch, allowToolCall: false },
+    signal,
+  );
 }
 
 export const POST: APIRoute = async ({ request, clientAddress }) => {
@@ -167,7 +314,13 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return json(413, { error: "Yêu cầu quá lớn." }, cors);
   }
 
-  let body: { message?: unknown; slug?: unknown; history?: unknown };
+  let body: {
+    message?: unknown;
+    slug?: unknown;
+    history?: unknown;
+    fp?: unknown;
+    used?: unknown;
+  };
   try {
     body = JSON.parse(raw);
   } catch {
@@ -186,7 +339,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return json(429, { error: BUSY_MSG }, { ...cors, "Retry-After": "2" });
   }
 
-  const gen = answer(question, cleanSlug(body.slug), sanitizeHistory(body.history), request.signal);
+  const fp = cleanFingerprint(body.fp);
+  const gen = answer(
+    question,
+    cleanSlug(body.slug),
+    sanitizeHistory(body.history),
+    { fp, used: webSearchUsed(fp, body.used) },
+    request.signal,
+  );
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
@@ -215,7 +375,13 @@ export const GET: APIRoute = () =>
     usage: {
       method: "POST",
       path: "/api/v1/chat",
-      body: { message: "string", slug: "string | null", history: "{role, content}[]" },
+      body: {
+        message: "string",
+        slug: "string | null",
+        history: "{role, content}[]",
+        fp: "string | null (dấu vân tay trình duyệt, hex)",
+        used: `number (số lượt tìm trên mạng đã dùng, tối đa ${WEB_SEARCH_LIMIT})`,
+      },
       response: "text/event-stream",
     },
   });
