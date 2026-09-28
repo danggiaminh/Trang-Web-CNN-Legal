@@ -1,6 +1,7 @@
 import { site } from "../data/site";
 import { getAllArticles } from "../data/articles";
 import { notableCases } from "../data/cases";
+import { services } from "../data/services";
 
 interface SitemapEntry {
   path: string;
@@ -29,6 +30,12 @@ export async function GET() {
     { path: "/", changefreq: "weekly", priority: 1.0, lastmod: today },
     { path: "/tong-quan/", changefreq: "monthly", priority: 0.8, lastmod: today },
     { path: "/dich-vu/", changefreq: "weekly", priority: 0.9, lastmod: today },
+    ...services.map((s) => ({
+      path: `/dich-vu/${s.slug}/`,
+      changefreq: "monthly" as const,
+      priority: 0.8,
+      lastmod: today,
+    })),
     { path: "/kinh-nghiem/", changefreq: "weekly", priority: 0.9, lastmod: today },
     { path: "/bai-viet/", changefreq: "weekly", priority: 0.9, lastmod: today },
 

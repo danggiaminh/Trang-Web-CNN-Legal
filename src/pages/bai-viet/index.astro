@@ -1,10 +1,10 @@
 ---
-import { Image } from "astro:assets";
+import { Picture } from "astro:assets";
 import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getAllArticles, externalArticles } from "../../data/articles";
 import { site } from "../../data/site";
-import articleHero from "../../assets/images/article-hero.jpg";
+import articleHero from "../../assets/images/articles-field.jpg";
 
 const articles = await getAllArticles();
 
@@ -67,18 +67,25 @@ const structuredData = [
 
 <BaseLayout title={title} description={description} canonicalPath={canonicalPath} structuredData={structuredData}>
   <section class="relative overflow-hidden py-20 md:py-28 lg:py-32">
-    <div class="absolute inset-0 z-0" style="background-color:#afa89a">
-      <Image
+    <div class="absolute inset-0 z-0" style="background-color:#5a929c">
+      {/* Ảnh 3:2; banner màn hẹp cao 295px (tiêu đề hai dòng) nên dưới 444px ảnh phóng
+          theo chiều cao, rộng ≈ 444px. Đoạn mô tả để dưới banner: giữ trong banner thì
+          banner điện thoại cao 520px, cần ảnh 194 KB, Lighthouse mobile tụt còn 94–97.
+          quality 65 như các banner khác (≈ WebP 80).
+          Phủ tối đều 20%, không gradient, như banner Giới thiệu và Kinh nghiệm. */}
+      <Picture
         class="h-full w-full object-cover object-center"
         src={articleHero}
-        alt="Hình ảnh nền trang bài viết pháp lý CNN Legal"
-        widths={[320, 640, 768, 1024, 1280]}
-        sizes="100vw"
-        quality={80}
+        alt="Cánh đồng cỏ dưới trời xanh và dãy núi"
+        formats={["avif"]}
+        fallbackFormat="webp"
+        widths={[640, 768, 800, 960, 1280, 1600, 1920, 2560, 3840]}
+        sizes="(max-width: 443px) 444px, 100vw"
+        quality={65}
         loading="eager"
         fetchpriority="high"
       />
-      <div class="absolute inset-0 bg-black/55"></div>
+      <div class="absolute inset-0" style="background-color:rgb(0 0 0 / 0.2)"></div>
     </div>
 
     <div class="section-shell relative z-10">
@@ -87,16 +94,16 @@ const structuredData = [
       <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
         Bài viết và ý kiến pháp lý
       </h1>
-
-      <p class="prose-justify mt-6 max-w-2xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
-        Kinh nghiệm tích lũy từ hoạt động tranh tụng và tư vấn là nền tảng để Luật sư Đặng Kim Chinh và đội ngũ cộng sự thực hiện các nghiên cứu, phân tích và chia sẻ các bài viết, bình luận, ý kiến pháp lý trên các tạp chí, báo chuyên ngành, qua đó góp phần kết nối giữa lý luận và thực tiễn trong quá trình áp dụng pháp luật.
-      </p>
     </div>
   </section>
 
   <section class="bg-panel-taupe">
     <div class="section-shell py-16 md:py-20">
-      <div class="flex flex-col gap-12 lg:flex-row lg:gap-20">
+      <p class="prose-justify max-w-3xl font-sans text-[1rem] leading-[1.8] text-text-dark md:text-[1.0625rem]">
+        Kinh nghiệm tích lũy từ hoạt động tranh tụng và tư vấn là nền tảng để Luật sư Đặng Kim Chinh và đội ngũ cộng sự thực hiện các nghiên cứu, phân tích và chia sẻ các bài viết, bình luận, ý kiến pháp lý trên các tạp chí, báo chuyên ngành, qua đó góp phần kết nối giữa lý luận và thực tiễn trong quá trình áp dụng pháp luật.
+      </p>
+
+      <div class="mt-10 flex flex-col gap-12 lg:flex-row lg:gap-20">
 
         <aside class="shrink-0 lg:w-[16.25rem]">
           <div class="flex items-center gap-4 mb-6">

@@ -21,7 +21,7 @@ export const GET: APIRoute = () => {
     ...services.map((s) => ({
       t: s.title,
       d: trim(s.summary),
-      u: "/dich-vu/",
+      u: `/dich-vu/${s.slug}/`,
       g: "Dịch vụ",
       k: "Dịch vụ" as const,
     })),

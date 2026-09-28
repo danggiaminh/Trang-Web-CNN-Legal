@@ -617,8 +617,14 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
           }),
         });
         if (!res.ok || !res.body) {
+          // Máy chủ trả lý do cụ thể ("Câu hỏi quá dài."…); hiện đúng câu đó thay
+          // vì "đang bận" để người đọc khỏi bấm gửi lại vô ích.
+          const detail = await res
+            .json()
+            .then((j: { error?: unknown }) => (typeof j?.error === "string" ? j.error : ""))
+            .catch(() => "");
           stopThinking();
-          answer.textContent = "Hệ thống đang bận, thử lại sau nhé.";
+          answer.textContent = detail || "Hệ thống đang bận, thử lại sau nhé.";
           return;
         }
         const reader = res.body.getReader();
@@ -677,6 +683,10 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
               saveQuota(quota);
               syncLimitNotice();
             } else if (typeof obj.e === "string") {
+              if (frame) {
+                cancelAnimationFrame(frame);
+                frame = 0;
+              }
               answer.textContent = obj.e;
               finalShown = true;
               scrollToEnd();
@@ -685,7 +695,9 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
         }
         stopThinking();
         if (frame) cancelAnimationFrame(frame);
-        if (raw) {
+        // Lỗi giữa chừng: giữ nguyên thông báo lỗi, không đè bằng câu trả lời dở
+        // và không nhét câu dở đó vào lịch sử hội thoại.
+        if (raw && !finalShown) {
           answer.setAttribute("aria-live", "polite");
           flush();
           const copied = raw;

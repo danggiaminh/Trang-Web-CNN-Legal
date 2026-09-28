@@ -183,7 +183,9 @@ export interface SenderStatus {
 // Trang thai nguoi gui gan nhu khong doi. Nho lai de /health khong bien thanh
 // duong khuech dai: moi lan goi la 2 request ra Brevo, ton quota cua chinh minh.
 const SENDER_TTL_MS = 5 * 60 * 1000;
-let senderCache: { at: number; value: SenderStatus } | null = null;
+const UNCHECKED_TTL_MS = 60 * 1000;
+const UNCHECKED = "Không kiểm tra được trạng thái người gửi.";
+let senderCache: { at: number; ttl: number; value: SenderStatus } | null = null;
 
 /**
  * Kiem tra CONTACT_FROM_EMAIL co thuc su gui duoc khong.
@@ -191,13 +193,17 @@ let senderCache: { at: number; value: SenderStatus } | null = null;
  * chua hop le, nen khong the phat hien luc gui - phai hoi truoc bang duong nay.
  */
 export async function checkSender(signal?: AbortSignal): Promise<SenderStatus> {
-  if (senderCache && Date.now() - senderCache.at < SENDER_TTL_MS) return senderCache.value;
+  if (senderCache && Date.now() - senderCache.at < senderCache.ttl) return senderCache.value;
 
   const status = await fetchSenderStatus(signal);
-  // Chi nho ket qua chac chan; loi mang tam thoi thi lan sau hoi lai.
-  if (status.reason !== "Không kiểm tra được trạng thái người gửi.") {
-    senderCache = { at: Date.now(), value: status };
-  }
+  // Ket qua "khong kiem tra duoc" chi nho ngan: loi mang thi som hoi lai, con
+  // khoa bi thu hoi / IP bi chan la loi ben, khong nho thi moi lan goi /health
+  // lai ban request sang Brevo.
+  senderCache = {
+    at: Date.now(),
+    ttl: status.reason === UNCHECKED ? UNCHECKED_TTL_MS : SENDER_TTL_MS,
+    value: status,
+  };
   return status;
 }
 
@@ -208,25 +214,31 @@ async function fetchSenderStatus(signal?: AbortSignal): Promise<SenderStatus> {
 
   const init = { signal, headers: { "api-key": key, Accept: "application/json" } };
 
+  // Brevo trả lỗi HTTP (401/403 vì khoá bị giới hạn quyền, 5xx…) nghĩa là KHÔNG
+  // hỏi được, chứ không phải người gửi chưa xác minh. Bản cũ gộp hai chuyện này
+  // nên /health có thể báo nhầm là form liên hệ không gửi được.
+  const unchecked: SenderStatus = { from, valid: false, reason: UNCHECKED };
   try {
     const res = await fetch(SENDERS_URL, init);
-    if (res.ok) {
-      const body = (await res.json()) as { senders?: { email?: string; active?: boolean }[] };
-      const hit = body.senders?.find((s) => s.email?.toLowerCase() === from.toLowerCase());
-      if (hit?.active) return { from, valid: true, reason: "Người gửi đã được xác minh." };
-    } else {
+    if (!res.ok) {
+      console.error(`[contact] Brevo /senders trả HTTP ${res.status}`);
       await res.body?.cancel().catch(() => {});
+      return unchecked;
     }
+    const senders = (await res.json()) as { senders?: { email?: string; active?: boolean }[] };
+    const sender = senders.senders?.find((s) => s.email?.toLowerCase() === from.toLowerCase());
+    if (sender?.active) return { from, valid: true, reason: "Người gửi đã được xác minh." };
 
     const domain = from.split("@")[1]?.toLowerCase() ?? "";
     const dRes = await fetch(DOMAINS_URL, init);
-    if (dRes.ok) {
-      const body = (await dRes.json()) as { domains?: { domain_name?: string; authenticated?: boolean }[] };
-      const hit = body.domains?.find((d) => d.domain_name?.toLowerCase() === domain);
-      if (hit?.authenticated) return { from, valid: true, reason: `Domain ${domain} đã xác thực.` };
-    } else {
+    if (!dRes.ok) {
+      console.error(`[contact] Brevo /domains trả HTTP ${dRes.status}`);
       await dRes.body?.cancel().catch(() => {});
+      return unchecked;
     }
+    const domains = (await dRes.json()) as { domains?: { domain_name?: string; authenticated?: boolean }[] };
+    const hit = domains.domains?.find((d) => d.domain_name?.toLowerCase() === domain);
+    if (hit?.authenticated) return { from, valid: true, reason: `Domain ${domain} đã xác thực.` };
 
     return {
       from,
@@ -234,6 +246,6 @@ async function fetchSenderStatus(signal?: AbortSignal): Promise<SenderStatus> {
       reason: `${from} chưa được xác minh và domain ${domain} chưa xác thực — thư sẽ bị Brevo từ chối sau khi nhận.`,
     };
   } catch {
-    return { from, valid: false, reason: "Không kiểm tra được trạng thái người gửi." };
+    return unchecked;
   }
 }

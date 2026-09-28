@@ -8,6 +8,7 @@ async function preloadPageImages(rawHref: string): Promise<void> {
     return;
   }
 
+  if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
   if (url.origin !== location.origin) return;
   if (url.pathname === location.pathname) return;
   if (processed.has(url.pathname)) return;
@@ -29,12 +30,26 @@ async function preloadPageImages(rawHref: string): Promise<void> {
         'img[loading="eager"], img[fetchpriority="high"]'
       );
 
+      // Tải đúng ứng viên mà trang đích sẽ dùng: <source> đầu tiên của <picture>
+      // có media khớp khung nhìn hiện tại (AVIF), rồi srcset/sizes của chính ảnh;
+      // chỉ rơi về src khi không có srcset. Bản cũ lấy src — tức bản rộng nhất —
+      // nên rê chuột vào link "/" tải về 303 KB ảnh không bao giờ được hiển thị.
       imgs.forEach((img) => {
+        const source =
+          img.parentElement?.tagName === "PICTURE"
+            ? [...img.parentElement.querySelectorAll("source[srcset]")].find((s) => {
+                const media = s.getAttribute("media");
+                return !media || matchMedia(media).matches;
+              }) ?? null
+            : null;
+        const srcset = source?.getAttribute("srcset") ?? img.getAttribute("srcset");
+        const sizes = source?.getAttribute("sizes") ?? img.getAttribute("sizes");
         const src = img.getAttribute("src");
-        if (!src) return;
         try {
           const preloader = new Image();
-          preloader.src = new URL(src, url.href).href;
+          if (sizes) preloader.sizes = sizes;
+          if (srcset) preloader.srcset = srcset;
+          else if (src) preloader.src = new URL(src, url.href).href;
         } catch {
           void 0;
         }

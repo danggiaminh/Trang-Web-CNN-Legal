@@ -286,6 +286,11 @@ async function* answer(
     console.warn("[api/v1/chat] bỏ qua tìm kiếm: chạm trần Tavily trong ngày");
     toolResult = CAP_NOTE;
   } else if (query) {
+    // Giữ chỗ trong trần toàn site TRƯỚC khi await: kiểm rồi mới tăng sau khi có
+    // kết quả thì các yêu cầu đồng thời cùng lọt qua mốc kiểm. Trần này đếm số lần
+    // gọi Tavily thật, kể cả lần không ra kết quả; lượt của người đọc thì vẫn chỉ
+    // trừ khi có kết quả như dưới.
+    noteGlobalSearch();
     yield { w: query };
     const results = await searchWeb(query, signal);
     if (signal.aborted) return;
@@ -293,7 +298,6 @@ async function* answer(
     if (results) {
       const used = quota.used + 1;
       noteWebSearch(quota.fp, used);
-      noteGlobalSearch();
       // Chỉ trừ lượt khi đã cầm chắc kết quả trong tay.
       yield { s: used, n: WEB_SEARCH_LIMIT };
       toolResult = renderResults(query, results);

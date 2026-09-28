@@ -1,9 +1,10 @@
 ---
-import { Image } from "astro:assets";
+import { Picture } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
 import { site } from "../../data/site";
-import aboutHero from "../../assets/images/about-hero.jpg";
+import aboutHero from "../../assets/images/about-halong.jpg";
+import portrait from "../../assets/images/about-portrait.jpg";
 
 const title = `Giới thiệu | ${site.name}`;
 const description =
@@ -31,22 +32,29 @@ const structuredData = [
 ---
 
 <BaseLayout title={title} description={description} canonicalPath={canonicalPath} structuredData={structuredData}>
-
   <section class="relative overflow-hidden py-24 md:py-32 lg:py-40">
 
-    <div class="absolute inset-0 z-0" style="background-color:#dcb596">
-      <Image
+    <div class="absolute inset-0 z-0" style="background-color:#6c9093">
+      {/* Ảnh 1,61:1 phủ banner. Màn hẹp banner cao 286px nên ảnh phóng theo chiều cao,
+          rộng ≈ 462px dù màn chỉ 360–412px; khai 100vw ở đó là tải thiếu và ảnh mờ.
+          quality 65: giống ảnh gốc ngang WebP 80 (SSIM 0,978) mà nhẹ hơn ~20%.
+          Ưu tiên tải thấp là cố ý: trên mobile LCP là ảnh chân dung bên dưới, banner ưu
+          tiên cao giành băng thông làm LCP chậm ~300 ms; desktop đo vẫn 100 điểm. */}
+      <Picture
         class="h-full w-full object-cover object-center"
         src={aboutHero}
-        alt="Hình ảnh giới thiệu CNN Legal"
-        widths={[320, 640, 768, 1024, 1280, 1536, 1920]}
-        sizes="100vw"
-        quality={80}
+        alt="Vịnh Hạ Long"
+        formats={["avif"]}
+        fallbackFormat="webp"
+        widths={[640, 840, 960, 1280, 1600, 1920, 2560, 3840]}
+        sizes="(max-width: 461px) 462px, 100vw"
+        quality={65}
         loading="eager"
-        fetchpriority="high"
+        fetchpriority="low"
       />
-
-      <div class="absolute inset-0 bg-black/50"></div>
+      {/* Phủ tối đều 20%, không gradient, cùng mức với banner trang Kinh nghiệm: ảnh vẫn
+          sáng mà tiêu đề lên ~7:1 (trung vị), chỗ đè vách đá sáng từ ~1,7 lên ~2,7:1. */}
+      <div class="absolute inset-0" style="background-color:rgb(0 0 0 / 0.2)"></div>
     </div>
 
     <div class="section-shell relative z-10">
@@ -55,57 +63,117 @@ const structuredData = [
       <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
         Về chúng tôi
       </h1>
+    </div>
+  </section>
 
-      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
+  <section class="section-shell about">
+    <div class="about-photo">
+      <Picture
+        src={portrait}
+        alt="Chân dung Luật sư Đặng Kim Chinh"
+        formats={["avif"]}
+        fallbackFormat="webp"
+        widths={[400, 560, 720, 800, 1200]}
+        sizes="(min-width: 1367px) 29.3vw, (min-width: 1136px) 25rem, (min-width: 1024px) calc(100vw - 46rem), (min-width: 432px) 25rem, calc(100vw - 2rem)"
+        quality={65}
+        loading="eager"
+        fetchpriority="high"
+      />
+    </div>
+
+    <div class="about-body">
+      <p>
         CNN Legal là công ty luật được xây dựng trên nền tảng của sự chính trực, chuyên môn và tư duy pháp lý thực tiễn. Chúng tôi phân tích đúng bản chất vụ việc, tư vấn trung thực và xây dựng giải pháp pháp lý phù hợp với yêu cầu của khách hàng.
+      </p>
+      <p>
+        Mỗi vụ việc đều có những đặc điểm riêng, vì vậy không có một giải pháp pháp lý phù hợp cho mọi trường hợp. CNN Legal tiếp cận từng hồ sơ trên cơ sở phân tích các tình tiết của vụ việc, quy định của pháp luật và thực tiễn áp dụng pháp luật, từ đó xác định những vấn đề pháp lý cần ưu tiên giải quyết.
+      </p>
+      <p>
+        Trong quá trình tư vấn, chúng tôi hướng đến việc giúp khách hàng hiểu rõ bản chất của vụ việc, các lựa chọn có thể cân nhắc cũng như hệ quả pháp lý của từng phương án. Điều đó giúp khách hàng có đầy đủ thông tin để đưa ra quyết định phù hợp với mục tiêu và lợi ích hợp pháp của mình.
+      </p>
+      <p>
+        Bên cạnh hoạt động tranh tụng và tư vấn, CNN Legal cũng dành sự quan tâm cho nghiên cứu pháp lý và phản biện chính sách. Chúng tôi tin rằng kinh nghiệm thực tiễn và nghiên cứu chuyên môn bổ trợ cho nhau, qua đó góp phần nâng cao chất lượng dịch vụ pháp lý.
+      </p>
+
+      <h2>Đóng góp cho cộng đồng</h2>
+      <p>
+        CNN Legal tin rằng nghề luật sư không chỉ mang đến các giải pháp pháp lý cho khách hàng mà còn góp phần nâng cao hiểu biết pháp luật và ý thức thượng tôn pháp luật trong cộng đồng. Với tinh thần đó, chúng tôi luôn dành thời gian và nguồn lực để chia sẻ kiến thức pháp luật, hỗ trợ cộng đồng và thực hiện các hoạt động xã hội phù hợp với chuyên môn của mình.
+      </p>
+      <p>
+        Đối với chúng tôi, trách nhiệm xã hội không phải là một hoạt động riêng biệt mà là một phần trong hoạt động hành nghề luật sư.
       </p>
     </div>
   </section>
-
-  <section class="bg-panel-cream">
-    <div class="section-shell py-16 md:py-24">
-      <div class="grid gap-10 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
-
-        <div class="pt-1">
-          <p class="font-sans text-[1.0625rem] font-medium text-text-dark">Tổng quan</p>
-          <div class="mt-3 h-px w-8 bg-text-dark"></div>
-        </div>
-
-        <div class="prose-justify font-sans text-[1rem] leading-[1.85] text-text-dark space-y-5">
-          <p>
-            Mỗi vụ việc đều có những đặc điểm riêng, vì vậy không có một giải pháp pháp lý phù hợp cho mọi trường hợp. CNN Legal tiếp cận từng hồ sơ trên cơ sở phân tích các tình tiết của vụ việc, quy định của pháp luật và thực tiễn áp dụng pháp luật, từ đó xác định những vấn đề pháp lý cần ưu tiên giải quyết.
-          </p>
-          <p>
-            Trong quá trình tư vấn, chúng tôi hướng đến việc giúp khách hàng hiểu rõ bản chất của vụ việc, các lựa chọn có thể cân nhắc cũng như hệ quả pháp lý của từng phương án. Điều đó giúp khách hàng có đầy đủ thông tin để đưa ra quyết định phù hợp với mục tiêu và lợi ích hợp pháp của mình.
-          </p>
-          <p>
-            Bên cạnh hoạt động tranh tụng và tư vấn, CNN Legal cũng dành sự quan tâm cho nghiên cứu pháp lý và phản biện chính sách. Chúng tôi tin rằng kinh nghiệm thực tiễn và nghiên cứu chuyên môn bổ trợ cho nhau, qua đó góp phần nâng cao chất lượng dịch vụ pháp lý.
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <section class="bg-panel-taupe border-t border-panel-taupe-border">
-    <div class="section-shell py-16 md:py-24">
-      <div class="grid gap-10 md:grid-cols-[200px_1fr] lg:grid-cols-[240px_1fr]">
-
-        <div class="pt-1">
-          <p class="font-sans text-[1.0625rem] font-medium text-text-dark">Đóng góp cho cộng đồng</p>
-          <div class="mt-3 h-px w-8 bg-text-dark"></div>
-        </div>
-
-        <div class="prose-justify font-sans text-[1rem] leading-[1.85] text-text-dark space-y-5">
-          <p>
-            CNN Legal tin rằng nghề luật sư không chỉ mang đến các giải pháp pháp lý cho khách hàng mà còn góp phần nâng cao hiểu biết pháp luật và ý thức thượng tôn pháp luật trong cộng đồng. Với tinh thần đó, chúng tôi luôn dành thời gian và nguồn lực để chia sẻ kiến thức pháp luật, hỗ trợ cộng đồng và thực hiện các hoạt động xã hội phù hợp với chuyên môn của mình.
-          </p>
-          <p>
-            Đối với chúng tôi, trách nhiệm xã hội không phải là một hoạt động riêng biệt mà là một phần trong hoạt động hành nghề luật sư.
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </section>
 </BaseLayout>
+
+<style>
+  /* Dưới banner là bố cục phỏng theo trang "Our Firm" mẫu: nền trắng, chữ bên
+     trái, ảnh bên phải. Điện thoại: tiêu đề → ảnh → nội dung. CSS scoped nên chỉ
+     nằm trong trang này. */
+  :global(body) {
+    background: var(--color-surface-white);
+  }
+
+  .about {
+    display: grid;
+    grid-template-areas:
+      "photo"
+      "body";
+    row-gap: 1.75rem;
+    padding-block: 2.5rem 4rem;
+  }
+
+  .about-photo {
+    grid-area: photo;
+    justify-self: center;
+    width: 100%;
+    max-width: 25rem;
+  }
+
+  .about-photo :global(img) {
+    width: 100%;
+  }
+
+  .about-body {
+    grid-area: body;
+  }
+
+  .about-body p {
+    margin: 0 0 1.5rem;
+    font-size: 0.9375rem;
+    line-height: 2;
+    color: var(--color-text-dark);
+  }
+
+  .about-body h2 {
+    margin: 2.5rem 0 1rem;
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-text-dark);
+  }
+
+  /* Căn đều hai bên chỉ khi cột đủ rộng; màn hẹp căn trái để khỏi hở chữ. */
+  @media (min-width: 640px) {
+    .about-body p {
+      text-align: justify;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .about {
+      grid-template-columns: minmax(0, 38rem) minmax(0, 1fr);
+      grid-template-areas: "body photo";
+      padding-block: 4.5rem 6rem;
+    }
+
+    /* Không đặt khe giữa hai cột: ảnh căn giữa khoảng từ mép chữ tới mép khung
+       nên hai bên trống đều nhau, và luôn chừa ít nhất 3rem mỗi bên khi cột phải
+       hẹp lại. */
+    .about-photo {
+      align-self: start;
+      width: min(25rem, 100% - 6rem);
+      margin-top: 0.5rem;
+    }
+  }
+</style>

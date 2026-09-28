@@ -1,102 +1,59 @@
 ---
-import { Image, Picture } from "astro:assets";
+import { getImage } from "astro:assets";
 import { site } from "../data/site";
-import heroRadialLines from "../assets/images/hero-gradient.jpg";
-import carousel1 from "../assets/images/carousel-1.jpg";
-import carousel3 from "../assets/images/carousel-3.jpg";
+import heroSaigon from "../assets/images/hero-saigon.jpg";
+import heroSaigonTall from "../assets/images/hero-saigon-portrait.jpg";
+
+// Bỏ lớp phủ tối thì lỗi nén lộ hết: ở quality 40 dây văng đứt đoạn, mất sợi và toà nhà
+// nhoè (giữ 63–68% năng lượng biên so với ảnh gốc thu nhỏ); 60 giữ 80–84%. Bản dọc là ảnh
+// LCP của Lighthouse mobile (bản 960w) nên giữ 40: đo 5 lượt, 43 KB → LCP 1,5 s, 100 điểm;
+// 45 (57 KB) → 1,66 s, sát mốc tụt; 50–60 (71–111 KB) → 1,8 s, 99 điểm.
+const QUALITY_WIDE = 60;
+const QUALITY_TALL = 40;
+const [tallAvif, wideAvif, wideWebp] = await Promise.all([
+  getImage({ src: heroSaigonTall, widths: [640, 960, 1280, 1440], format: "avif", quality: QUALITY_TALL }),
+  getImage({ src: heroSaigon, widths: [640, 960, 1280, 1600, 2048, 2560], format: "avif", quality: QUALITY_WIDE }),
+  getImage({ src: heroSaigon, widths: [640, 960, 1280, 1600, 2048, 2560], format: "webp", quality: QUALITY_WIDE }),
+]);
+
+// Ảnh 3:2 phủ kín hero → khung hẹp hơn 3/2 thì object-cover phóng theo CHIỀU CAO:
+// 1,5 × 100vh = 150vh.
+const WIDE_SIZES = "(min-aspect-ratio: 3/2) 100vw, 150vh";
+// Màn dựng đứng dùng bản cắt 9:16 quanh cầu Ba Son: bản ngang ở đó chỉ hiện chừng
+// một phần ba bề ngang mà vẫn phải tải file 2560w. Đo Lighthouse mobile: bản ngang
+// đẩy LCP 1.882 → 2.254 ms. Hẹp hơn 9/16 thì phóng theo chiều cao: 0,5625 × 100vh.
+const TALL_SIZES = "(min-aspect-ratio: 9/16) 100vw, 57vh";
 ---
 
-{/* Cao trọn phần <main> của khung khoá cuộn (BaseLayout lockViewport) */}
-<section class="relative h-full overflow-hidden bg-ink-black" data-hero>
+{/* Cao trọn phần còn lại dưới header của khung khoá cuộn (BaseLayout lockViewport). */}
+<section class="relative h-full overflow-hidden bg-ink-black">
 
-  <div class="hero-bg-image active absolute inset-0 transition-opacity duration-700 ease-in-out">
-    {/* Ảnh LCP: AVIF cho máy hỗ trợ, WebP dự phòng — WebP nén hạt nhiễu của ảnh
-        này kém hơn AVIF tới 5 lần (258 KB so với 50 KB ở 2560w).
-        quality 30 là ngưỡng thấp nhất còn giữ được hạt: xuống 25 là hạt vón mảng.
-        Nguồn đã lật ngang để vùng tối nằm bên trái đỡ chữ trắng, và thu về 2560px
-        để ảnh dự phòng <img src> không thành file 5120w nặng 723 KB. */}
-    <Picture
-      class="absolute inset-0 h-full w-full object-cover"
-      src={heroRadialLines}
-      alt="CNN Legal – Tư vấn pháp lý chuyên nghiệp"
-      formats={["avif"]}
-      fallbackFormat="webp"
-      widths={[640, 960, 1280, 1600, 2048, 2560]}
-      {/* Ảnh 16:9 nhét vào khung hero → object-cover phóng theo CHIỀU CAO khi
-          khung nhìn dựng đứng, nên phải khai theo vh chứ không phải vw, nếu không
-          điện thoại sẽ tải file 640w rồi phóng 2,3 lần. Ngưỡng 5/3 chứ không phải
-          16/9: hero thấp hơn khung nhìn 61px, và 16/9 rơi đúng ranh giới màn 1080p
-          nên chỉ cần thanh cuộn là lật sang nhánh sai. */}
-      sizes="(min-aspect-ratio: 5/3) 105vw, 190vh"
-      quality={30}
-      loading="eager"
-      fetchpriority="high"
-    />
+  <div class="hero-bg-image absolute inset-0">
+    <picture>
+      <source media="(max-aspect-ratio: 3/4)" type="image/avif" srcset={tallAvif.srcSet.attribute} sizes={TALL_SIZES} />
+      <source type="image/avif" srcset={wideAvif.srcSet.attribute} sizes={WIDE_SIZES} />
+      <img
+        class="absolute inset-0 h-full w-full object-cover"
+        src={wideWebp.src}
+        srcset={wideWebp.srcSet.attribute}
+        sizes={WIDE_SIZES}
+        alt="Sông Sài Gòn với cầu Ba Son và tòa Landmark 81"
+        width={heroSaigon.width}
+        height={heroSaigon.height}
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </picture>
   </div>
 
-  <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
-    <Image
-      class="absolute inset-0 h-full w-full object-cover"
-      src={carousel1}
-      alt="CNN Legal – Dịch vụ pháp lý"
-      widths={[640, 768, 1024, 1280, 1536, 1763]}
-      sizes="105vw"
-      quality={80}
-      loading="eager"
-      fetchpriority="low"
-    />
-  </div>
-
-  <div class="hero-bg-image absolute inset-0 transition-opacity duration-700 ease-in-out opacity-0">
-    <Image
-      class="absolute inset-0 h-full w-full object-cover"
-      src={carousel3}
-      alt="CNN Legal – Tư vấn chuyên nghiệp"
-      widths={[640, 768, 1024, 1280, 1536, 1672]}
-      sizes="105vw"
-      quality={80}
-      loading="eager"
-      fetchpriority="low"
-    />
-  </div>
-
-  {/* Lớp phủ tối: giữ chữ trắng đọc được trên cả 3 ảnh, kể cả ảnh sáng nhất */}
-  <div class="hero-scrim pointer-events-none absolute inset-0 z-10"></div>
-
-  <div class="hero-copy relative z-20 flex h-full flex-col justify-start px-6 pt-[24dvh] sm:px-10 md:px-16 xl:px-20">
+  <div class="hero-copy relative flex h-full flex-col px-6 pt-[24dvh] sm:px-10 md:px-16 xl:px-20">
 
     <h1 class="hero-title font-sans font-semibold leading-[1.15] tracking-[-0.02em] text-white">
       {site.sloganLines.map((line) => (
         <span class="block">{line}</span>
       ))}
     </h1>
-  </div>
-
-  <div class="hero-dots absolute bottom-10 left-6 z-30 flex gap-2 pb-[env(safe-area-inset-bottom)] sm:left-10 md:left-16 xl:left-20">
-    <button
-      type="button"
-      class="progress-indicator active relative h-1 w-16 bg-white/45 rounded-full focus:outline-none cursor-pointer border-0 p-0"
-      data-index="0"
-      aria-label="Go to slide 1"
-    >
-      <div class="progress-fill h-full bg-white rounded-full w-0"></div>
-    </button>
-    <button
-      type="button"
-      class="progress-indicator relative h-1 w-16 bg-white/45 rounded-full focus:outline-none cursor-pointer border-0 p-0"
-      data-index="1"
-      aria-label="Go to slide 2"
-    >
-      <div class="progress-fill h-full bg-white rounded-full w-0"></div>
-    </button>
-    <button
-      type="button"
-      class="progress-indicator relative h-1 w-16 bg-white/45 rounded-full focus:outline-none cursor-pointer border-0 p-0"
-      data-index="2"
-      aria-label="Go to slide 3"
-    >
-      <div class="progress-fill h-full bg-white rounded-full w-0"></div>
-    </button>
   </div>
 </section>
 
@@ -116,241 +73,18 @@ import carousel3 from "../assets/images/carousel-3.jpg";
     text-wrap: balance;
   }
 
-  /* Đậm về bên trái nơi đặt tiêu đề, nhạt dần để lộ ảnh bên phải */
-  .hero-scrim {
-    background:
-      linear-gradient(
-        100deg,
-        rgba(15, 25, 35, 0.94) 0%,
-        rgba(15, 25, 35, 0.86) 22%,
-        rgba(15, 25, 35, 0.62) 45%,
-        rgba(15, 25, 35, 0.28) 68%,
-        rgba(15, 25, 35, 0.06) 88%,
-        rgba(15, 25, 35, 0) 100%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(15, 25, 35, 0.3) 0%,
-        rgba(15, 25, 35, 0) 30%,
-        rgba(15, 25, 35, 0) 62%,
-        rgba(15, 25, 35, 0.42) 100%
-      );
-  }
-
-  /* Màn hẹp: chữ chiếm gần hết bề ngang nên phủ đều thay vì dồn trái */
-  @media (max-width: 1023px) {
-    .hero-scrim {
-      background: linear-gradient(
-        180deg,
-        rgba(15, 25, 35, 0.62) 0%,
-        rgba(15, 25, 35, 0.5) 45%,
-        rgba(15, 25, 35, 0.66) 100%
-      );
+  /* Ảnh ngang: slogan phải nằm trên nền trời. Chữ trải 6–56% bề ngang, phủ qua đỉnh
+     trụ cầu (≈37,6% chiều cao ảnh) và dãy nhà bên trái (≈43%). Căn giữa với slogan cách
+     đỉnh 24% thì đáy chữ rơi vào 45–48% ở mọi khổ màn → đè. Dời tiêu điểm ảnh lên 28% và
+     slogan lên 16% chiều cao màn: dò trên 11 khổ 1024–2560, đáy chữ ≤ 35,8% chiều cao ảnh,
+     mép dưới vẫn thấy tới ≥ 74% (cầu và thuyền). Ảnh dọc không đè nên không đổi. */
+  @media not all and (max-aspect-ratio: 3/4) {
+    .hero-bg-image img {
+      object-position: 50% 28%;
     }
-  }
 
-  .hero-bg-image {
-    opacity: 0;
-    transition: opacity 700ms ease-in-out;
-  }
-
-  .hero-bg-image.active {
-    opacity: 1;
-  }
-
-  .hero-bg-image img {
-
-    /* Để trình duyệt nội suy trơn. Tránh -webkit-optimize-contrast: Firefox hiểu
-       nó là crisp-edges (lấy mẫu điểm gần nhất) nên ảnh phóng to bị răng cưa. */
-    image-rendering: auto;
-
-    will-change: opacity;
-  }
-
-  /* Chỉ bật hiệu ứng khi thật sự có chuột và người dùng không tắt chuyển động.
-     Nới ảnh rộng hơn khung 5% rồi CHỈ tịnh tiến, không scale: lớp ảnh được
-     dựng đúng tỉ lệ 1:1 nên không bị GPU phóng lại làm nhoè và răng cưa. */
-  @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-    [data-hero] .hero-bg-image {
-      inset: -2.5%;
-      will-change: opacity, transform;
+    .hero-copy {
+      padding-top: 16dvh;
     }
-  }
-
-  /* Vạch dày 4px nên tách khỏi ảnh sáng bằng bóng đổ, khỏi bị chìm */
-  .hero-dots {
-    filter: drop-shadow(0 1px 3px rgba(15, 25, 35, 0.65));
-  }
-
-  /* Nới vùng chạm lên 32px mà không đổi hình dạng nhìn thấy:
-     4px thì không tài nào bấm trúng trên máy cảm ứng */
-  .progress-indicator::after {
-    content: "";
-    position: absolute;
-    inset: -14px -4px;
-  }
-
-  .progress-indicator.active .progress-fill {
-    animation: fillProgress 3s linear forwards;
-  }
-
-  @keyframes fillProgress {
-    from {
-      width: 0%;
-    }
-    to {
-      width: 100%;
-    }
-  }
-
-  .progress-indicator:not(.active) .progress-fill {
-    width: 0%;
-    animation: none;
   }
 </style>
-
-<script is:inline>
-
-  (function() {
-
-    if ('scrollRestoration' in history) {
-      history.scrollRestoration = 'manual';
-    }
-
-    function initSlider() {
-      if (window.heroRotationInterval) {
-        clearInterval(window.heroRotationInterval);
-      }
-
-      const bgImages = document.querySelectorAll('.hero-bg-image');
-      const indicators = document.querySelectorAll('.progress-indicator');
-
-      if (bgImages.length === 0 || indicators.length === 0) {
-        return;
-      }
-
-      let currentIndex = 0;
-      const totalSlides = Math.min(bgImages.length, indicators.length);
-      const rotationInterval = 3000;
-
-      function showSlide(index) {
-
-        bgImages.forEach(function(img) { img.classList.remove('active'); });
-        indicators.forEach(function(ind) {
-          ind.classList.remove('active');
-          const fill = ind.querySelector('.progress-fill');
-          if (fill) {
-
-            void fill.offsetWidth;
-          }
-        });
-
-        bgImages[index].classList.add('active');
-        indicators[index].classList.add('active');
-      }
-
-      function nextSlide() {
-        currentIndex = (currentIndex + 1) % totalSlides;
-        showSlide(currentIndex);
-      }
-
-      function resetRotation() {
-        if (window.heroRotationInterval) {
-          clearInterval(window.heroRotationInterval);
-        }
-        window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
-      }
-
-      indicators.forEach(function(ind, idx) {
-        ind.onclick = function() {
-          currentIndex = idx;
-          showSlide(currentIndex);
-          resetRotation();
-        };
-      });
-
-      showSlide(0);
-
-      window.heroRotationInterval = setInterval(nextSlide, rotationInterval);
-    }
-
-    function initParallax() {
-      const hero = document.querySelector('[data-hero]');
-
-      if (!hero || hero.dataset.parallax) {
-        return;
-      }
-
-      if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches ||
-          window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        return;
-      }
-
-      hero.dataset.parallax = '1';
-
-      const layers = hero.querySelectorAll('.hero-bg-image');
-      let targetX = 0, targetY = 0, curX = 0, curY = 0;
-      let frame = 0, settledFrames = 0;
-      let box = hero.getBoundingClientRect();
-
-      function tick() {
-
-        curX += (targetX - curX) * 0.075;
-        curY += (targetY - curY) * 0.075;
-
-        const shift = 'translate3d(' + (curX * -0.9).toFixed(3) + '%,' +
-                                       (curY * -0.9).toFixed(3) + '%,0)';
-
-        for (let i = 0; i < layers.length; i++) {
-          layers[i].style.transform = shift;
-        }
-
-        const settled = Math.abs(targetX - curX) < 0.004 && Math.abs(targetY - curY) < 0.004;
-        settledFrames = settled ? settledFrames + 1 : 0;
-
-        if (settledFrames > 4) {
-
-          frame = 0;
-          return;
-        }
-
-        frame = requestAnimationFrame(tick);
-      }
-
-      function kick() {
-        if (!frame) {
-          frame = requestAnimationFrame(tick);
-        }
-      }
-
-      hero.addEventListener('pointermove', function(event) {
-
-        targetX = ((event.clientX - box.left) / box.width) * 2 - 1;
-        targetY = ((event.clientY - box.top) / box.height) * 2 - 1;
-        kick();
-      });
-
-      hero.addEventListener('pointerleave', function() {
-        targetX = 0;
-        targetY = 0;
-        kick();
-      });
-
-      window.addEventListener('resize', function() {
-        box = hero.getBoundingClientRect();
-      });
-    }
-
-    window.addEventListener('pageshow', function(event) {
-
-      if (!event.persisted) {
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      }
-
-      initSlider();
-      initParallax();
-    });
-  })();
-</script>

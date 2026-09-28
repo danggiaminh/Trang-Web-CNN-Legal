@@ -5,6 +5,8 @@ export const MAX_QUESTION_CHARS = 2000;
 const MAX_SLUG_CHARS = 200;
 const MAX_HISTORY_TURNS = 6;
 const MAX_HISTORY_CHARS = 4000;
+const MAX_HISTORY_MESSAGE_CHARS = 1500;
+const MIN_HISTORY_PIECE = 200;
 export const MAX_BODY_BYTES = 32 * 1024;
 
 const allowedOrigins = new Set(
@@ -185,23 +187,30 @@ export function cleanSlug(raw: unknown): string | null {
   return /^[A-Za-z0-9_-]+$/.test(slug) ? slug : null;
 }
 
+// Câu trả lời trước có thể dài tới 4.000 ký tự, bằng cả ngân sách. Bản cũ gặp
+// tin nhắn vượt ngân sách là dừng hẳn, nên câu hỏi nối tiếp mất sạch ngữ cảnh
+// hoặc chỉ còn một câu trả lời mồ côi. Giờ mỗi tin nhắn bị cắt đuôi ở
+// MAX_HISTORY_MESSAGE_CHARS, nhờ vậy cặp hỏi–đáp gần nhất luôn vừa ngân sách,
+// và lịch sử không bao giờ mở đầu bằng câu trả lời thiếu câu hỏi của nó.
 export function sanitizeHistory(raw: unknown): ChatMessage[] {
   if (!Array.isArray(raw)) return [];
   const out: ChatMessage[] = [];
   let used = 0;
 
-  for (let i = raw.length - 1; i >= 0; i -= 1) {
+  for (let i = raw.length - 1; i >= 0 && out.length < MAX_HISTORY_TURNS; i -= 1) {
     const turn = raw[i];
     const role = turn?.role;
     if (role !== "user" && role !== "assistant") continue;
     const content = typeof turn?.content === "string" ? turn.content.trim() : "";
     if (!content) continue;
 
-    const cost = content.length;
-    if (out.length >= MAX_HISTORY_TURNS || used + cost > MAX_HISTORY_CHARS) break;
-    used += cost;
-    out.push({ role, content });
+    const room = Math.min(MAX_HISTORY_MESSAGE_CHARS, MAX_HISTORY_CHARS - used);
+    if (room < MIN_HISTORY_PIECE && room < content.length) break;
+    const kept = content.length <= room ? content : `${content.slice(0, room - 1).toWellFormed()}…`;
+    used += kept.length;
+    out.push({ role, content: kept });
   }
 
+  if (out.at(-1)?.role === "assistant") out.pop();
   return out.reverse();
 }

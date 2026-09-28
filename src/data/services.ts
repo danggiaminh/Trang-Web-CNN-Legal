@@ -4,6 +4,8 @@ export type Service = {
   readonly summary: string;
   readonly description: string;
   readonly situations: readonly string[];
+  /** Slug trong notableCases của các vụ án liên quan, hiện ở trang chi tiết dịch vụ. */
+  readonly caseSlugs: readonly string[];
 };
 
 export const services = [
@@ -22,6 +24,13 @@ export const services = [
       "Tư vấn khi bị triệu tập lấy lời khai hoặc khởi tố bị can",
       "Hỗ trợ bị cáo người nước ngoài trong các vụ án có yếu tố đặc thù",
     ],
+    caseSlugs: [
+      "dai-an-van-thinh-phat-giai-doan-2",
+      "dai-an-van-thinh-phat-giai-doan-1",
+      "buon-lau-xang-dau-200-trieu-lit",
+      "dai-an-xang-dau-giai-doan-2-tron-thue",
+      "ma-tuy-quan-bar-phuong-lam",
+    ],
   },
   {
     slug: "tranh-tung-dan-su-thuong-mai",
@@ -38,6 +47,7 @@ export const services = [
       "Khiếu kiện quyết định hành chính, hành vi hành chính",
       "Hỗ trợ hòa giải và khởi kiện tại tòa",
     ],
+    caseSlugs: ["tranh-chap-bat-dong-san-go-vap", "hanh-chinh-cuong-che-van-phong-quan-3"],
   },
   {
     slug: "dat-dai-bat-dong-san",
@@ -54,6 +64,7 @@ export const services = [
       "Tư vấn pháp lý trước khi ký hợp đồng mua bán, chuyển nhượng",
       "Phân tích rủi ro trong các dự án bất động sản có tranh chấp",
     ],
+    caseSlugs: ["tranh-chap-bat-dong-san-go-vap"],
   },
   {
     slug: "tu-van-dau-tu-doanh-nghiep",
@@ -70,5 +81,6 @@ export const services = [
       "Tư vấn tuân thủ pháp luật Việt Nam cho doanh nghiệp nước ngoài",
       "Tư vấn phòng ngừa rủi ro hình sự cho doanh nghiệp và người quản lý",
     ],
+    caseSlugs: [],
   },
 ] as const satisfies readonly Service[];

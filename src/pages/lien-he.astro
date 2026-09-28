@@ -155,6 +155,7 @@ const structuredData = [
                   name="name"
                   type="text"
                   required
+                  maxlength="120"
                   autocomplete="name"
                   class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
                   placeholder="Họ tên của bạn"
@@ -169,6 +170,7 @@ const structuredData = [
                   name="phone"
                   type="tel"
                   required
+                  maxlength="32"
                   autocomplete="tel"
                   class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
                   placeholder="Số điện thoại để luật sư liên hệ"
@@ -184,6 +186,7 @@ const structuredData = [
                 id="cf-email"
                 name="email"
                 type="email"
+                maxlength="200"
                 autocomplete="email"
                 class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
                 placeholder="Email nhận phản hồi"
@@ -217,6 +220,7 @@ const structuredData = [
                 id="cf-subject"
                 name="subject"
                 type="text"
+                maxlength="200"
                 class="mt-2 w-full rounded-xl border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
                 placeholder="Mô tả ngắn gọn vụ việc..."
               />
@@ -230,6 +234,7 @@ const structuredData = [
                 id="cf-message"
                 name="message"
                 required
+                maxlength="5000"
                 rows="5"
                 class="mt-2 w-full rounded-xl resize-none border border-input-border bg-white px-4 py-3 text-[0.9375rem] text-text-dark placeholder:text-text-muted focus:border-text-dark focus:outline-none"
                 placeholder="Mô tả chi tiết vụ việc hoặc câu hỏi của bạn..."
