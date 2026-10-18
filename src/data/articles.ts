@@ -1013,6 +1013,15 @@ export const externalArticles: readonly ExternalArticle[] = [
       "Hành vi bạo hành vợ là hành vi bạo lực gia đình bị nghiêm cấm theo Luật Phòng, chống bạo lực gia đình năm 2022, có thể bị xử phạt vi phạm hành chính hoặc truy cứu trách nhiệm hình sự theo Điều 134 Bộ luật Hình sự tùy tỷ lệ tổn thương cơ thể. Đây đồng thời là căn cứ để Tòa án giải quyết ly hôn theo Điều 56 Luật Hôn nhân và gia đình năm 2014.",
   },
   {
+    title: "Bàn về “miễn trách nhiệm hình sự” và “miễn truy cứu trách nhiệm hình sự”",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/ban-ve-mien-trach-nhiem-hinh-su-va-mien-truy-cuu-trach-nhiem-hinh-su-a178069.html",
+    publishedAt: "25/08/2026",
+    category: "Hình sự",
+    summary:
+      "“Miễn trách nhiệm hình sự” là chế định của Bộ luật Hình sự, còn cụm từ “miễn truy cứu trách nhiệm hình sự” không được pháp luật hình sự hiện hành quy định nhưng vẫn được sử dụng trên truyền thông và trong một số tài liệu xây dựng pháp luật. Bài viết phân tích các căn cứ và việc áp dụng miễn trách nhiệm hình sự ở từng giai đoạn điều tra, truy tố, xét xử, đồng thời khuyến nghị không dùng cụm từ “miễn truy cứu trách nhiệm hình sự” như một thuật ngữ pháp lý vì thiếu chính xác và có thể gây nhầm lẫn.",
+  },
+  {
     title: "Bàn về “Quyết định truy tìm người” trong quy định về thời hiệu truy cứu trách nhiệm hình sự tại dự thảo Bộ luật Hình sự (sửa đổi)",
     sourceName: "Tạp chí điện tử Luật sư Việt Nam",
     sourceUrl: "https://lsvn.vn/ban-ve-quyet-dinh-truy-tim-nguoi-trong-quy-dinh-ve-thoi-hieu-truy-cuu-trach-nhiem-hinh-su-tai-du-thao-bo-luat-hinh-su-sua-doi-a157662.html",
