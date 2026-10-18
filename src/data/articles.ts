@@ -1013,6 +1013,24 @@ export const externalArticles: readonly ExternalArticle[] = [
       "Hành vi bạo hành vợ là hành vi bạo lực gia đình bị nghiêm cấm theo Luật Phòng, chống bạo lực gia đình năm 2022, có thể bị xử phạt vi phạm hành chính hoặc truy cứu trách nhiệm hình sự theo Điều 134 Bộ luật Hình sự tùy tỷ lệ tổn thương cơ thể. Đây đồng thời là căn cứ để Tòa án giải quyết ly hôn theo Điều 56 Luật Hôn nhân và gia đình năm 2014.",
   },
   {
+    title: "Khi quy định có dấu hiệu trái với văn bản có hiệu lực pháp lý cao hơn được sử dụng để xác định hành vi phạm tội: Khoảng trống pháp lý và kiến nghị hoàn thiện",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/khi-quy-dinh-co-dau-hieu-trai-voi-van-ban-co-hieu-luc-phap-ly-cao-hon-duoc-su-dung-de-xac-dinh-hanh-vi-pham-toi-khoang-trong-phap-ly-va-kien-nghi-hoan-thien-a180466.html",
+    publishedAt: "09/10/2026",
+    category: "Hình sự",
+    summary:
+      "Quy định pháp luật chuyên ngành được dùng để xác định hành vi phạm tội có thể có dấu hiệu trái với văn bản có hiệu lực pháp lý cao hơn, trong khi pháp luật hiện hành chưa kết nối đầy đủ cơ chế kiểm tra, xử lý văn bản với quá trình giải quyết vụ án hình sự. Bài viết kiến nghị quy định việc phát hiện, kiến nghị của cơ quan tiến hành tố tụng và cách giải quyết vụ án ở từng giai đoạn tố tụng trong thời gian chờ kết quả kiểm tra, xử lý văn bản.",
+  },
+  {
+    title: "“Miễn trách nhiệm hình sự” được dẫn chiếu làm căn cứ “không khởi tố vụ án hình sự”: Một số vấn đề đặt ra và góp ý đối với hai dự thảo Bộ luật",
+    sourceName: "Tạp chí điện tử Luật sư Việt Nam",
+    sourceUrl: "https://lsvn.vn/mien-trach-nhiem-hinh-su-duoc-dan-chieu-lam-can-cu-khong-khoi-to-vu-an-hinh-su-mot-so-van-de-dat-ra-va-gop-y-doi-voi-hai-du-thao-bo-luat-a179222.html",
+    publishedAt: "18/09/2026",
+    category: "Hình sự",
+    summary:
+      "Khoản 9 Điều 164 Dự thảo Bộ luật Tố tụng hình sự bổ sung căn cứ không khởi tố vụ án hình sự bằng cách dẫn chiếu các trường hợp được miễn trách nhiệm hình sự tại Điều 16 và Điều 29 Dự thảo Bộ luật Hình sự. Bài viết xây dựng hai tiêu chí để xem xét việc dẫn chiếu, gồm khả năng xác định căn cứ ngay từ giai đoạn giải quyết nguồn tin về tội phạm và tính bắt buộc của hệ quả pháp lý, từ đó đề xuất hoàn thiện Điều 164 Dự thảo Bộ luật Tố tụng hình sự và Điều 29 Dự thảo Bộ luật Hình sự.",
+  },
+  {
     title: "Bàn về “miễn trách nhiệm hình sự” và “miễn truy cứu trách nhiệm hình sự”",
     sourceName: "Tạp chí điện tử Luật sư Việt Nam",
     sourceUrl: "https://lsvn.vn/ban-ve-mien-trach-nhiem-hinh-su-va-mien-truy-cuu-trach-nhiem-hinh-su-a178069.html",
