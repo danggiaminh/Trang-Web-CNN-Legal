@@ -5,6 +5,9 @@ import HeroBreadcrumb from "../../components/HeroBreadcrumb.astro";
 import { site } from "../../data/site";
 import aboutHero from "../../assets/images/about-halong.jpg";
 import portrait from "../../assets/images/about-portrait.jpg";
+import { blurPlaceholder } from "../../lib/blur-placeholder";
+
+const [heroBlur, portraitBlur] = await Promise.all([blurPlaceholder(aboutHero), blurPlaceholder(portrait)]);
 
 const title = `Giới thiệu | ${site.name}`;
 const description =
@@ -34,7 +37,7 @@ const structuredData = [
 <BaseLayout title={title} description={description} canonicalPath={canonicalPath} structuredData={structuredData}>
   <section class="relative overflow-hidden py-24 md:py-32 lg:py-40">
 
-    <div class="absolute inset-0 z-0" style="background-color:#6c9093">
+    <div class="absolute inset-0 z-0" style={`background:#6c9093 ${heroBlur} center/cover`}>
       {/* Ảnh 1,61:1 phủ banner. Màn hẹp banner cao 286px nên ảnh phóng theo chiều cao,
           rộng ≈ 462px dù màn chỉ 360–412px; khai 100vw ở đó là tải thiếu và ảnh mờ.
           quality 65: giống ảnh gốc ngang WebP 80 (SSIM 0,978) mà nhẹ hơn ~20%.
@@ -78,6 +81,7 @@ const structuredData = [
         quality={65}
         loading="eager"
         fetchpriority="high"
+        style={`background:${portraitBlur} center/cover`}
       />
     </div>
 

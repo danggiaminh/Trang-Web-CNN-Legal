@@ -3,6 +3,7 @@ import { getImage } from "astro:assets";
 import { site } from "../data/site";
 import heroSaigon from "../assets/images/hero-saigon.jpg";
 import heroSaigonTall from "../assets/images/hero-saigon-portrait.jpg";
+import { blurPlaceholder } from "../lib/blur-placeholder";
 
 // Bỏ lớp phủ tối thì lỗi nén lộ hết: ở quality 40 dây văng đứt đoạn, mất sợi và toà nhà
 // nhoè (giữ 63–68% năng lượng biên so với ảnh gốc thu nhỏ); 60 giữ 80–84%. Bản dọc là ảnh
@@ -10,10 +11,12 @@ import heroSaigonTall from "../assets/images/hero-saigon-portrait.jpg";
 // 45 (57 KB) → 1,66 s, sát mốc tụt; 50–60 (71–111 KB) → 1,8 s, 99 điểm.
 const QUALITY_WIDE = 60;
 const QUALITY_TALL = 40;
-const [tallAvif, wideAvif, wideWebp] = await Promise.all([
+const [tallAvif, wideAvif, wideWebp, tallBlur, wideBlur] = await Promise.all([
   getImage({ src: heroSaigonTall, widths: [640, 960, 1280, 1440], format: "avif", quality: QUALITY_TALL }),
   getImage({ src: heroSaigon, widths: [640, 960, 1280, 1600, 2048, 2560], format: "avif", quality: QUALITY_WIDE }),
   getImage({ src: heroSaigon, widths: [640, 960, 1280, 1600, 2048, 2560], format: "webp", quality: QUALITY_WIDE }),
+  blurPlaceholder(heroSaigonTall),
+  blurPlaceholder(heroSaigon),
 ]);
 
 // Ảnh 3:2 phủ kín hero → khung hẹp hơn 3/2 thì object-cover phóng theo CHIỀU CAO:
@@ -28,7 +31,7 @@ const TALL_SIZES = "(min-aspect-ratio: 9/16) 100vw, 57vh";
 {/* Cao trọn phần còn lại dưới header của khung khoá cuộn (BaseLayout lockViewport). */}
 <section class="relative h-full overflow-hidden bg-ink-black">
 
-  <div class="hero-bg-image absolute inset-0">
+  <div class="hero-bg-image absolute inset-0" style={`--blur-tall:${tallBlur};--blur-wide:${wideBlur}`}>
     <picture>
       <source media="(max-aspect-ratio: 3/4)" type="image/avif" srcset={tallAvif.srcSet.attribute} sizes={TALL_SIZES} />
       <source type="image/avif" srcset={wideAvif.srcSet.attribute} sizes={WIDE_SIZES} />
@@ -58,6 +61,10 @@ const TALL_SIZES = "(min-aspect-ratio: 9/16) 100vw, 57vh";
 </section>
 
 <style>
+  .hero-bg-image {
+    background: var(--blur-tall) center / cover;
+  }
+
   .hero-copy {
     container-type: inline-size;
   }
@@ -79,6 +86,11 @@ const TALL_SIZES = "(min-aspect-ratio: 9/16) 100vw, 57vh";
      slogan lên 16% chiều cao màn: dò trên 11 khổ 1024–2560, đáy chữ ≤ 35,8% chiều cao ảnh,
      mép dưới vẫn thấy tới ≥ 74% (cầu và thuyền). Ảnh dọc không đè nên không đổi. */
   @media not all and (max-aspect-ratio: 3/4) {
+    .hero-bg-image {
+      background-image: var(--blur-wide);
+      background-position: 50% 28%;
+    }
+
     .hero-bg-image img {
       object-position: 50% 28%;
     }

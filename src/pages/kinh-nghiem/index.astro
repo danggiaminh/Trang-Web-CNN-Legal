@@ -5,6 +5,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { notableCases } from "../../data/cases";
 import { site } from "../../data/site";
 import experienceHero from "../../assets/images/experience-river.jpg";
+import { blurPlaceholder } from "../../lib/blur-placeholder";
+
+const heroBlur = await blurPlaceholder(experienceHero);
 
 const title = `Kinh nghiệm | ${site.name}`;
 const description =
@@ -33,7 +36,7 @@ const structuredData = [
 
 <BaseLayout title={title} description={description} canonicalPath={canonicalPath} structuredData={structuredData}>
   <section class="relative overflow-hidden py-20 md:py-28 lg:py-32">
-    <div class="absolute inset-0 z-0" style="background-color:#8cabbf">
+    <div class="absolute inset-0 z-0" style={`background:#8cabbf ${heroBlur} 50% 42%/cover`}>
       {/* Banner màn hẹp cao 254px; dưới 400px tiêu đề xuống hai dòng, banner cao 295px
           nên ảnh 3:2 phóng theo chiều cao, rộng ≈ 443px. Banner desktop chỉ lộ ~29% chiều
           cao ảnh mà dãy nhà trải 26–58%, nên tiêu điểm 42% giữ đỉnh phần lớn toà nhà lẫn

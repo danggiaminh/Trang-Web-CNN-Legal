@@ -1,16 +1,18 @@
 ---
-import { Image } from "astro:assets";
+import { Image, Picture } from "astro:assets";
 import HeroBreadcrumb from "../components/HeroBreadcrumb.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { site } from "../data/site";
-import lienHeHero from "../assets/images/lien-he-hero.jpg";
+import lienHeHero from "../assets/images/contact-river.jpg";
 import contactSuccessBg from "../assets/images/contact-success-bg.avif";
+import { blurPlaceholder } from "../lib/blur-placeholder";
 
 const title = `Liên hệ | ${site.name}`;
 const description =
   "Thông tin liên hệ trực tiếp của CNN Legal qua email và điện thoại.";
 const pagePath = "/lien-he/";
 const pageUrl = new URL(pagePath, site.canonicalBaseUrl).toString();
+const heroBlur = await blurPlaceholder(lienHeHero);
 const legalServiceData = {
   "@context": "https://schema.org",
   "@type": "LegalService",
@@ -63,33 +65,38 @@ const structuredData = [
 <BaseLayout title={title} description={description} canonicalPath={pagePath} structuredData={structuredData}>
 
   <section class="relative overflow-hidden py-24 md:py-32 lg:py-40">
-    <div class="absolute inset-0 z-0" style="background-color:#b4ac9e">
-      <Image
-        src={lienHeHero}
-        alt="Liên hệ với chúng tôi"
+    <div class="absolute inset-0 z-0" style={`background:#4a8b86 ${heroBlur} center/cover`}>
+      {/* Ảnh 3:2; banner màn hẹp cao 286px (327px dưới 380px vì tiêu đề xuống dòng) nên
+          ảnh phóng theo chiều cao, rộng ≈ 429px (≈ 491px). quality 65 như các banner khác
+          (≈ WebP 80). Đoạn mô tả để dưới banner cho banner điện thoại thấp, ảnh nhẹ. */}
+      <Picture
         class="h-full w-full object-cover object-center"
-        widths={[320, 640, 937]}
-        sizes="100vw"
-        quality={42}
+        src={lienHeHero}
+        alt="Dòng sông giữa hai dãy núi"
+        formats={["avif"]}
+        fallbackFormat="webp"
+        widths={[640, 768, 960, 1280, 1600, 1920, 2560, 3840]}
+        sizes="(max-width: 379px) 491px, (max-width: 428px) 429px, 100vw"
+        quality={65}
         loading="eager"
         fetchpriority="high"
       />
-      <div class="absolute inset-0 bg-black/50"></div>
     </div>
     <div class="section-shell relative z-10">
       <HeroBreadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: "Liên hệ" }]} />
       <h1 class="mt-8 text-balance max-w-4xl font-sans text-[2.25rem] font-semibold leading-[1.14] tracking-[-0.01em] text-white md:text-[2.75rem] lg:text-[3.125rem]">
         Liên hệ với chúng tôi
       </h1>
-      <p class="prose-justify mt-6 max-w-xl font-sans text-[1rem] leading-[1.8] text-white/80 md:text-[1.0625rem]">
-        Thông tin Quý khách cung cấp qua website chỉ bao gồm những nội dung cần thiết ban đầu. Khi tiếp nhận vụ việc, CNN Legal sẽ thống nhất phương thức trao đổi hồ sơ, tài liệu hoặc chứng cứ phù hợp nhằm bảo đảm tính bảo mật và an toàn của thông tin.
-      </p>
     </div>
   </section>
 
   <section class="bg-panel-cream">
     <div class="section-shell py-16 md:py-24">
-      <div class="grid gap-16 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
+      <p class="prose-justify max-w-3xl font-sans text-[1rem] leading-[1.8] text-text-dark md:text-[1.0625rem]">
+        Thông tin Quý khách cung cấp qua website chỉ bao gồm những nội dung cần thiết ban đầu. Khi tiếp nhận vụ việc, CNN Legal sẽ thống nhất phương thức trao đổi hồ sơ, tài liệu hoặc chứng cứ phù hợp nhằm bảo đảm tính bảo mật và an toàn của thông tin.
+      </p>
+
+      <div class="mt-10 grid gap-16 lg:grid-cols-[1fr_1.2fr] lg:gap-20">
 
         <div class="space-y-8 font-sans text-[1rem] leading-[1.85] text-text-dark">
           <div>

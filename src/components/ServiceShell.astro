@@ -3,6 +3,7 @@ import { Picture } from "astro:assets";
 import HeroBreadcrumb from "./HeroBreadcrumb.astro";
 import { services } from "../data/services";
 import servicesHero from "../assets/images/services-nhatrang.jpg";
+import { blurPlaceholder } from "../lib/blur-placeholder";
 
 interface Crumb {
   readonly label: string;
@@ -19,10 +20,11 @@ interface Props {
 
 const { crumbs, currentSlug, titleIsH1 = false } = Astro.props;
 const TitleTag = titleIsH1 ? "h1" : "p";
+const heroBlur = await blurPlaceholder(servicesHero);
 ---
 
 <section class="relative overflow-hidden py-20 md:py-28 lg:py-32">
-  <div class="absolute inset-0 z-0" style="background-color:#75a2d2">
+  <div class="absolute inset-0 z-0" style={`background:#75a2d2 ${heroBlur} 50% 63%/cover`}>
     {/* Ảnh 3:2; banner màn hẹp cao 254px nên dưới 381px ảnh phóng theo chiều cao.
         Banner desktop chỉ lộ ~29% chiều cao ảnh: căn giữa thì cắt ngang dãy nhà
         (61–67% chiều cao), nên dời tiêu điểm xuống 63%.

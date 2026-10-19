@@ -30,7 +30,7 @@ export default defineConfig({
         access: "public",
         default: 200,
       }),
-      BREVO_API_KEY: envField.string({
+      MISARMAIL_API_KEY: envField.string({
         context: "server",
         access: "secret",
         optional: true,

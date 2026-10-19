@@ -4,6 +4,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import AskBox from "../../components/AskBox.astro";
 import { getAllArticles, type Article } from "../../data/articles";
 import { site } from "../../data/site";
+import { blurPlaceholder } from "../../lib/blur-placeholder";
 
 export async function getStaticPaths() {
   const articles = await getAllArticles();
@@ -27,6 +28,9 @@ const dateIso = article.publishedAt !== "Đang cập nhật"
   : undefined;
 
 const firstImageIndex = article.blocks?.findIndex((b) => b.type === "image") ?? -1;
+// Ảnh lấy từ lsvn.vn không làm ảnh xem trước: máy chủ ảnh lsvn trả mỗi ảnh mất 4–60 s (đo
+// 18/10/2026), tải thêm lúc build thì build chậm hẳn hoặc hỏng. Ảnh trong public/ thì làm được.
+const imageBlur = article.imageUrl.startsWith("/") ? await blurPlaceholder(article.imageUrl) : undefined;
 
 const structuredData = [
   {
@@ -106,6 +110,7 @@ const structuredData = [
               quality={80}
               loading="eager"
               fetchpriority="high"
+              style={imageBlur && `background:${imageBlur} center/cover`}
             />
           </div>
         )}
@@ -165,6 +170,7 @@ const structuredData = [
                           quality={80}
                           loading={i === firstImageIndex ? "eager" : "lazy"}
                           fetchpriority={i === firstImageIndex ? "high" : undefined}
+                          style={imageBlur && `background:${imageBlur} center/cover`}
                         />
                       </div>
                       {block.caption && (

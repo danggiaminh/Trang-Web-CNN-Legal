@@ -1,11 +1,13 @@
 import {
-  BREVO_API_KEY,
+  MISARMAIL_API_KEY,
   CONTACT_FROM_EMAIL,
   CONTACT_TO_EMAIL,
 } from "astro:env/server";
 
-const BREVO_URL = "https://api.brevo.com/v3/smtp/email";
+const MISARMAIL_URL = "https://api.misar.io/mail/v1/send";
 const SENDER_NAME = "CNN Legal";
+// Không có trần thì MisarMail treo sẽ giữ khách (và function) chờ tới maxDuration.
+const SEND_TIMEOUT_MS = 15_000;
 
 export const MAX_CONTACT_BYTES = 24 * 1024;
 
@@ -47,8 +49,8 @@ function multiLine(value: unknown, max: number): string {
   return value.replace(/\r\n?/g, "\n").trim().slice(0, max);
 }
 
-export function hasBrevoKey(): boolean {
-  return Boolean(BREVO_API_KEY?.trim());
+export function hasMailKey(): boolean {
+  return Boolean(MISARMAIL_API_KEY?.trim());
 }
 
 export type ParseResult =
@@ -137,115 +139,52 @@ export async function sendContactEmail(
   signal: AbortSignal,
 ): Promise<{ ok: boolean; status: number; messageId: string | null; detail: string | null }> {
   const payload: Record<string, unknown> = {
-    sender: { email: CONTACT_FROM_EMAIL.trim(), name: SENDER_NAME },
+    from: { email: CONTACT_FROM_EMAIL.trim(), name: SENDER_NAME },
     to: [{ email: CONTACT_TO_EMAIL.trim() }],
     subject: buildSubject(data),
-    htmlContent: buildHtml(data),
-    textContent: buildText(data),
+    html: buildHtml(data),
+    text: buildText(data),
   };
-  // Brevo giới hạn trường name tối đa 70 ký tự, cắt bớt để tránh lỗi 400.
-  if (data.email) payload.replyTo = { email: data.email, name: data.name.slice(0, 70) };
+  if (data.email) payload.reply_to = { email: data.email, name: data.name };
 
-  const res = await fetch(BREVO_URL, {
+  let result = await postToMisarMail(payload, signal);
+  // EMAIL_RE lỏng hơn bộ kiểm của MisarMail (vd "a@gmail..com" vẫn lọt), và một
+  // reply_to sai làm cả thư bị 400. Email khách đã nằm trong nội dung thư nên bỏ
+  // reply_to gửi lại, còn hơn mất liên hệ. 400 nghĩa là chưa gửi gì, không sợ trùng.
+  if (result.status === 400 && payload.reply_to) {
+    delete payload.reply_to;
+    result = await postToMisarMail(payload, signal);
+  }
+  return result;
+}
+
+async function postToMisarMail(
+  payload: Record<string, unknown>,
+  signal: AbortSignal,
+): Promise<{ ok: boolean; status: number; messageId: string | null; detail: string | null }> {
+  const res = await fetch(MISARMAIL_URL, {
     method: "POST",
-    signal,
+    signal: AbortSignal.any([signal, AbortSignal.timeout(SEND_TIMEOUT_MS)]),
     headers: {
-      "api-key": BREVO_API_KEY?.trim() ?? "",
+      Authorization: `Bearer ${MISARMAIL_API_KEY?.trim() ?? ""}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     },
     body: JSON.stringify(payload),
   });
-  // Brevo tra 201 ngay ca khi thu bi tu choi sau do (vi du nguoi gui chua xac minh).
-  // Giu lai messageId de con tra cuu trong Brevo > Logs khi thu khong toi noi.
+  // 200 là đã gửi; 202 là SMTP chính bận, MisarMail tự xếp hàng gửi lại, nên vẫn
+  // tính là nhận. Người gửi chưa xác minh (403) hay hộp nhận bị chặn vì bounce
+  // (422) đều báo lỗi ngay lúc gửi, không âm thầm bỏ thư.
   const raw = await res.text().catch(() => "");
   let messageId: string | null = null;
   let detail: string | null = null;
   try {
-    const body = JSON.parse(raw) as { messageId?: unknown; message?: unknown };
-    if (typeof body?.messageId === "string") messageId = body.messageId;
-    if (typeof body?.message === "string") detail = body.message.slice(0, 300);
+    const body = JSON.parse(raw) as { message_id?: unknown; error?: unknown; message?: unknown };
+    if (typeof body?.message_id === "string") messageId = body.message_id;
+    const msg = body?.error ?? body?.message;
+    if (typeof msg === "string") detail = msg.slice(0, 300);
   } catch {
-    // Than tra ve khong phai JSON - status va detail rong da du de ghi log.
+    // Thân trả về không phải JSON - status và detail rỗng đã đủ để ghi log.
   }
   return { ok: res.ok, status: res.status, messageId, detail };
-}
-
-const SENDERS_URL = "https://api.brevo.com/v3/senders";
-const DOMAINS_URL = "https://api.brevo.com/v3/senders/domains";
-
-export interface SenderStatus {
-  readonly from: string;
-  readonly valid: boolean;
-  readonly reason: string;
-}
-
-// Trang thai nguoi gui gan nhu khong doi. Nho lai de /health khong bien thanh
-// duong khuech dai: moi lan goi la 2 request ra Brevo, ton quota cua chinh minh.
-const SENDER_TTL_MS = 5 * 60 * 1000;
-const UNCHECKED_TTL_MS = 60 * 1000;
-const UNCHECKED = "Không kiểm tra được trạng thái người gửi.";
-let senderCache: { at: number; ttl: number; value: SenderStatus } | null = null;
-
-/**
- * Kiem tra CONTACT_FROM_EMAIL co thuc su gui duoc khong.
- * Brevo chap nhan request (201) roi moi tu choi khong dong bo neu nguoi gui
- * chua hop le, nen khong the phat hien luc gui - phai hoi truoc bang duong nay.
- */
-export async function checkSender(signal?: AbortSignal): Promise<SenderStatus> {
-  if (senderCache && Date.now() - senderCache.at < senderCache.ttl) return senderCache.value;
-
-  const status = await fetchSenderStatus(signal);
-  // Ket qua "khong kiem tra duoc" chi nho ngan: loi mang thi som hoi lai, con
-  // khoa bi thu hoi / IP bi chan la loi ben, khong nho thi moi lan goi /health
-  // lai ban request sang Brevo.
-  senderCache = {
-    at: Date.now(),
-    ttl: status.reason === UNCHECKED ? UNCHECKED_TTL_MS : SENDER_TTL_MS,
-    value: status,
-  };
-  return status;
-}
-
-async function fetchSenderStatus(signal?: AbortSignal): Promise<SenderStatus> {
-  const from = CONTACT_FROM_EMAIL.trim();
-  const key = BREVO_API_KEY?.trim() ?? "";
-  if (!key) return { from, valid: false, reason: "Thiếu BREVO_API_KEY." };
-
-  const init = { signal, headers: { "api-key": key, Accept: "application/json" } };
-
-  // Brevo trả lỗi HTTP (401/403 vì khoá bị giới hạn quyền, 5xx…) nghĩa là KHÔNG
-  // hỏi được, chứ không phải người gửi chưa xác minh. Bản cũ gộp hai chuyện này
-  // nên /health có thể báo nhầm là form liên hệ không gửi được.
-  const unchecked: SenderStatus = { from, valid: false, reason: UNCHECKED };
-  try {
-    const res = await fetch(SENDERS_URL, init);
-    if (!res.ok) {
-      console.error(`[contact] Brevo /senders trả HTTP ${res.status}`);
-      await res.body?.cancel().catch(() => {});
-      return unchecked;
-    }
-    const senders = (await res.json()) as { senders?: { email?: string; active?: boolean }[] };
-    const sender = senders.senders?.find((s) => s.email?.toLowerCase() === from.toLowerCase());
-    if (sender?.active) return { from, valid: true, reason: "Người gửi đã được xác minh." };
-
-    const domain = from.split("@")[1]?.toLowerCase() ?? "";
-    const dRes = await fetch(DOMAINS_URL, init);
-    if (!dRes.ok) {
-      console.error(`[contact] Brevo /domains trả HTTP ${dRes.status}`);
-      await dRes.body?.cancel().catch(() => {});
-      return unchecked;
-    }
-    const domains = (await dRes.json()) as { domains?: { domain_name?: string; authenticated?: boolean }[] };
-    const hit = domains.domains?.find((d) => d.domain_name?.toLowerCase() === domain);
-    if (hit?.authenticated) return { from, valid: true, reason: `Domain ${domain} đã xác thực.` };
-
-    return {
-      from,
-      valid: false,
-      reason: `${from} chưa được xác minh và domain ${domain} chưa xác thực — thư sẽ bị Brevo từ chối sau khi nhận.`,
-    };
-  } catch {
-    return unchecked;
-  }
 }

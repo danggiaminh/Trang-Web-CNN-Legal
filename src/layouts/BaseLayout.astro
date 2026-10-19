@@ -47,7 +47,9 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
       : <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     }
 
-    <link rel="icon" href="/favicon.ico" sizes="any" />
+    {/* sizes="32x32", đừng đổi lại "any": với "any" Chrome tải cả .ico lẫn .svg rồi hiện bản .ico
+        (ảnh điểm ảnh cỡ cố định); với "32x32" chỉ tải và hiện .svg vector, nét ở mọi độ phóng. Đo 18/10/2026. */}
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" type="image/svg+xml" href="/cnn-mark.svg" />
     <link rel="icon" type="image/png" sizes="512x512" href="/cnn-icon-512.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/cnn-touch-180.png" />

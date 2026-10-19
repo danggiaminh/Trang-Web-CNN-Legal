@@ -3,7 +3,7 @@ export const prerender = false;
 import type { APIRoute } from "astro";
 import { allDocs } from "../../../server/knowledge";
 import { hasApiKey } from "../../../server/openrouter";
-import { checkSender, hasBrevoKey } from "../../../server/contact";
+import { hasMailKey } from "../../../server/contact";
 import { withinRateLimit } from "../../../server/guard";
 
 function clientIp(request: Request, fallback: string | undefined): string {
@@ -13,7 +13,7 @@ function clientIp(request: Request, fallback: string | undefined): string {
 }
 
 export const GET: APIRoute = async ({ request, clientAddress }) => {
-  // allDocs() dung lai kho tri thuc va checkSender() goi ra Brevo, deu ton tai nguyen.
+  // allDocs() dung lai kho tri thuc, ton tai nguyen.
   // Khong chan thi endpoint cong khai nay thanh duong khuech dai chi phi tren Vercel.
   if (!withinRateLimit(`health:${clientIp(request, clientAddress)}`)) {
     return new Response(JSON.stringify({ error: "Quá nhiều yêu cầu." }), {
@@ -40,20 +40,15 @@ export const GET: APIRoute = async ({ request, clientAddress }) => {
     ok = false;
   }
 
-  const sender = hasBrevoKey() ? await checkSender(request.signal) : null;
-
+  // Khoá MisarMail chỉ có scope "send" nên không hỏi trước được người gửi; người gửi
+  // chưa xác minh thì POST /v1/send trả 403 ngay và route contact ghi log lỗi đó.
   return new Response(
     JSON.stringify({
       ok,
       keyPresent: hasApiKey(),
       docs,
       sections,
-      contact: {
-        keyPresent: hasBrevoKey(),
-        from: sender?.from ?? null,
-        canSend: sender?.valid ?? false,
-        reason: sender?.reason ?? "Thiếu BREVO_API_KEY.",
-      },
+      contact: { keyPresent: hasMailKey() },
     }),
     {
       status: ok ? 200 : 500,
