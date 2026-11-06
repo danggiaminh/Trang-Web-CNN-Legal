@@ -1,5 +1,5 @@
 ---
-import { Image } from "astro:assets";
+import { Image, getImage } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import AskBox from "../../components/AskBox.astro";
 import { getAllArticles, type Article } from "../../data/articles";
@@ -27,10 +27,35 @@ const dateIso = article.publishedAt !== "Đang cập nhật"
   ? article.publishedAt.split("/").reverse().join("-")
   : undefined;
 
-const firstImageIndex = article.blocks?.findIndex((b) => b.type === "image") ?? -1;
+const firstImageIndex = article.blocks.findIndex((b) => b.type === "image");
+
+// Ảnh "/images/…" dùng bản trong src/assets để Astro dựng được các cỡ; bản trong public/ giữ cho link cũ.
+const localImages = import.meta.glob<{ default: ImageMetadata }>("../../assets/images/article-*", { eager: true });
+const localImage = article.imageUrl.startsWith("/")
+  ? localImages[`../../assets${article.imageUrl}`]?.default
+  : undefined;
+if (article.imageUrl.startsWith("/") && !localImage) {
+  throw new Error(`Bài ${article.slug}: thiếu ảnh src/assets${article.imageUrl}`);
+}
+// Ảnh lsvn.vn: cỡ thật ghi trong dữ liệu, hỏi cỡ lúc build thì mỗi lần build lại phải gọi máy chủ lsvn.
+if (!localImage && !(article.imageWidth && article.imageHeight)) {
+  throw new Error(`Bài ${article.slug}: thiếu imageWidth/imageHeight (cỡ thật của ảnh ${article.imageUrl})`);
+}
+// <Image> nhận ảnh import hoặc URL kèm cỡ, không nhận biến mang kiểu chung của cả hai nên tách hai dạng.
+const imageSource = localImage
+  ? { src: localImage }
+  : { src: article.imageUrl, width: article.imageWidth, height: article.imageHeight };
+// Ảnh chia sẻ (Facebook, Zalo): JPEG đúng cỡ gốc, tải từ cnnlegal.vn thay vì máy chủ lsvn chậm.
+const ogImage = await getImage({ ...imageSource, format: "jpg", quality: 80 });
+const ogImageUrl = new URL(ogImage.src, site.canonicalBaseUrl).toString();
+// Cỡ gốc lấy qua getImage: đọc thẳng width của ảnh import thì Astro coi ảnh gốc là có dùng, chép thêm vào bản build.
+const imageWidth: number = ogImage.attributes.width;
+const imageHeight: number = ogImage.attributes.height;
+// Không xin cỡ lớn hơn ảnh gốc: Astro không phóng to, chỉ trả lại đúng ảnh gốc dưới tên khác.
+const imageWidths = [...[320, 640, 768].filter((w) => w < imageWidth), imageWidth];
 // Ảnh lấy từ lsvn.vn không làm ảnh xem trước: máy chủ ảnh lsvn trả mỗi ảnh mất 4–60 s (đo
-// 18/10/2026), tải thêm lúc build thì build chậm hẳn hoặc hỏng. Ảnh trong public/ thì làm được.
-const imageBlur = article.imageUrl.startsWith("/") ? await blurPlaceholder(article.imageUrl) : undefined;
+// 18/10/2026), tải thêm lúc build thì build chậm hẳn hoặc hỏng. Ảnh trong src/assets thì làm được.
+const imageBlur = localImage ? await blurPlaceholder(localImage) : undefined;
 
 const structuredData = [
   {
@@ -38,8 +63,13 @@ const structuredData = [
     "@type": "Article",
     headline: article.title,
     description: article.excerpt,
-    image: article.imageUrl,
+    image: ogImageUrl,
     ...(dateIso ? { datePublished: dateIso } : {}),
+    author: {
+      "@type": "Person",
+      name: "Đặng Kim Chinh",
+      url: site.externalProfileUrl,
+    },
     isBasedOn: article.sourceUrl,
     publisher: {
       "@type": "Organization",
@@ -49,7 +79,7 @@ const structuredData = [
     copyrightHolder: {
       "@type": "Organization",
       name: article.sourceName,
-      url: "https://lsvn.vn",
+      url: new URL(article.sourceUrl).origin,
     },
     inLanguage: "vi-VN",
   },
@@ -70,7 +100,10 @@ const structuredData = [
   description={description}
   canonicalPath={canonicalPath}
   ogType="article"
-  ogImage={article.imageUrl}
+  ogImage={ogImage.src}
+  ogImageWidth={imageWidth}
+  ogImageHeight={imageHeight}
+  ogImageAlt={article.imageAlt || article.title}
   structuredData={structuredData}
 >
   <article class="bg-warm-ivory">
@@ -97,123 +130,97 @@ const structuredData = [
     <div class="section-shell py-10 md:py-14">
       <div class="mx-auto max-w-3xl">
 
-        {article.imageUrl && !article.blocks && (
-          <div class="overflow-hidden rounded-sm border border-border-soft bg-muted-blue">
-            <Image
-              class="aspect-[16/9] w-full object-cover"
-              src={article.imageUrl}
-              alt={article.imageAlt}
-              width={900}
-              height={506}
-              widths={[320, 640, 768]}
-              sizes="(min-width: 768px) 768px, 100vw"
-              quality={80}
-              loading="eager"
-              fetchpriority="high"
-              style={imageBlur && `background:${imageBlur} center/cover`}
-            />
-          </div>
-        )}
-
         <div class="article-body mt-8 space-y-5">
-          {article.blocks ? (
-            article.blocks.map((block, i) => {
-              switch (block.type) {
-                case "lead":
-                  return (
-                    <p class="text-[1.0625rem] font-bold leading-[1.7] text-text-dark">
-                      {block.text}
-                    </p>
-                  );
-                case "heading":
-                  return (
-                    <h2 class="pt-3 text-[1.0625rem] font-bold leading-snug text-text-dark">
-                      {block.text}
-                    </h2>
-                  );
-                case "subheading":
-                  return (
-                    <h3 class="pt-2 text-[0.9375rem] font-bold italic leading-snug text-text-dark">
-                      {block.text}
-                    </h3>
-                  );
-                case "italic":
-                  return (
-                    <p class="pt-1 text-[0.9375rem] italic leading-[1.8] text-text-dark">
-                      {block.text}
-                    </p>
-                  );
-                case "paragraph":
-                  return (
-                    <p class="text-[0.9375rem] leading-[1.8] text-text-dark">
-                      {block.text}
-                    </p>
-                  );
-                case "quote":
-                  return (
-                    <p class="border-l-2 border-border-soft pl-4 text-[0.9375rem] leading-[1.8] text-text-dark">
-                      {block.text}
-                    </p>
-                  );
-                case "image":
-                  return (
-                    <figure class="pt-1">
-                      <div class="overflow-hidden rounded-sm border border-border-soft bg-muted-blue">
-                        <Image
-                          class="aspect-[16/9] w-full object-cover"
-                          src={article.imageUrl}
-                          alt={article.imageAlt}
-                          width={900}
-                          height={506}
-                          widths={[320, 640, 768]}
-                          sizes="(min-width: 768px) 768px, 100vw"
-                          quality={80}
-                          loading={i === firstImageIndex ? "eager" : "lazy"}
-                          fetchpriority={i === firstImageIndex ? "high" : undefined}
-                          style={imageBlur && `background:${imageBlur} center/cover`}
-                        />
-                      </div>
-                      {block.caption && (
-                        <figcaption class="mt-2 text-center text-[0.8125rem] italic text-text-muted">
-                          {block.caption}
-                        </figcaption>
-                      )}
-                    </figure>
-                  );
-                case "noteHeading":
-                  return (
-                    <p class="pt-2 text-[0.8125rem] font-bold leading-[1.75] text-text-dark">
-                      {block.text}
-                    </p>
-                  );
-                case "note":
-                  return (
-                    <p class="text-[0.8125rem] leading-[1.75] text-text-dark">
-                      {block.text}
-                    </p>
-                  );
-                case "signature":
-                  return (
-                    <div class="pt-4">
-                      <p class:list={["text-[0.9375rem] leading-[1.8] text-text-dark", block.nameBold && "font-bold"]}>
-                        {block.name}
-                      </p>
-                      <p class:list={["text-[0.9375rem] leading-[1.8] text-text-dark", block.orgItalic && "italic"]}>
-                        {block.org}
-                      </p>
+          {article.blocks.map((block, i) => {
+            switch (block.type) {
+              case "lead":
+                return (
+                  <p class="text-[1.0625rem] font-bold leading-[1.7] text-text-dark">
+                    {block.text}
+                  </p>
+                );
+              case "heading":
+                return (
+                  <h2 class="pt-3 text-[1.0625rem] font-bold leading-snug text-text-dark">
+                    {block.text}
+                  </h2>
+                );
+              case "subheading":
+                return (
+                  <h3 class="pt-2 text-[0.9375rem] font-bold italic leading-snug text-text-dark">
+                    {block.text}
+                  </h3>
+                );
+              case "italic":
+                return (
+                  <p class="pt-1 text-[0.9375rem] italic leading-[1.8] text-text-dark">
+                    {block.text}
+                  </p>
+                );
+              case "paragraph":
+                return (
+                  <p class="text-[0.9375rem] leading-[1.8] text-text-dark">
+                    {block.text}
+                  </p>
+                );
+              case "quote":
+                return (
+                  <p class="border-l-2 border-border-soft pl-4 text-[0.9375rem] leading-[1.8] text-text-dark">
+                    {block.text}
+                  </p>
+                );
+              case "image":
+                return (
+                  <figure class="pt-1">
+                    <div class="overflow-hidden rounded-sm border border-border-soft bg-muted-blue">
+                      {/* Đúng tỉ lệ ảnh gốc, không cắt. Khung rộng 48rem; trên 1366px rem phóng theo
+                          màn hình nên 48rem = 56.22vw. */}
+                      <Image
+                        {...imageSource}
+                        class="w-full"
+                        alt={article.imageAlt}
+                        width={imageWidth}
+                        height={imageHeight}
+                        widths={imageWidths}
+                        sizes="(min-width: 1367px) 56.22vw, (min-width: 768px) 768px, 100vw"
+                        quality={80}
+                        loading={i === firstImageIndex ? "eager" : "lazy"}
+                        fetchpriority={i === firstImageIndex ? "high" : undefined}
+                        style={imageBlur && `background:${imageBlur} center/cover`}
+                      />
                     </div>
-                  );
-              }
-            })
-          ) : article.bodyParagraphs.length > 0 ? (
-            article.bodyParagraphs.map((para) => (
-              <p class="text-[0.9375rem] leading-[1.8] text-text-dark">{para}</p>
-            ))
-          ) : (
-            <p class="text-[0.9375rem] leading-[1.8] text-text-muted">
-              {article.excerpt || "Nội dung đang được cập nhật."}
-            </p>
-          )}
+                    {block.caption && (
+                      <figcaption class="mt-2 text-center text-[0.8125rem] italic text-text-muted">
+                        {block.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              case "noteHeading":
+                return (
+                  <p class="pt-2 text-[0.8125rem] font-bold leading-[1.75] text-text-dark">
+                    {block.text}
+                  </p>
+                );
+              case "note":
+                return (
+                  <p class="text-[0.8125rem] leading-[1.75] text-text-dark">
+                    {block.text}
+                  </p>
+                );
+              case "signature":
+                return (
+                  <div class="pt-4">
+                    <p class:list={["text-[0.9375rem] leading-[1.8] text-text-dark", block.nameBold && "font-bold"]}>
+                      {block.name}
+                    </p>
+                    <p class:list={["text-[0.9375rem] leading-[1.8] text-text-dark", block.orgItalic && "italic"]}>
+                      {block.org}
+                    </p>
+                  </div>
+                );
+            }
+          })}
         </div>
 
         <div class="mt-10 border-t border-border-soft pt-6">

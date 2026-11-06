@@ -200,7 +200,7 @@ export const notableCases: readonly NotableCase[] = [
         publishedAt: "20/01/2025",
       },
       {
-        name: "Cổng Thông tin điện tử Bộ Công an",
+        name: "Đài Tiếng nói Việt Nam (VOV)",
         url: "https://vov.gov.vn/bo-cong-an-thong-tin-ve-chuyen-an-ma-tuy-lon-tai-quan-bar-phuong-lam-tphcm-dtnew-856175",
         title: "Bộ Công an thông tin về chuyên án ma tuý lớn tại quán bar Phương Lâm, TPHCM",
         publishedAt: "",

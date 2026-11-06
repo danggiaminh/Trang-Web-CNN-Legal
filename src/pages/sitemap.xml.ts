@@ -7,19 +7,14 @@ interface SitemapEntry {
   path: string;
   changefreq: "daily" | "weekly" | "monthly";
   priority: number;
-  lastmod: string;
+  // Chỉ ghi khi biết ngày sửa thật. Ghi ngày build cho trang không đổi thì Google học cách bỏ qua
+  // lastmod của cả sitemap; ngày diễn ra vụ án cũng không phải ngày trang được sửa.
+  lastmod?: string;
 }
 
-const today = new Date().toISOString().split("T")[0];
-
-function toIsoDate(input: string | undefined): string {
-  const s = (input ?? "").trim();
-  const dmy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s);
-  if (dmy) return `${dmy[3]}-${dmy[2]}-${dmy[1]}`;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
-  const year = /^(\d{4})$/.exec(s);
-  if (year) return `${year[1]}-01-01`;
-  return today;
+function toIsoDate(input: string): string | undefined {
+  const dmy = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(input.trim());
+  return dmy ? `${dmy[3]}-${dmy[2]}-${dmy[1]}` : undefined;
 }
 
 export async function GET() {
@@ -27,17 +22,16 @@ export async function GET() {
 
   const pages: SitemapEntry[] = [
 
-    { path: "/", changefreq: "weekly", priority: 1.0, lastmod: today },
-    { path: "/tong-quan/", changefreq: "monthly", priority: 0.8, lastmod: today },
-    { path: "/dich-vu/", changefreq: "weekly", priority: 0.9, lastmod: today },
+    { path: "/", changefreq: "weekly", priority: 1.0 },
+    { path: "/tong-quan/", changefreq: "monthly", priority: 0.8 },
+    { path: "/dich-vu/", changefreq: "weekly", priority: 0.9 },
     ...services.map((s) => ({
       path: `/dich-vu/${s.slug}/`,
       changefreq: "monthly" as const,
       priority: 0.8,
-      lastmod: today,
     })),
-    { path: "/kinh-nghiem/", changefreq: "weekly", priority: 0.9, lastmod: today },
-    { path: "/bai-viet/", changefreq: "weekly", priority: 0.9, lastmod: today },
+    { path: "/kinh-nghiem/", changefreq: "weekly", priority: 0.9 },
+    { path: "/bai-viet/", changefreq: "weekly", priority: 0.9 },
 
     ...articles.map((a) => ({
       path: `/bai-viet/${a.slug}/`,
@@ -49,15 +43,14 @@ export async function GET() {
       path: `/vu-an-tieu-bieu/${c.slug}/`,
       changefreq: "monthly" as const,
       priority: 0.7,
-      lastmod: toIsoDate(c.date || String(c.year)),
     })),
-    { path: "/lien-he/", changefreq: "monthly", priority: 0.7, lastmod: today },
+    { path: "/lien-he/", changefreq: "monthly", priority: 0.7 },
   ];
 
   const urls = pages
     .map(
       (p) =>
-        `  <url>\n    <loc>${new URL(p.path, site.canonicalBaseUrl).toString()}</loc>\n    <lastmod>${p.lastmod}</lastmod>\n    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority.toFixed(1)}</priority>\n  </url>`
+        `  <url>\n    <loc>${new URL(p.path, site.canonicalBaseUrl).toString()}</loc>\n${p.lastmod ? `    <lastmod>${p.lastmod}</lastmod>\n` : ""}    <changefreq>${p.changefreq}</changefreq>\n    <priority>${p.priority.toFixed(1)}</priority>\n  </url>`
     )
     .join("\n");
 

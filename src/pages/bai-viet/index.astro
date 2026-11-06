@@ -127,6 +127,7 @@ const structuredData = [
                     ? "bg-ink-black font-bold text-white"
                     : "bg-surface-white font-medium text-text-dark",
                 ]}
+                aria-pressed={cat === "Tất cả"}
                 data-category={cat}
               >
                 {cat}
@@ -176,9 +177,12 @@ const structuredData = [
         const isActive = b.dataset.category === selected;
         b.classList.toggle("bg-ink-black", isActive);
         b.classList.toggle("text-white", isActive);
+        b.classList.toggle("font-bold", isActive);
         b.classList.toggle("bg-surface-white", !isActive);
         b.classList.toggle("text-text-dark", !isActive);
+        b.classList.toggle("font-medium", !isActive);
         b.classList.toggle("border-text-dark/20", true);
+        b.setAttribute("aria-pressed", String(isActive));
       });
 
       let visibleCount = 0;
