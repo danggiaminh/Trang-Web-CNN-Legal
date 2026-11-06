@@ -70,20 +70,21 @@ const structuredData = [
   </section>
 
   <section class="section-shell about">
-    <div class="about-photo">
+    <figure class="about-photo">
       <Picture
         src={portrait}
         alt="Chân dung Luật sư Đặng Kim Chinh"
         formats={["avif"]}
         fallbackFormat="webp"
         widths={[400, 560, 720, 800, 1200]}
-        sizes="(min-width: 1367px) 29.3vw, (min-width: 1136px) 25rem, (min-width: 1024px) calc(100vw - 46rem), (min-width: 432px) 25rem, calc(100vw - 2rem)"
+        sizes="(min-width: 1367px) 24.6vw, (min-width: 1136px) 21rem, (min-width: 1024px) calc(100vw - 46rem), (min-width: 432px) 21rem, calc(100vw - 2rem)"
         quality={65}
         loading="eager"
         fetchpriority="high"
         style={`background:${portraitBlur} center/cover`}
       />
-    </div>
+      <figcaption>Luật sư Đặng Kim Chinh - Giám đốc Công ty Luật CNN Legal</figcaption>
+    </figure>
 
     <div class="about-body">
       <p>
@@ -114,10 +115,6 @@ const structuredData = [
   /* Dưới banner là bố cục phỏng theo trang "Our Firm" mẫu: nền trắng, chữ bên
      trái, ảnh bên phải. Điện thoại: tiêu đề → ảnh → nội dung. CSS scoped nên chỉ
      nằm trong trang này. */
-  :global(body) {
-    background: var(--color-surface-white);
-  }
-
   .about {
     display: grid;
     grid-template-areas:
@@ -131,11 +128,21 @@ const structuredData = [
     grid-area: photo;
     justify-self: center;
     width: 100%;
-    max-width: 25rem;
+    max-width: 21rem;
   }
 
   .about-photo :global(img) {
     width: 100%;
+  }
+
+  .about-photo figcaption {
+    margin-top: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.5;
+    text-align: center;
+    text-wrap: balance;
+    color: var(--color-text-dark);
   }
 
   .about-body {
@@ -176,7 +183,7 @@ const structuredData = [
        hẹp lại. */
     .about-photo {
       align-self: start;
-      width: min(25rem, 100% - 6rem);
+      width: min(21rem, 100% - 6rem);
       margin-top: 0.5rem;
     }
   }

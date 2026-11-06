@@ -37,6 +37,12 @@ const setMenuState = (isOpen: boolean) => {
   drawer.classList.toggle("translate-x-full", !isOpen);
   drawer.classList.toggle("translate-x-0", isOpen);
   document.body.classList.toggle("nav-open", isOpen);
+
+  // Ngăn kéo đóng thì inert: Tab, trình đọc màn hình và tìm trong trang không lọt vào nữa.
+  // Mở thì đưa focus tới nút Đóng, đóng thì trả về nút Mở menu. preventScroll: lúc này ngăn
+  // kéo còn nằm ngoài màn hình, focus mà cuộn theo thì nó bị kéo lệch khỏi chỗ.
+  drawer.inert = !isOpen;
+  (isOpen ? closeButton : menuButton)?.focus({ preventScroll: true });
 };
 
 menuButton?.addEventListener("click", () => setMenuState(true));
@@ -48,4 +54,14 @@ drawerLinks.forEach((link) => {
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") setMenuState(false);
+
+  // Ngăn kéo mở phủ kín màn hình: Tab ở link cuối thì vòng về link đầu, Shift+Tab ở link đầu
+  // thì về link cuối, để focus không lọt xuống trang nằm khuất sau ngăn kéo. Xét inert === false
+  // (không phải !inert): trình duyệt chưa hỗ trợ inert thì link của ngăn kéo đóng vẫn nhận focus
+  // và inert là undefined tới lần mở đầu, vòng lại ở đó thì Tab kẹt mãi trong ngăn kéo vô hình.
+  const last = drawerLinks.length - 1;
+  if (event.key === "Tab" && event.target === drawerLinks[event.shiftKey ? 0 : last] && drawer!.inert === false) {
+    event.preventDefault();
+    drawerLinks[event.shiftKey ? last : 0].focus();
+  }
 });

@@ -9,12 +9,16 @@ const matchesPrefix = (href: string) =>
 const isActive = (item: NavigationItem) =>
   [item.href, ...(item.activePrefixes ?? [])].some(matchesPrefix);
 
+// Khung bọc ngăn kéo di động có style overflow:clip (lớp ẩn phần tràn để dự phòng cho trình
+// duyệt cũ) nên không còn là vùng cuộn: focus hay địa chỉ /#mobile-menu không thể cuộn ngăn kéo
+// đang đóng ra che trang. Ngăn kéo đóng thì inert (navigation.ts bật tắt).
+
 ---
 
 <header
-  class="sticky top-0 z-50 border-b border-border-soft bg-surface-white"
+  class="sticky top-0 z-50 bg-surface-white px-[var(--frame-gap)]"
 >
-  <div class="flex h-[3.75rem] items-center gap-6 px-4 lg:px-9">
+  <div class="flex h-[var(--header-h)] items-center gap-8">
 
     <a href="/" class="shrink-0" aria-label="CNN Legal trang chủ">
       <span class="font-sans text-[1.5rem] font-bold tracking-tight text-text-dark">
@@ -22,32 +26,34 @@ const isActive = (item: NavigationItem) =>
       </span>
     </a>
 
-    <div class="ml-auto flex shrink-0 items-center gap-3">
-      <nav
-        class="hidden items-center gap-0.5 lg:flex"
-        aria-label="Điều hướng chính"
-      >
-        {navigationItems.map((item) => (
-          <a
-            class:list={[
-              "rounded-md px-3 py-2 text-[1rem] font-medium leading-none transition-all",
-              isActive(item) ? "text-text-dark" : "text-text-muted hover:text-text-dark",
-            ]}
-            href={item.href}
-          >
-            {item.label}
-          </a>
-        ))}
-      </nav>
+    <nav
+      class="hidden items-center gap-1 lg:flex"
+      aria-label="Điều hướng chính"
+    >
+      {navigationItems.map((item) => (
+        <a
+          class:list={[
+            "px-3 py-2 text-[1rem] font-medium leading-none transition-colors",
+            isActive(item) ? "text-text-dark" : "text-text-muted hover:text-text-dark",
+          ]}
+          href={item.href}
+          aria-current={isActive(item) ? "page" : undefined}
+        >
+          {item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="ml-auto flex shrink-0 items-center gap-4">
       <Search />
       <a
         href="/lien-he/"
-        class="hidden rounded-full bg-ink-black px-5 py-2 text-[0.9375rem] font-medium text-white shadow-sm transition-colors hover:bg-ink-hover active:scale-[0.97] lg:inline-flex"
+        class="hidden h-10 items-center rounded-full bg-[#0066cc] px-5 text-[0.9375rem] font-medium text-white transition-colors hover:bg-[#004080] active:scale-[0.97] lg:inline-flex"
       >
         Liên hệ
       </a>
       <button
-        class="inline-flex h-9 w-9 items-center justify-center rounded text-text-dark hover:bg-surface-subtle lg:hidden"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-dark hover:bg-surface-white lg:hidden"
         type="button"
         aria-controls="mobile-menu"
         aria-expanded="false"
@@ -75,12 +81,13 @@ const isActive = (item: NavigationItem) =>
 
   </div>
 
-  <div class="pointer-events-none fixed inset-x-0 top-0 z-50 h-dvh overflow-hidden lg:hidden">
+  <div class="pointer-events-none fixed inset-x-0 top-0 z-50 h-dvh overflow-hidden lg:hidden" style="overflow:clip">
   <aside
     id="mobile-menu"
     class="pointer-events-auto absolute inset-0 h-full w-full translate-x-full overflow-y-auto bg-surface-white px-5 py-5 transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]"
-    aria-label="Điều hướng di động"
+    aria-label="Menu"
     data-mobile-drawer
+    inert
   >
     <div class="mb-6 flex items-center justify-between">
       <a href="/" class="shrink-0" aria-label="CNN Legal trang chủ">
@@ -112,7 +119,7 @@ const isActive = (item: NavigationItem) =>
       </button>
     </div>
 
-    <nav class="flex flex-col gap-0.5" aria-label="Điều hướng di động">
+    <nav class="flex flex-col gap-0.5" aria-label="Điều hướng chính">
       {navigationItems.map((item) => (
         <a
           class:list={[
@@ -120,6 +127,7 @@ const isActive = (item: NavigationItem) =>
             isActive(item) ? "text-text-dark" : "text-text-muted",
           ]}
           href={item.href}
+          aria-current={isActive(item) ? "page" : undefined}
         >
           {item.label}
         </a>

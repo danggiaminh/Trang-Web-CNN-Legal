@@ -1,4 +1,5 @@
 const processed = new Set<string>();
+let dwellTimer: ReturnType<typeof setTimeout> | undefined;
 
 async function preloadPageImages(rawHref: string): Promise<void> {
   let url: URL;
@@ -8,7 +9,6 @@ async function preloadPageImages(rawHref: string): Promise<void> {
     return;
   }
 
-  if ((navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData) return;
   if (url.origin !== location.origin) return;
   if (url.pathname === location.pathname) return;
   if (processed.has(url.pathname)) return;
@@ -71,18 +71,31 @@ function whenIdle(task: () => void): void {
 function onIntent(event: Event): void {
   const target = event.target;
   if (!(target instanceof Element)) return;
+  // Chỉ chuột thật, hoặc focus bằng bàn phím (focusin không có pointerType nên xét :focus-visible).
+  // pointerover của màn cảm ứng là lúc ngón tay bắt đầu cuộn trang; focus do chạm hay nhấp chuột
+  // thì trang đã đang chuyển đi.
+  if ((event as PointerEvent).pointerType !== "mouse" && !target.matches(":focus-visible")) return;
 
+  // Link "#…", href rỗng, mailto:, tel: không cần lọc ở đây: preloadPageImages bỏ qua đường dẫn
+  // trùng trang hiện tại và origin khác (mailto:/tel: có origin "null").
   const link = target.closest<HTMLAnchorElement>("a[href]");
   if (!link) return;
-
-  const href = link.getAttribute("href");
-  if (!href) return;
-  if (href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return;
   if (link.target === "_blank") return;
   if (link.hasAttribute("download")) return;
 
-  preloadPageImages(link.href);
+  // Phải dừng ~90 ms trên link (prefetch của Astro chờ 80 ms): hết giờ mà chuột đã rời link hoặc
+  // focus đã sang chỗ khác thì thôi, nên lướt chuột ngang hàng link hay Tab lướt qua không tải gì.
+  // Xét lại lúc hết giờ thay cho nghe thêm pointerout/focusout: script nằm trong mọi trang.
+  clearTimeout(dwellTimer);
+  dwellTimer = setTimeout(() => link.matches(":hover,:focus-visible") && preloadPageImages(link.href), 90);
 }
 
-document.addEventListener("pointerover", onIntent, { passive: true });
-document.addEventListener("focusin", onIntent, { passive: true });
+// Tiết kiệm dữ liệu hoặc mạng chậm (slow-2g, 2g, 3g) thì bỏ hẳn: một banner tải trước nặng hàng
+// trăm KB cho trang chưa chắc được mở. Trình duyệt không có navigator.connection: test(undefined)
+// so với chuỗi "undefined", không khớp.
+const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } })
+  .connection;
+if (!connection?.saveData && !/[23]g/.test(connection?.effectiveType!)) {
+  document.addEventListener("pointerover", onIntent);
+  document.addEventListener("focusin", onIntent);
+}

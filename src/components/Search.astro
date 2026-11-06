@@ -3,7 +3,7 @@
 
 <button
   type="button"
-  class="search-trigger inline-flex h-9 w-9 items-center justify-center rounded-xl text-text-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-dark lg:h-10 lg:w-10"
+  class="search-trigger inline-flex h-10 w-10 items-center justify-center rounded-md text-text-dark hover:bg-surface-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-text-dark"
   aria-label="Tìm kiếm nội dung"
   title="Tìm kiếm nội dung (Ctrl + K)"
   data-search-open
@@ -95,7 +95,8 @@
   :global(body[data-search-open]) {
     overflow: hidden;
   }
-  [data-search-hit][aria-selected="true"] {
+  /* Hàng kết quả dựng bằng innerHTML nên không mang thuộc tính scope của component. */
+  :global([data-search-hit][aria-selected="true"]) {
     background: var(--color-surface-subtle);
   }
 
@@ -136,6 +137,12 @@
   const openers = document.querySelectorAll<HTMLButtonElement>("[data-search-open]");
 
   if (overlay && input && list && crumbs) {
+    // Vùng status ẩn đọc cho trình đọc màn hình: đang tải, số kết quả, không có kết quả, lỗi tải.
+    // Dựng bằng script (file JS dùng chung, có cache) để HTML của mọi trang không nặng thêm.
+    const status = document.createElement("p");
+    status.className = "sr-only";
+    status.setAttribute("role", "status");
+    list.after(status);
 
     type Flat = Node & { p: string; ft: string; fd: string; et: string; ed: string; eg: string };
 
@@ -235,8 +242,13 @@
       return nodes;
     };
 
+    // Listbox chỉ được chứa option (gom trong group có nhãn), nên tiêu đề mục và dòng thông
+    // báo ẩn khỏi trình đọc màn hình; nội dung của chúng đã được đọc qua vùng status.
     const heading = (label: string) =>
-      `<p class="px-3 pb-1.5 pt-2.5 text-[0.9375rem] font-semibold text-text-dark">${esc(label)}</p>`;
+      `<p aria-hidden="true" class="px-3 pb-1.5 pt-2.5 text-[0.9375rem] font-semibold text-text-dark">${esc(label)}</p>`;
+
+    const notice = (msg: string) =>
+      `<p aria-hidden="true" class="px-3 py-6 text-center text-[0.8125rem] text-text-muted">${esc(msg)}</p>`;
 
     const chevron =
       '<svg class="h-4 w-4 shrink-0 text-text-muted" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 3.5L10.5 8L6 12.5" stroke-linecap="round"/></svg>';
@@ -263,7 +275,8 @@
     const note = (msg: string) => {
       hits = [];
       active = -1;
-      list.innerHTML = `<p class="px-3 py-6 text-center text-[0.8125rem] text-text-muted">${msg}</p>`;
+      list.innerHTML = notice(msg);
+      status.textContent = msg;
       input.setAttribute("aria-expanded", "false");
       input.removeAttribute("aria-activedescendant");
     };
@@ -271,11 +284,13 @@
     const paint = (label: string, items: Node[]) => {
       hits = items;
       active = items.length ? 0 : -1;
+      const empty = "Mục này chưa có nội dung.";
       list.innerHTML =
         heading(label) +
         (items.length
-          ? items.map(row).join("")
-          : `<p class="px-3 py-6 text-center text-[0.8125rem] text-text-muted">Mục này chưa có nội dung.</p>`);
+          ? `<div role="group" aria-label="${esc(label)}">${items.map(row).join("")}</div>`
+          : notice(empty));
+      status.textContent = items.length ? `${label}: ${items.length} mục` : empty;
       input.setAttribute("aria-expanded", items.length ? "true" : "false");
       if (items.length) input.setAttribute("aria-activedescendant", "search-hit-0");
       else input.removeAttribute("aria-activedescendant");
@@ -365,7 +380,7 @@
         .map((x) => x.e as Node);
 
       if (!scored.length) {
-        note(`Không tìm thấy kết quả cho “${esc(raw)}”.`);
+        note(`Không tìm thấy kết quả cho “${raw}”.`);
         return;
       }
       paint("Kết quả", scored);
@@ -418,6 +433,8 @@
       if (!overlay.hasAttribute("data-open")) return;
       overlay.removeAttribute("data-open");
       document.body.removeAttribute("data-search-open");
+      // Xoá để lần mở sau dù cùng câu thông báo vẫn là một thay đổi, trình đọc màn hình mới đọc.
+      status.textContent = "";
       hits = [];
       active = -1;
       lastFocus?.focus({ preventScroll: true });

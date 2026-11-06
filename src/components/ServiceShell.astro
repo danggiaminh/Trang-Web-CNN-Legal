@@ -44,6 +44,9 @@ const heroBlur = await blurPlaceholder(servicesHero);
       loading="eager"
       fetchpriority="high"
     />
+    {/* Phủ tối đều 20%, không gradient, như banner Giới thiệu, Kinh nghiệm, Bài viết: tiêu
+        đề trắng nằm trên trời sáng và mây trắng, chưa phủ chỉ đạt trung vị ~1,9:1. */}
+    <div class="absolute inset-0" style="background-color:rgb(0 0 0 / 0.2)"></div>
   </div>
 
   <div class="section-shell relative z-10">
@@ -83,12 +86,6 @@ const heroBlur = await blurPlaceholder(servicesHero);
   /* Hero giống các trang khác của site, bên dưới là danh mục dịch vụ bên trái và
      nội dung bên phải, cùng một nền trắng. CSS để scoped ở đây nên chỉ nằm trong 5
      trang dịch vụ, không thêm byte cho trang khác. */
-
-  /* Nền trắng tới tận cuối trang: khoảng trống dưới phần nội dung vốn lấy màu kem
-     chung của site, lộ ra thành một dải khác màu. */
-  :global(body) {
-    background: var(--color-surface-white);
-  }
 
   .svc-grid {
     display: grid;

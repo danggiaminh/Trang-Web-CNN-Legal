@@ -18,6 +18,8 @@ const [tallAvif, wideAvif, wideWebp, tallBlur, wideBlur] = await Promise.all([
   blurPlaceholder(heroSaigonTall),
   blurPlaceholder(heroSaigon),
 ]);
+// Kích thước <img> lấy từ kết quả getImage (2560×1707), đừng đọc heroSaigon.width/height: đọc
+// thuộc tính nào của ảnh import (trừ clone, fsPath) là Astro giữ lại file JPEG gốc 1 MB khi deploy.
 
 // Ảnh 3:2 phủ kín hero → khung hẹp hơn 3/2 thì object-cover phóng theo CHIỀU CAO:
 // 1,5 × 100vh = 150vh.
@@ -41,8 +43,8 @@ const TALL_SIZES = "(min-aspect-ratio: 9/16) 100vw, 57vh";
         srcset={wideWebp.srcSet.attribute}
         sizes={WIDE_SIZES}
         alt="Sông Sài Gòn với cầu Ba Son và tòa Landmark 81"
-        width={heroSaigon.width}
-        height={heroSaigon.height}
+        width={wideWebp.attributes.width}
+        height={wideWebp.attributes.height}
         loading="eager"
         fetchpriority="high"
         decoding="async"

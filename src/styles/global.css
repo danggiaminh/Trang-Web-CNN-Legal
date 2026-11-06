@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source("..");
 
 /* Subset latin giống hệt bản của Fontsource/Google Fonts, chỉ khác W và w dùng nét ss09
    (hai nét giữa không bắt chéo nhau). Google cắt mất ss09 nên phải tự dựng lại, cách
@@ -58,12 +58,35 @@
     }
   }
 
+  /* Khung nổi: header nằm thẳng trên nền trắng, nội dung là một tấm bảng trắng bo góc cách bốn mép
+     màn hình một khoảng --frame-gap. --header-h phải khớp chiều cao header (Header.astro). */
+  :root {
+    --header-h: 3.5rem;
+    --frame-gap: 1.5rem;
+    --frame-gap-bottom: 1rem;
+    --frame-radius: 12px;
+  }
+
+  @media (min-width: 640px) {
+    :root {
+      --frame-radius: 16px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    :root {
+      --frame-gap: 2rem;
+      --frame-gap-bottom: 1.25rem;
+      --header-h: 3.75rem;
+    }
+  }
+
   body {
     min-width: 320px;
     min-height: 100dvh;
     overflow-x: hidden;
     overscroll-behavior: none;
-    background: var(--color-warm-ivory);
+    background: var(--color-surface-white);
     color: var(--color-text-dark);
     font-family: var(--font-sans);
     font-variant-numeric: lining-nums;
@@ -92,13 +115,63 @@
 
   a:focus-visible,
   button:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--color-deep-blue-navy) 50%, transparent);
+    outline: 2px solid var(--color-deep-blue-navy);
     outline-offset: 3px;
     border-radius: 2px;
   }
 }
 
 @layer components {
+  .site-panel {
+    margin: 0 var(--frame-gap) var(--frame-gap-bottom);
+    min-height: calc(100dvh - var(--header-h) - var(--frame-gap-bottom));
+    border-radius: var(--frame-radius);
+    background: var(--color-surface-white);
+    overflow: clip;
+  }
+
+  /* Trang vẫn cuộn bằng cửa sổ (giữ khôi phục vị trí cuộn khi bấm Quay lại, thanh địa chỉ điện
+     thoại tự thu). Lớp cố định này vẽ nền trắng ra ngoài một hình chữ nhật bo góc trùng mép bảng,
+     nên phần nội dung đã cuộn qua mép bảng bị che đi như thể bảng tự cuộn bên trong. */
+  .site-frame {
+    position: fixed;
+    z-index: 30;
+    inset: var(--header-h) var(--frame-gap) var(--frame-gap-bottom);
+    border-radius: var(--frame-radius);
+    box-shadow: 0 0 0 100vmax var(--color-surface-white);
+    pointer-events: none;
+  }
+
+  /* Màn rộng: bảng nội dung tự cuộn bên trong nên thanh cuộn nằm trong bảng, header đứng yên.
+     Màn nhỏ vẫn cuộn bằng cửa sổ (thanh địa chỉ điện thoại tự thu), dùng lớp .site-frame ở trên. */
+  @media (min-width: 1024px) {
+    html,
+    body {
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    [data-app-shell] {
+      display: flex;
+      height: 100dvh;
+      flex-direction: column;
+    }
+
+    .site-panel {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      clip-path: inset(0 round var(--frame-radius));
+      scrollbar-width: thin;
+      scrollbar-color: #9a9a9a transparent;
+    }
+
+    .site-frame {
+      display: none;
+    }
+  }
+
   .section-shell {
     margin-inline: auto;
     width: min(100% - 2rem, 73rem);

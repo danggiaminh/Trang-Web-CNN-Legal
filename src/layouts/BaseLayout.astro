@@ -11,6 +11,10 @@ interface Props {
   canonicalPath?: string;
   ogType?: string;
   ogImage?: string;
+  /** Cỡ thật (px) của ogImage; không biết thì bỏ trống, thẻ og:image:width/height sẽ không in ra. */
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogImageAlt?: string;
   structuredData?: JsonLd | JsonLd[];
   noindex?: boolean;
   lockViewport?: boolean;
@@ -21,14 +25,19 @@ const {
   description = site.description,
   canonicalPath = Astro.url.pathname,
   ogType = "website",
-  ogImage = "/images/og-default.png",
+  ogImageAlt = `${site.name} – ${site.slogan}`,
   structuredData = [],
   noindex = false,
   lockViewport = false,
 } = Astro.props;
 
+// Ảnh chia sẻ mặc định 1200x630. Đổi hình thì đổi luôn tên file: Facebook, Zalo nhớ ảnh theo URL.
+const og = Astro.props.ogImage
+  ? { src: Astro.props.ogImage, width: Astro.props.ogImageWidth, height: Astro.props.ogImageHeight }
+  : { src: "/images/og-cnnlegal.png", width: 1200, height: 630 };
+
 const canonicalUrl = new URL(canonicalPath, site.canonicalBaseUrl).toString();
-const ogImageUrl = new URL(ogImage, site.canonicalBaseUrl).toString();
+const ogImageUrl = new URL(og.src, site.canonicalBaseUrl).toString();
 const jsonLdItems = Array.isArray(structuredData) ? structuredData : [structuredData];
 const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\\u003c");
 ---
@@ -48,11 +57,13 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
     }
 
     {/* sizes="32x32", đừng đổi lại "any": với "any" Chrome tải cả .ico lẫn .svg rồi hiện bản .ico
-        (ảnh điểm ảnh cỡ cố định); với "32x32" chỉ tải và hiện .svg vector, nét ở mọi độ phóng. Đo 18/10/2026. */}
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" type="image/svg+xml" href="/cnn-mark.svg" />
-    <link rel="icon" type="image/png" sizes="512x512" href="/cnn-icon-512.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/cnn-touch-180.png" />
+        (ảnh điểm ảnh cỡ cố định); với "32x32" chỉ tải và hiện .svg vector, nét ở mọi độ phóng. Đo 18/10/2026.
+        Đổi hình icon thì đổi luôn tên file: Chrome không tải lại icon có URL cũ, khách quay lại vẫn thấy hình cũ
+        (đo 21/10/2026). Tên mới giữ cùng độ dài để HTML không nặng thêm. /favicon.ico giữ cho trình duyệt cũ, bot. */}
+    <link rel="icon" href="/cnn-fav.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/cnn-logo.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/cnn-logo-512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/cnn-apple-180.png" />
 
     <meta name="theme-color" content="#0f1923" />
     <meta name="color-scheme" content="light" />
@@ -75,9 +86,13 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content={site.name} />
     <meta property="og:image" content={ogImageUrl} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={`${site.name} – ${site.slogan}`} />
+    {og.width && og.height && (
+      <>
+        <meta property="og:image:width" content={String(og.width)} />
+        <meta property="og:image:height" content={String(og.height)} />
+      </>
+    )}
+    <meta property="og:image:alt" content={ogImageAlt} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
@@ -86,13 +101,17 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
 
     {jsonLdItems.map((item) => <script is:inline type="application/ld+json" set:html={jsonLdToString(item)} />)}
   </head>
-  <body class="bg-warm-ivory text-text-dark antialiased">
+  <body class="text-text-dark antialiased">
     <div data-app-shell class:list={[lockViewport && "flex h-dvh flex-col overflow-hidden"]}>
       <Header />
-      <main class:list={[lockViewport && "min-h-0 flex-1"]}>
+      <main class:list={["site-panel", lockViewport && "min-h-0 flex-1"]}>
         <slot />
       </main>
+      {/* Nằm trong khung chứ không ngoài: mở bảng trợ lý thì khung thành position:fixed, tức một
+          lớp xếp chồng riêng, và lớp phủ phải nằm cùng lớp đó mới đứng dưới header và bảng trợ lý. */}
+      <div class="site-frame" aria-hidden="true"></div>
     </div>
+    <script src="../scripts/panel-scroll.ts"></script>
     <script src="../scripts/image-preload.ts"></script>
   </body>
 </html>
