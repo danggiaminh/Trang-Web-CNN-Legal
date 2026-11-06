@@ -7,7 +7,8 @@ export default defineConfig({
   adapter: vercel({
   }),
   image: {
-
+    // /_image chỉ dev mới cần; production trả 404 thay vì biến đổi ảnh theo tham số tuỳ ý.
+    endpoint: { route: "/_image", entrypoint: "./src/server/image-endpoint.ts" },
     domains: ["img.lsvn.vn"],
   },
   env: {
@@ -73,7 +74,7 @@ export default defineConfig({
       CHAT_ALLOWED_ORIGINS: envField.string({
         context: "server",
         access: "public",
-        default: "https://cnnlegal.vn,https://www.cnnlegal.vn,http://localhost:4321",
+        default: "https://cnnlegal.vn,https://www.cnnlegal.vn",
       }),
     },
   },

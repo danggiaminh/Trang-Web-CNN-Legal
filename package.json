@@ -3,11 +3,15 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro check && npm run test && astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "test": "node --import ./tests/register.mjs --test \"tests/**/*.test.ts\""
   },
   "overrides": {
     "path-to-regexp": "6.3.0"
@@ -17,7 +21,7 @@
     "@astrojs/vercel": "^11.0.11",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.1.1",
-    "astro": "^7.3.5",
+    "astro": "7.4.4",
     "tailwindcss": "^4.3.3",
     "typescript": "^6.0.3",
     "vite": "^8.1.5"
