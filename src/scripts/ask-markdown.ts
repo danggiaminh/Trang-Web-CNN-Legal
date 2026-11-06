@@ -19,7 +19,9 @@ export const escapeHtml = (s: string) =>
  */
 export const safeUrl = (raw: string): string | null => {
   const url = raw.trim();
-  if (!/^(https?:\/\/|\/|mailto:)/i.test(url)) return null;
+  // Đường dẫn nội bộ là "/" KHÔNG đi liền "/" hay "\": trình duyệt hiểu "//host" và "/\host" là
+  // sang tên miền khác, mở ngay trong tab đang đọc.
+  if (!/^(https?:\/\/|\/(?![/\\])|mailto:)/i.test(url)) return null;
   return url.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 };
 

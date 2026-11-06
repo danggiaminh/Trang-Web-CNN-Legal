@@ -1,15 +1,18 @@
 export const prerender = false;
 
 import type { APIRoute } from "astro";
-import { corsHeaders, originAllowed, withinRateLimit } from "../../../server/guard";
+import { site } from "../../../data/site";
+import { contactSendWait, corsHeaders, originAllowed, withinRateLimit } from "../../../server/guard";
 import {
   MAX_CONTACT_BYTES,
   hasMailKey,
+  noteSend,
   parseContact,
   sendContactEmail,
 } from "../../../server/contact";
 
 const BUSY_MSG = "Không gửi được lúc này, bạn thử lại sau hoặc gọi trực tiếp giúp mình nhé.";
+const LIMIT_MSG = `Bạn đã gửi nhiều yêu cầu liên tiếp. Để được hỗ trợ ngay, bạn gọi trực tiếp ${site.publicPhone} giúp mình nhé.`;
 
 function json(status: number, body: unknown, extra: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -56,14 +59,25 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   const parsed = parseContact(body);
   if (!parsed.ok) {
+    // Bot điền ô bẫy: trả y như gửi thành công để nó không biết mình bị lọc, và không gửi thư.
+    if (parsed.trap) {
+      console.warn("[api/v1/contact] ô bẫy chống bot có dữ liệu, bỏ qua không gửi thư");
+      return json(200, { ok: true }, cors);
+    }
     return json(400, { error: parsed.error }, cors);
   }
 
-  if (!withinRateLimit(`contact:${clientIp(request, clientAddress)}`)) {
+  const ip = clientIp(request, clientAddress);
+  if (!withinRateLimit(`contact:${ip}`)) {
     return json(429, { error: "Bạn gửi hơi nhanh, chờ một chút rồi thử lại nhé." }, {
       ...cors,
       "Retry-After": "10",
     });
+  }
+
+  const wait = contactSendWait(ip);
+  if (wait > 0) {
+    return json(429, { error: LIMIT_MSG }, { ...cors, "Retry-After": String(wait) });
   }
 
   if (!hasMailKey()) {
@@ -73,6 +87,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
 
   try {
     const result = await sendContactEmail(parsed.data, request.signal);
+    noteSend(result.status);
     if (!result.ok) {
       console.error(
         `[api/v1/contact] MisarMail trả lỗi HTTP ${result.status}${result.detail ? ` — ${result.detail}` : ""}`,
@@ -85,6 +100,7 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     );
   } catch (err) {
     if (request.signal.aborted) return json(499, { error: BUSY_MSG }, cors);
+    noteSend(0);
     console.error("[api/v1/contact] gọi MisarMail thất bại", err);
     return json(502, { error: BUSY_MSG }, cors);
   }

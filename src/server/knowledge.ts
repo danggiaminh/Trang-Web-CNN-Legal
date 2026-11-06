@@ -156,6 +156,11 @@ function makeDoc(input: {
   };
 }
 
+// Ghi ngày đăng vào đầu tài liệu để trợ lý biết bài đã cũ chừng nào (dự thảo có thể đã thành
+// luật, quy định có thể đã sửa). Vụ án thì các mốc ngày đã nằm sẵn trong nội dung.
+const dated = (publishedAt: string, text: string) =>
+  text && publishedAt ? `Ngày đăng: ${publishedAt}\n\n${text}` : text;
+
 async function buildCorpus(): Promise<Map<string, Doc>> {
   const docs = new Map<string, Doc>();
   const add = (d: Doc) => {
@@ -163,16 +168,13 @@ async function buildCorpus(): Promise<Map<string, Doc>> {
   };
 
   for (const a of await getAllArticles()) {
-    const body = a.blocks?.length
-      ? blocksToText(a.blocks)
-      : (a.bodyParagraphs ?? []).join("\n\n");
     add(
       makeDoc({
         slug: a.slug,
         title: a.title,
         url: `/bai-viet/${a.slug}/`,
         category: a.category,
-        text: body,
+        text: dated(a.publishedAt, blocksToText(a.blocks ?? [])),
       }),
     );
   }
@@ -200,7 +202,10 @@ async function buildCorpus(): Promise<Map<string, Doc>> {
         title: a.title,
         url: a.sourceUrl,
         category: a.category,
-        text: `${a.summary}\n\nĐây là phần giới thiệu ngắn. Toàn văn bài viết đăng trên ${a.sourceName}.`,
+        text: dated(
+          a.publishedAt,
+          `${a.summary}\n\nĐây là phần giới thiệu ngắn. Toàn văn bài viết đăng trên ${a.sourceName}.`,
+        ),
       }),
     );
   }

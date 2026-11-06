@@ -29,11 +29,13 @@ import {
   type TurnResult,
   type UsageStats,
 } from "../../../server/openrouter";
+import { chatTurnCap } from "../../../server/chat-cap";
 import { buildMessages, toolResultMessages, type ChatMessage } from "../../../server/prompt";
 import { selectContext } from "../../../server/retrieval";
 import { MAX_QUERY_CHARS, hasTavilyKey, renderResults, searchWeb } from "../../../server/tavily";
 
 const BUSY_MSG = "Xin lỗi hệ thống đang bận, vui lòng thử lại sau.";
+const TRUNCATED_NOTE = "\n\n(câu trả lời bị cắt bớt)";
 const VO_NGHIA_MSG =
   "Mình chưa hiểu câu hỏi. Bạn thử hỏi rõ hơn về một vụ án hoặc bài viết trên trang nhé.";
 const LIMIT_MSG =
@@ -138,7 +140,15 @@ async function* tokensOf(res: Response): AsyncGenerator<Payload, TurnResult, voi
   }
 }
 
-const EMPTY_TURN: TurnResult = { call: null, preamble: "" };
+const EMPTY_TURN: TurnResult = { call: null, preamble: "", finish: null, error: null, cut: null };
+
+/** Ghi lại mọi kiểu kết thúc lượt khác thường. Không bao giờ ghi chữ của người đọc hay của model. */
+function logTurnEnd(turn: TurnResult): void {
+  if (turn.cut === "junk") console.warn("[api/v1/chat] cắt luồng: model lặp chữ");
+  else if (turn.cut === "max_chars") console.log(`[api/v1/chat] cắt câu trả lời ở mốc ${MAX_ANSWER_CHARS} ký tự`);
+  else if (turn.finish !== "stop" && turn.finish !== "tool_calls")
+    console.warn(`[api/v1/chat] OpenRouter kết thúc lượt với finish_reason=${turn.finish?.slice(0, 40) ?? "(không có)"}`);
+}
 
 interface TurnOutcome {
   readonly ok: boolean;
@@ -173,6 +183,23 @@ async function* runTurn(
     if (res.ok) {
       try {
         const turn = yield* tokensOf(res);
+        if (turn.error || turn.finish === "error") {
+          // Lỗi tới SAU khi OpenRouter đã trả 200. Bản trước để luồng tắt im lặng: câu dở hiện ra
+          // như câu trả lời hoàn chỉnh, còn log không có lấy một dòng.
+          // Chỉ ghi mã lỗi và lời nhà cung cấp viết, không bao giờ ghi câu hỏi hay câu trả lời.
+          const detail = (turn.error?.message ?? "").replace(/\s+/g, " ").slice(0, 160);
+          console.error(
+            `[api/v1/chat] OpenRouter báo lỗi giữa luồng: code=${turn.error?.code.slice(0, 40) || "-"} ` +
+              `finish_reason=${turn.finish?.slice(0, 40) ?? "-"}${detail ? ` "${detail}"` : ""}`,
+          );
+          yield { e: BUSY_MSG };
+          return FAILED;
+        }
+        logTurnEnd(turn);
+        // Chạm max_tokens hay mốc MAX_ANSWER_CHARS: nói rõ là câu trả lời chưa hết.
+        if (!turn.call && (turn.finish === "length" || turn.cut === "max_chars")) {
+          yield { t: TRUNCATED_NOTE };
+        }
         return { ok: true, toolCall: turn.call, preamble: turn.preamble };
       } catch (err) {
         if (signal.aborted) return FAILED;
@@ -219,7 +246,9 @@ async function* answer(
   quota: Quota,
   signal: AbortSignal,
 ): AsyncGenerator<Payload, void, void> {
-  if (isMeaninglessQuestion(question)) {
+  // Câu ngắn kiểu "Ai?", "Vì?" chỉ vô nghĩa khi đứng một mình; đang có hội thoại thì nó là câu
+  // hỏi nối tiếp, để model hiểu theo ngữ cảnh.
+  if (!history.length && isMeaninglessQuestion(question)) {
     yield { m: 0, r: 0 };
     yield { t: VO_NGHIA_MSG };
     return;
@@ -227,6 +256,12 @@ async function* answer(
 
   if (!hasApiKey()) {
     console.error("[api/v1/chat] thiếu OPENROUTER_API_KEY — kiểm tra biến môi trường trên Vercel");
+    yield { e: BUSY_MSG };
+    return;
+  }
+
+  // Chạm trần trong 24 giờ thì trả lời "đang bận" ngay, không gọi model (xem chat-cap.ts).
+  if (!chatTurnCap.take()) {
     yield { e: BUSY_MSG };
     return;
   }
@@ -301,12 +336,15 @@ async function* answer(
       // Chỉ trừ lượt khi đã cầm chắc kết quả trong tay.
       yield { s: used, n: WEB_SEARCH_LIMIT };
       toolResult = renderResults(query, results);
-      console.log(`[api/v1/chat] tìm trên mạng "${query}" — ${results.length} kết quả, lượt ${used}/${WEB_SEARCH_LIMIT}`);
+      // Chỉ ghi độ dài: model viết truy vấn từ câu hỏi của người đọc, có thể chứa chuyện riêng của họ.
+      console.log(
+        `[api/v1/chat] tìm trên mạng (truy vấn ${query.length} ký tự) — ${results.length} kết quả, lượt ${used}/${WEB_SEARCH_LIMIT}`,
+      );
     } else {
       toolResult = NO_RESULT_NOTE;
     }
   } else {
-    console.error(`[api/v1/chat] model gọi công cụ lạ hoặc thiếu tham số: ${call.name}`);
+    console.error(`[api/v1/chat] model gọi công cụ lạ hoặc thiếu tham số: ${call.name.slice(0, 40)}`);
   }
 
   yield* runTurn(

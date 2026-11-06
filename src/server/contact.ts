@@ -53,9 +53,27 @@ export function hasMailKey(): boolean {
   return Boolean(MISARMAIL_API_KEY?.trim());
 }
 
+// Kết quả lần gửi gần nhất của instance này, cho /api/v1/health: chỉ thời điểm và mã HTTP của
+// MisarMail (0 là lỗi mạng hoặc hết thời gian chờ), không có gì từ nội dung thư.
+export interface SendRecord {
+  readonly at: string;
+  readonly status: number;
+  readonly ok: boolean;
+}
+
+let lastSend: SendRecord | null = null;
+
+export function noteSend(status: number): void {
+  lastSend = { at: new Date().toISOString(), status, ok: status >= 200 && status < 300 };
+}
+
+export function lastSendRecord(): SendRecord | null {
+  return lastSend;
+}
+
 export type ParseResult =
   | { readonly ok: true; readonly data: ContactData }
-  | { readonly ok: false; readonly error: string };
+  | { readonly ok: false; readonly error: string; readonly trap?: true };
 
 export function parseContact(raw: unknown): ParseResult {
   if (typeof raw !== "object" || raw === null) {
@@ -63,8 +81,10 @@ export function parseContact(raw: unknown): ParseResult {
   }
   const body = raw as Record<string, unknown>;
 
-  if (oneLine(body.company, 100)) {
-    return { ok: false, error: "Yêu cầu bị từ chối." };
+  // Ô bẫy bot (cf_hp trong lien-he.astro): người thật không thấy nên luôn để trống. Tên cũ
+  // "company" trùng trường tự điền của trình duyệt, có thể bị điền theo hồ sơ của khách thật.
+  if (oneLine(body.cf_hp, 100)) {
+    return { ok: false, trap: true, error: "Yêu cầu bị từ chối." };
   }
 
   const name = oneLine(body.name, LIMITS.name);

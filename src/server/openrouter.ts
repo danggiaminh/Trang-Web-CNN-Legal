@@ -109,19 +109,24 @@ export function retryAfterMs(res: Response, attempt: number): number {
   return Number.isFinite(secs) ? Math.min(secs, 3) * 1000 : 400 + attempt * 200;
 }
 
+// Model rơi vào vòng lặp (một chữ, một cụm ngắn lặp mãi) thì cắt luồng cho khỏi tốn token. Chỉ
+// coi là lặp khi phần đuôi lặp đúng một đơn vị suốt từ JUNK_SPAN_CHARS ký tự trở lên, và đơn vị đó
+// không phải toàn dấu câu, khoảng trắng, ký hiệu kẻ dòng. Bản cũ cắt khi một đơn vị lặp 12 lần, nên
+// dòng kẻ bảng ("|------------|") hay dòng chấm chừa chỗ điền ("……………") là đủ làm câu trả lời
+// đứt ngang mà không báo gì; những dòng như vậy giờ dài mấy cũng không bị coi là rác.
+const JUNK_SPAN_CHARS = 200;
+const JUNK_MAX_UNIT = 24;
+const JUNK_TAIL_CHARS = JUNK_SPAN_CHARS + JUNK_MAX_UNIT;
+const FILLER_UNIT = /^[\p{P}\p{Z}\p{Sm}\p{Sk}\s]+$/u;
+
 export function isJunkRepetition(tail: string): boolean {
-  const THRESHOLD = 12;
-  const ch = [...tail];
-  for (let len = 1; len <= 8; len += 1) {
-    if (ch.length < len * THRESHOLD) continue;
-    const pattern = ch.slice(ch.length - len).join("");
-    let reps = 0;
-    let i = ch.length;
-    while (i >= len && ch.slice(i - len, i).join("") === pattern) {
-      reps += 1;
-      i -= len;
-    }
-    if (reps >= THRESHOLD) return true;
+  const n = tail.length;
+  if (n < JUNK_SPAN_CHARS) return false;
+  for (let len = 1; len <= JUNK_MAX_UNIT; len += 1) {
+    // Độ dài phần đuôi lặp đúng chu kỳ len (đơn vị đầu tiên có thể chỉ lặp dở).
+    let run = len;
+    while (run < n && tail.charCodeAt(n - 1 - run) === tail.charCodeAt(n - 1 - run + len)) run += 1;
+    if (run >= JUNK_SPAN_CHARS && !FILLER_UNIT.test(tail.slice(n - len))) return true;
   }
   return false;
 }
@@ -162,9 +167,19 @@ interface CallFragment {
   readonly args?: string;
 }
 
-interface Delta {
+/** Khung lỗi OpenRouter gửi giữa luồng, khi đã lỡ trả HTTP 200. */
+export interface StreamError {
+  readonly code: string;
+  readonly message: string;
+}
+
+interface Chunk {
   readonly content: string;
   readonly calls: readonly CallFragment[];
+  /** finish_reason ("stop", "length", "tool_calls", "error"…); null khi lượt chưa xong. */
+  readonly finish: string | null;
+  readonly error: StreamError | null;
+  readonly usage: UsageStats | null;
 }
 
 function parseCallFragments(raw: unknown): CallFragment[] {
@@ -184,33 +199,40 @@ function parseCallFragments(raw: unknown): CallFragment[] {
   return out;
 }
 
-function parseSseLine(line: string): Delta | typeof DONE | null {
+function parseError(raw: unknown): StreamError | null {
+  if (typeof raw === "string") return { code: "", message: raw };
+  if (typeof raw !== "object" || raw === null) return null;
+  const e = raw as Record<string, unknown>;
+  return {
+    code: typeof e.code === "string" || typeof e.code === "number" ? String(e.code) : "",
+    message: typeof e.message === "string" ? e.message : "",
+  };
+}
+
+// Mỗi khung có thể mang chữ, mảnh lời gọi công cụ, finish_reason, lỗi giữa luồng hoặc gói usage
+// (gói này đi ở một khung riêng gần cuối luồng). Bản trước chỉ đọc delta và usage, nên lỗi giữa
+// luồng hay finish_reason "length" trôi qua im lặng, câu trả lời dở trông như đã xong.
+function parseSseLine(line: string): Chunk | typeof DONE | null {
   if (!line.startsWith("data:")) return null;
   const data = line.slice(5).trim();
   if (!data) return null;
   if (data === "[DONE]") return DONE;
+  let obj: Record<string, unknown>;
   try {
-    const delta = JSON.parse(data)?.choices?.[0]?.delta;
-    if (typeof delta !== "object" || delta === null) return null;
-    const content = typeof delta.content === "string" ? delta.content : "";
-    const calls = parseCallFragments(delta.tool_calls);
-    return content || calls.length ? { content, calls } : null;
+    obj = JSON.parse(data);
   } catch {
     return null;
   }
-}
-
-// Gói usage đi kèm ở một khung SSE riêng gần cuối luồng, tách khỏi các khung
-// chứa nội dung, nên phải soi song song với việc đọc token.
-function usageFromLine(line: string): UsageStats | null {
-  if (!line.startsWith("data:")) return null;
-  const data = line.slice(5).trim();
-  if (!data || data === "[DONE]") return null;
-  try {
-    return parseUsage(JSON.parse(data)?.usage);
-  } catch {
-    return null;
-  }
+  if (typeof obj !== "object" || obj === null) return null;
+  const choice = (Array.isArray(obj.choices) ? obj.choices[0] : null) as Record<string, unknown> | null;
+  const delta = (choice?.delta ?? null) as Record<string, unknown> | null;
+  return {
+    content: typeof delta?.content === "string" ? delta.content : "",
+    calls: parseCallFragments(delta?.tool_calls),
+    finish: typeof choice?.finish_reason === "string" ? choice.finish_reason : null,
+    error: parseError(obj.error),
+    usage: parseUsage(obj.usage),
+  };
 }
 
 // Model hay mở lời trước khi gọi công cụ ("Tôi sẽ tìm kiếm…"). Giữ lại vài chục
@@ -224,9 +246,14 @@ export interface TurnResult {
   readonly call: ToolCall | null;
   /** Lời mở đầu đã trót phát ra màn hình trước khi model gọi công cụ. */
   readonly preamble: string;
+  /** finish_reason cuối cùng nhà cung cấp báo; null khi luồng tắt mà không báo hoặc mình tự cắt. */
+  readonly finish: string | null;
+  readonly error: StreamError | null;
+  /** Mình tự cắt luồng: quá maxChars, hoặc model lặp chữ. */
+  readonly cut: "max_chars" | "junk" | null;
 }
 
-const NOTHING: TurnResult = { call: null, preamble: "" };
+const NOTHING: TurnResult = { call: null, preamble: "", finish: null, error: null, cut: null };
 
 /**
  * Vừa phát chữ ra ngoài, vừa dò lời gọi công cụ. Luôn trả về lời gọi công cụ nếu
@@ -244,6 +271,9 @@ export async function* streamTurn(
   let produced = "";
   let held = "";
   let flushed = false;
+  let finish: string | null = null;
+  let error: StreamError | null = null;
+  let cut: TurnResult["cut"] = null;
 
   const calls = new Map<number, { id: string; name: string; args: string }>();
   const merge = (frag: CallFragment) => {
@@ -266,14 +296,16 @@ export async function* streamTurn(
         const line = buf.slice(0, nl).replace(/\r$/, "");
         buf = buf.slice(nl + 1);
 
-        if (onUsage) {
-          const usage = usageFromLine(line);
-          if (usage) onUsage(usage);
-        }
-
         const parsed = parseSseLine(line);
         if (parsed === DONE) break outer;
         if (parsed === null) continue;
+        if (parsed.usage && onUsage) onUsage(parsed.usage);
+        if (parsed.finish) finish = parsed.finish;
+        // Lỗi giữa luồng: phần còn lại (nếu có) không đáng tin, dừng đọc để người gọi báo lỗi.
+        if (parsed.error || parsed.finish === "error") {
+          error = parsed.error;
+          break outer;
+        }
 
         if (parsed.calls.length) {
           for (const frag of parsed.calls) merge(frag);
@@ -296,21 +328,29 @@ export async function* streamTurn(
           yield parsed.content;
         }
 
-        if (produced.length >= maxChars) break outer;
-        if (produced.length >= 120 && isJunkRepetition(produced.slice(-160))) break outer;
+        if (produced.length >= maxChars) {
+          cut = "max_chars";
+          break outer;
+        }
+        if (produced.length >= JUNK_SPAN_CHARS && isJunkRepetition(produced.slice(-JUNK_TAIL_CHARS))) {
+          cut = "junk";
+          break outer;
+        }
       }
     }
   } finally {
     await reader.cancel().catch(() => {});
   }
 
+  const end = { finish, error, cut };
   for (const [index, call] of calls) {
     if (!call.name) continue;
     return {
       call: { id: call.id || `call_${index}`, name: call.name, args: call.args },
       preamble: produced,
+      ...end,
     };
   }
-  if (held) yield held;
-  return NOTHING;
+  if (held && !error && finish !== "error") yield held;
+  return { ...NOTHING, ...end };
 }

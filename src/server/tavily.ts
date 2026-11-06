@@ -1,4 +1,5 @@
 import { TAVILY_API_KEY } from "astro:env/server";
+import { WEB_RESULTS_CLOSE, WEB_RESULTS_OPEN } from "./prompt";
 
 const BASE_URL = "https://api.tavily.com/search";
 
@@ -107,17 +108,31 @@ export async function searchWeb(query: string, signal: AbortSignal): Promise<Web
   return results.length ? results : null;
 }
 
+// Trang lạ có thể tự viết thẻ đóng để "thoát" khỏi khối kết quả rồi chèn lời dặn giả làm hệ
+// thống. Xoá tên thẻ khỏi chữ của họ thì thẻ giả nào cũng thành vô nghĩa. Xoá tới khi hết hẳn:
+// xoá một lượt thì "ket_qua_tim_ket_qua_tim_kiemkiem" lại ghép thành đúng tên thẻ.
+const TAG_NAME = /ket_qua_tim_kiem/gi;
+const untrusted = (text: string) => {
+  let out = text;
+  for (let prev = ""; out !== prev; ) {
+    prev = out;
+    out = out.replace(TAG_NAME, "");
+  }
+  return out;
+};
+
 export function renderResults(query: string, results: readonly WebResult[]): string {
-  const lines: string[] = [`Kết quả tìm kiếm trên Internet cho truy vấn: "${query}"`, ""];
+  const lines: string[] = [`Kết quả tìm kiếm trên Internet cho truy vấn: "${query}"`, "", WEB_RESULTS_OPEN];
   let used = 0;
   for (let i = 0; i < results.length; i += 1) {
     const r = results[i]!;
-    const block = `[W${i + 1}] ${r.title}\nNguồn: ${r.url}\n${r.content}`;
+    const block = `[W${i + 1}] ${untrusted(r.title)}\nNguồn: ${untrusted(r.url)}\n${untrusted(r.content)}`;
     if (used + block.length > RESULTS_MAX_CHARS && i > 0) break;
     used += block.length;
     lines.push(block, "");
   }
-  return lines.join("\n").trim();
+  lines.push(WEB_RESULTS_CLOSE);
+  return lines.join("\n");
 }
 
 export const __test__ = { parseResults, renderResults, trimTo };

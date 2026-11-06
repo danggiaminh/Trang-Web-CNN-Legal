@@ -10,6 +10,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 <div
   class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4"
   data-ask-box
+  data-at-top
 >
   <form
     class="pointer-events-auto mx-auto w-full max-w-[25rem] rounded-[1rem] border-2 border-border-soft bg-surface-white pb-1 pl-3.5 pr-2.5 pt-3 shadow-[0_6px_20px_-6px_rgba(15,25,35,0.16)] transition-colors duration-150 focus-within:border-text-dark"
@@ -75,7 +76,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 
       <button
         type="button"
-        class="inline-flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-dark sm:hidden"
+        class="inline-flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-dark"
         aria-label="Đóng"
         data-ask-close
       >
@@ -92,9 +93,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     hidden
     data-ask-limit
   >
-    <p class="text-[0.8125rem] leading-[1.5] text-text-muted" data-ask-limit-text>
-      Bạn đã dùng hết 3 lượt tìm kiếm trên mạng. Trợ lý vẫn trả lời dựa trên nội dung trên trang.
-    </p>
+    <p class="text-[0.8125rem] leading-[1.5] text-text-muted" data-ask-limit-text></p>
 
     <button
       type="button"
@@ -113,14 +112,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     role="log"
     aria-live="polite"
     data-ask-messages
-  >
-    <p
-      class="mx-auto mt-1 max-w-[17rem] text-center text-[0.8125rem] leading-[1.5] text-text-muted"
-      data-ask-disclaimer
-    >
-      Các phản hồi được tạo ra bằng AI và có thể chứa sai sót.
-    </p>
-  </div>
+  ></div>
 
   <div class="shrink-0 px-4 pb-4">
     <form
@@ -152,6 +144,10 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
         </button>
       </div>
     </form>
+
+    <p class="mt-1.5 text-center text-[0.75rem] leading-[1.5] text-text-muted" data-ask-disclaimer>
+      Thông tin chung, không phải tư vấn pháp lý. Câu hỏi do bên thứ ba (AI, tìm kiếm) xử lý. Vụ việc cụ thể, hãy hỏi luật sư.
+    </p>
   </div>
 </aside>
 </div>
@@ -182,28 +178,28 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       visibility 0s 220ms;
   }
 
-  :global([data-app-shell]) {
-    transition:
-      margin 200ms cubic-bezier(0.16, 1, 0.3, 1),
-      border-radius 200ms cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
   :global(body[data-ask-panel-open]) {
     overflow: hidden;
   }
 
+  /* Ô tìm kiếm nằm trong header nên chỉ nổi ngang header; mở tìm kiếm (Ctrl+K) lúc bảng đang mở
+     thì hạ bảng xuống dưới header, kẻo bảng che mất ô tìm kiếm đang nhận phím gõ. */
+  :global(body[data-search-open] [data-ask-panel-wrap]) {
+    z-index: 40;
+  }
+
+  /* Bảng trợ lý rộng 23rem, cách mép phải 0.75rem. Khung trang co lại nhường chỗ: mép phải bảng
+     nội dung (khung + --frame-gap) cách mép màn hình 24.5rem, chừa đúng 0.75rem giữa hai bảng. */
   @media (min-width: 640px) {
     :global(body[data-ask-panel-open] [data-app-shell]) {
       position: fixed;
-      top: 0.75rem;
-      bottom: 0.75rem;
-      left: 0.75rem;
-      right: 24.5rem;
+      inset: 0 23.75rem 0 0;
       overflow-y: auto;
       overscroll-behavior: contain;
-      border: 1px solid var(--color-border-soft);
-      border-radius: 1rem;
-      background: var(--color-surface-white);
+    }
+
+    :global(body[data-ask-panel-open] .site-frame) {
+      right: 24.5rem;
     }
   }
 
@@ -267,6 +263,16 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     [data-ask-box],
     [data-ask-panel-wrap] {
       display: none;
+    }
+  }
+
+  /*
+   * iOS Safari tự phóng to trang khi chạm vào ô nhập có chữ nhỏ hơn 16px. Chỉ nâng cỡ chữ trên
+   * thiết bị cảm ứng; dùng chuột thì giữ 14px như thiết kế.
+   */
+  @media (pointer: coarse) {
+    input {
+      font-size: 16px;
     }
   }
 
@@ -416,8 +422,6 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
   const limitClose = document.querySelector<HTMLButtonElement>("[data-ask-limit-close]");
 
   if (form && input && submit && panel && panelForm && panelInput && panelSubmit && messages) {
-    const initialScroll = window.scrollY;
-
     const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
     if (isMac) {
       if (hint) hint.textContent = "⌘I";
@@ -428,7 +432,9 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       box?.toggleAttribute("data-at-top", window.scrollY <= 8);
     };
     window.addEventListener("scroll", syncBoxOnScroll, { passive: true });
-    box?.toggleAttribute("data-at-top", initialScroll <= 8);
+    // HTML đã để sẵn data-at-top nên ô nổi không vẽ ra rồi mới trượt đi; chỉ hiện khi trang đã
+    // cuộn xuống, kể cả khi trình duyệt khôi phục vị trí cuộn cũ (lúc đó có sự kiện scroll).
+    syncBoxOnScroll();
 
     const shell = document.querySelector<HTMLElement>("[data-app-shell]");
 
@@ -452,7 +458,9 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       panelInput.focus({ preventScroll: true });
     };
 
-    const closePanel = () => {
+    // refocus = false khi chạm nút X trên màn hình cảm ứng: focus gọi trong cử chỉ chạm sẽ bật bàn
+    // phím ảo (iOS còn phóng to trang) đúng lúc người đọc chỉ muốn quay lại bài.
+    const closePanel = (refocus = true) => {
 
       const target =
         shell && shellIsScroller.matches ? shell.scrollTop : savedScroll;
@@ -463,7 +471,10 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       document.body.removeAttribute("data-ask-panel-open");
       if (box) box.removeAttribute("data-hidden");
       window.scrollTo({ top: target, left: 0, behavior: "instant" as ScrollBehavior });
-      input.focus({ preventScroll: true });
+      // Sự kiện scroll tới muộn hơn một nhịp; cập nhật ngay để ô nổi đã hiện khi nhận focus.
+      syncBoxOnScroll();
+      if (refocus) input.focus({ preventScroll: true });
+      else (document.activeElement as HTMLElement | null)?.blur();
     };
 
     const addUserMessage = (text: string) => {
@@ -545,14 +556,23 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     let quota = readQuota();
 
     const syncLimitNotice = () => {
-      if (!limitNotice) return;
+      if (!limitNotice || !limitText) return;
       const show = quota.used >= quota.limit && !quota.dismissed;
-      if (show && limitText) {
+      if (!show) {
+        limitNotice.hidden = true;
+        limitText.textContent = "";
+        return;
+      }
+      if (!limitNotice.hidden) return;
+      // Hiện khung (còn rỗng) trước, ghi chữ sau một nhịp: vùng role=status đổi chữ lúc còn ẩn,
+      // hay hiện ra với chữ có sẵn, thì trình đọc màn hình thường bỏ qua.
+      limitNotice.hidden = false;
+      window.setTimeout(() => {
+        if (limitNotice.hidden) return;
         limitText.textContent =
           `Bạn đã dùng hết ${quota.limit} lượt tìm kiếm trên mạng. ` +
           "Trợ lý vẫn trả lời dựa trên nội dung trên trang.";
-      }
-      limitNotice.toggleAttribute("hidden", !show);
+      }, 150);
     };
 
     limitClose?.addEventListener("click", () => {
@@ -575,11 +595,16 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       inFlight = controller;
 
       openPanel();
-      messages.querySelector("[data-ask-disclaimer]")?.remove();
       addUserMessage(question);
       const answer = addAssistantMessage();
 
+      // Tắt đọc trong lúc chữ đang chạy, để trình đọc màn hình khỏi đọc từng mẩu. Chữ cuối cùng,
+      // kể cả thông báo lỗi, phải bật lại vùng thông báo TRƯỚC khi ghi thì mới được đọc lên.
       answer.setAttribute("aria-live", "off");
+      const showFinal = (text: string) => {
+        answer.setAttribute("aria-live", "polite");
+        answer.textContent = text;
+      };
       scrollToEnd();
 
       showStatus(answer, "Đang suy nghĩ");
@@ -624,7 +649,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
             .then((j: { error?: unknown }) => (typeof j?.error === "string" ? j.error : ""))
             .catch(() => "");
           stopThinking();
-          answer.textContent = detail || "Hệ thống đang bận, thử lại sau nhé.";
+          showFinal(detail || "Hệ thống đang bận, thử lại sau nhé.");
           return;
         }
         const reader = res.body.getReader();
@@ -687,7 +712,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
                 cancelAnimationFrame(frame);
                 frame = 0;
               }
-              answer.textContent = obj.e;
+              showFinal(obj.e);
               finalShown = true;
               scrollToEnd();
             }
@@ -706,7 +731,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
           history.push({ role: "assistant", content: raw });
           while (history.length > MAX_HISTORY) history.shift();
         } else if (!finalShown) {
-          answer.textContent = "Hệ thống đang bận, thử lại sau nhé.";
+          showFinal("Hệ thống đang bận, thử lại sau nhé.");
         }
       } catch (err) {
         if (frame) cancelAnimationFrame(frame);
@@ -717,7 +742,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
           else answer.remove();
           return;
         }
-        answer.textContent = "Không kết nối được máy chủ, thử lại sau nhé.";
+        showFinal("Không kết nối được máy chủ, thử lại sau nhé.");
       } finally {
         if (inFlight === controller) inFlight = null;
       }
@@ -759,7 +784,15 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
       askQuestion(question);
     });
 
-    closeBtn?.addEventListener("click", closePanel);
+    // Chạm nút X bằng tay thì không trả focus về ô nổi. Bấm bằng chuột, hoặc bằng bàn phím
+    // (detail 0: Enter/Space), thì trả như khi bấm Esc. Trình duyệt chưa cho biết pointerType
+    // của cú bấm thì đoán theo loại con trỏ chính của máy.
+    const finePointer = window.matchMedia("(pointer: fine)");
+    closeBtn?.addEventListener("click", (event) => {
+      const kind = (event as PointerEvent).pointerType;
+      const byTouch = event.detail !== 0 && (kind ? kind !== "mouse" : !finePointer.matches);
+      closePanel(!byTouch);
+    });
 
     // Phải khớp đúng media query ẩn trợ lý trong khối <style> bên trên.
     const TABLET_PORTRAIT = "(orientation: portrait) and (min-width: 600px) and (pointer: coarse)";
@@ -776,6 +809,12 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     tabletPortrait.addEventListener("change", (e) => closeIfHidden(e.matches));
 
     document.addEventListener("keydown", (event) => {
+      // Máy tính bảng dựng đứng (có bàn phím rời): CSS đang ẩn trợ lý, mở bảng lúc này chỉ ghim
+      // trang cạnh một khoảng trống. Để nguyên phím tắt cho trình duyệt.
+      if (tabletPortrait.matches) return;
+      // Ô tìm kiếm là hộp thoại modal: khi nó đang mở (hoặc vừa nhận Esc) phím thuộc về nó,
+      // nên mỗi lần Esc chỉ đóng một lớp và Ctrl+I không mở bảng nằm dưới ô tìm kiếm.
+      if (event.defaultPrevented || document.body.hasAttribute("data-search-open")) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "i") {
         event.preventDefault();
         panel.hasAttribute("data-open") ? closePanel() : openPanel();

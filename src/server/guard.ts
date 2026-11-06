@@ -25,8 +25,7 @@ function selfHost(request: Request): string | null {
   }
 }
 
-function accepted(request: Request, origin: string | null): boolean {
-  if (!origin) return true;
+function accepted(request: Request, origin: string): boolean {
   if (allowedOrigins.has(origin)) return true;
   try {
     const host = selfHost(request);
@@ -36,8 +35,14 @@ function accepted(request: Request, origin: string | null): boolean {
   }
 }
 
+// POST chỉ nhận từ trang của chính site: Origin nằm trong danh sách hoặc cùng host. Trình duyệt
+// luôn gửi Origin khi POST; thiếu Origin (proxy cắt bớt header) thì phải có Sec-Fetch-Site là
+// same-origin. Không có cả hai thì gần như chắc chắn là script. Script vẫn tự đặt được các header
+// này, nên đây chỉ là lớp lọc thô; chặn thật là các hạn mức bên dưới.
 export function originAllowed(request: Request): boolean {
-  return accepted(request, request.headers.get("origin"));
+  const origin = request.headers.get("origin");
+  if (origin) return accepted(request, origin);
+  return request.headers.get("sec-fetch-site") === "same-origin";
 }
 
 export function corsHeaders(request: Request): Record<string, string> {
@@ -57,25 +62,83 @@ const MAX_BUCKETS = 5000;
 
 const buckets = new Map<string, { tokens: number; last: number }>();
 
-export function withinRateLimit(ip: string): boolean {
-  const now = Date.now();
+// Map đầy thì bỏ khoá đã nguội; vẫn đầy thì bỏ tiếp khoá cũ nhất theo thứ tự chèn cho tới khi
+// trống một phần mười. Khoảng trống đó đẩy lần quét kế tiếp ra xa, nên dù hàng chục nghìn IP lạ
+// ập tới trong vài giây thì Map vẫn không vượt trần và mỗi lần thêm khoá chỉ tốn O(1) bình quân.
+function makeRoom<V>(map: Map<string, V>, max: number, stale: (value: V) => boolean): void {
+  if (map.size < max) return;
+  for (const [key, value] of map) {
+    if (stale(value)) map.delete(key);
+  }
+  const target = max - Math.ceil(max / 10);
+  for (const key of map.keys()) {
+    if (map.size <= target) break;
+    map.delete(key);
+  }
+}
+
+export function withinRateLimit(ip: string, now = Date.now()): boolean {
   const bucket = buckets.get(ip);
 
   if (!bucket) {
-    if (buckets.size >= MAX_BUCKETS) {
-      for (const [key, b] of buckets) {
-        if ((now - b.last) / 1000 > BURST / RATE_PER_SECOND) buckets.delete(key);
-      }
-    }
+    makeRoom(buckets, MAX_BUCKETS, (b) => (now - b.last) / 1000 > BURST / RATE_PER_SECOND);
     buckets.set(ip, { tokens: BURST - 1, last: now });
     return true;
   }
 
   bucket.tokens = Math.min(BURST, bucket.tokens + ((now - bucket.last) / 1000) * RATE_PER_SECOND);
   bucket.last = now;
+  // Như noteWebSearch: delete rồi set lại đẩy khoá xuống cuối, nên khi Map đầy thì khoá bị bỏ là
+  // IP lâu không gọi nhất, không phải IP đang dội liên tục (bị bỏ là nó có lại đủ lượt dồn).
+  buckets.delete(ip);
+  buckets.set(ip, bucket);
   if (bucket.tokens < 1) return false;
   bucket.tokens -= 1;
   return true;
+}
+
+/** Số khoá bộ đếm chống dồn dập đang giữ (để test kiểm trần). */
+export function rateLimitKeys(): number {
+  return buckets.size;
+}
+
+// ---------------------------------------------------------------------------
+// Hạn mức riêng của form liên hệ
+//
+// Mỗi lượt gửi là một thư thật vào hộp thư văn phòng và tốn quota MisarMail. Bộ đếm chống dồn
+// dập ở trên vẫn cho 1 lượt/giây, tức hàng nghìn thư mỗi giờ từ một IP, nên form liên hệ có thêm
+// trần theo IP: 3 thư mỗi 10 phút và 10 thư mỗi 24 giờ. Khách thật hiếm khi chạm tới; chạm rồi
+// thì được báo gọi điện thay vì thử lại. Cũng chỉ nằm trong bộ nhớ từng instance như mọi hạn mức
+// khác ở đây.
+// ---------------------------------------------------------------------------
+
+const CONTACT_DAY_MS = 24 * 60 * 60 * 1000;
+const CONTACT_WINDOWS = [
+  { ms: 10 * 60 * 1000, max: 3 },
+  { ms: CONTACT_DAY_MS, max: 10 },
+] as const;
+const MAX_CONTACT_IPS = 5000;
+
+const contactSends = new Map<string, number[]>();
+
+/**
+ * Xin một lượt gửi liên hệ cho IP này. Còn lượt thì ghi nhận luôn và trả 0; hết lượt thì trả số
+ * giây phải chờ tới khi có lượt mới.
+ */
+export function contactSendWait(ip: string, now = Date.now()): number {
+  const recent = (contactSends.get(ip) ?? []).filter((t) => now - t < CONTACT_DAY_MS);
+  let waitMs = 0;
+  for (const { ms, max } of CONTACT_WINDOWS) {
+    const inWindow = recent.filter((t) => now - t < ms);
+    if (inWindow.length >= max) waitMs = Math.max(waitMs, inWindow[inWindow.length - max]! + ms - now);
+  }
+  if (waitMs > 0) return Math.ceil(waitMs / 1000);
+
+  // delete rồi set lại đẩy IP xuống cuối, nên khoá bị bỏ trước là IP lâu không gửi nhất.
+  contactSends.delete(ip);
+  makeRoom(contactSends, MAX_CONTACT_IPS, (times) => now - times.at(-1)! >= CONTACT_DAY_MS);
+  contactSends.set(ip, [...recent, now]);
+  return 0;
 }
 
 // ---------------------------------------------------------------------------
