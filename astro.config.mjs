@@ -49,12 +49,12 @@ export default defineConfig({
       OPENROUTER_MODEL: envField.string({
         context: "server",
         access: "public",
-        default: "deepseek/deepseek-v4-flash",
+        default: "deepseek/deepseek-v4.1-flash-1017",
       }),
       OPENROUTER_PROVIDER: envField.string({
         context: "server",
         access: "public",
-        default: "parasail",
+        default: "deepinfra/fp8/flex",
       }),
       OPENROUTER_MAX_TOKENS: envField.number({
         context: "server",
