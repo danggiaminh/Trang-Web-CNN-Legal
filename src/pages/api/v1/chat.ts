@@ -271,7 +271,7 @@ async function* answer(
 
   let messages: ChatMessage[];
   try {
-    const context = await selectContext(question, slug);
+    const context = await selectContext(question, slug, signal);
     messages = buildMessages(question, context.passages, context.currentTitle, history, {
       webSearch,
       quotaExhausted: exhausted,

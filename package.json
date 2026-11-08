@@ -11,6 +11,7 @@
     "build": "astro check && npm run test && astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "embeddings:build": "node --env-file-if-exists=.env.local --import ./scripts/register.mjs scripts/build-embedding-index.ts",
     "test": "node --import ./tests/register.mjs --test \"tests/**/*.test.ts\""
   },
   "overrides": {

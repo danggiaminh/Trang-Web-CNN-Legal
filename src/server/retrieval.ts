@@ -1,4 +1,15 @@
 import { allDocs, getDoc, type Doc, type Section } from "./knowledge";
+import { EMBEDDING_INDEX } from "../data/embedding-index";
+import {
+  SEMANTIC_MIN_SIMILARITY,
+  embedQuery,
+  passageHash,
+  passageKey,
+  rankBySimilarity,
+  reciprocalRankFusion,
+  usableVectors,
+  type EmbeddingIndex,
+} from "./embedding";
 
 // Khi người đọc đang mở một bài, gửi NGUYÊN bài thay vì cắt khúc theo BM25.
 // Hai lý do, cùng một thay đổi:
@@ -13,6 +24,8 @@ const RETRIEVED_MAX_CHARS = 5000;
 const OUTLINE_SECTION_CHARS = 450;
 const OUTLINE_MAX_CHARS = 6000;
 const TOP_K = 4;
+// Số ứng viên mỗi bảng trước khi gộp, cùng công thức max(k*3, 8) của search_hybrid (db.rs).
+const POOL = Math.max(TOP_K * 3, 8);
 
 const WHOLE_DOC_HINTS = [
   "tóm tắt",
@@ -59,6 +72,8 @@ function tokenize(text: string): string[] {
 }
 
 interface Entry {
+  readonly key: string;
+  readonly hash: string;
   readonly passage: Passage;
   readonly tf: Map<string, number>;
   readonly len: number;
@@ -66,9 +81,12 @@ interface Entry {
 
 interface Index {
   readonly entries: readonly Entry[];
+  readonly byKey: ReadonlyMap<string, Entry>;
   readonly byDoc: Map<string, Entry[]>;
   readonly df: Map<string, number>;
   readonly avgLen: number;
+  /** Vector dùng được: đúng model, đúng chiều, và đoạn chưa đổi chữ kể từ lúc build. */
+  readonly vectors: ReadonlyMap<string, Float32Array>;
 }
 
 function toEntry(doc: Doc, section: Section): Entry {
@@ -76,6 +94,8 @@ function toEntry(doc: Doc, section: Section): Entry {
   const tf = new Map<string, number>();
   for (const t of tokens) tf.set(t, (tf.get(t) ?? 0) + 1);
   return {
+    key: passageKey(doc.slug, section.ord),
+    hash: passageHash({ title: doc.title, headingPath: section.headingPath, content: section.content }),
     passage: {
       slug: doc.slug,
       title: doc.title,
@@ -91,10 +111,10 @@ function toEntry(doc: Doc, section: Section): Entry {
 
 let index: Promise<Index> | null = null;
 
-async function buildIndex(): Promise<Index> {
+function buildIndexFrom(docs: readonly Doc[], bundled: EmbeddingIndex): Index {
   const entries: Entry[] = [];
   const byDoc = new Map<string, Entry[]>();
-  for (const doc of await allDocs()) {
+  for (const doc of docs) {
     const list: Entry[] = [];
     for (const section of doc.sections) {
       const entry = toEntry(doc, section);
@@ -111,7 +131,18 @@ async function buildIndex(): Promise<Index> {
     for (const term of e.tf.keys()) df.set(term, (df.get(term) ?? 0) + 1);
   }
 
-  return { entries, byDoc, df, avgLen: entries.length ? total / entries.length : 1 };
+  return {
+    entries,
+    byKey: new Map(entries.map((e) => [e.key, e] as const)),
+    byDoc,
+    df,
+    avgLen: entries.length ? total / entries.length : 1,
+    vectors: usableVectors(bundled, new Map(entries.map((e) => [e.key, e.hash] as const))),
+  };
+}
+
+async function buildIndex(): Promise<Index> {
+  return buildIndexFrom(await allDocs(), EMBEDDING_INDEX);
 }
 
 function getIndex(): Promise<Index> {
@@ -136,15 +167,42 @@ function bm25(entry: Entry, terms: readonly string[], idx: Index): number {
   return score;
 }
 
-function rank(pool: readonly Entry[], question: string, idx: Index, topK: number): Passage[] {
+/** Mục có điểm BM25 dương, xếp giảm dần. */
+function lexicalRanking(pool: readonly Entry[], question: string, idx: Index): Entry[] {
   const terms = [...new Set(tokenize(question))];
   if (!terms.length) return [];
   return pool
     .map((entry) => ({ entry, score: bm25(entry, terms, idx) }))
     .filter((r) => r.score > 0)
     .sort((a, b) => b.score - a.score)
-    .slice(0, topK)
-    .map((r) => r.entry.passage);
+    .map((r) => r.entry);
+}
+
+function rank(pool: readonly Entry[], question: string, idx: Index, topK: number): Passage[] {
+  return lexicalRanking(pool, question, idx).slice(0, topK).map((entry) => entry.passage);
+}
+
+async function semanticRanking(idx: Index, question: string, signal?: AbortSignal): Promise<Entry[]> {
+  if (!idx.vectors.size) return [];
+  const query = await embedQuery(question, signal);
+  if (!query) return [];
+  const candidates = idx.entries.flatMap((entry) => {
+    const vec = idx.vectors.get(entry.key);
+    return vec ? [{ key: entry.key, vec }] : [];
+  });
+  return rankBySimilarity(query, candidates, SEMANTIC_MIN_SIMILARITY, POOL).map((key) => idx.byKey.get(key)!);
+}
+
+/**
+ * Nhánh không mở bài nào: gộp BM25 với vector bằng RRF. Khi không có vector (chưa build chỉ mục,
+ * sai model, lỗi mạng) thì kết quả y hệt BM25 thuần.
+ */
+async function globalPassages(question: string, idx: Index, signal?: AbortSignal): Promise<Passage[]> {
+  const lexical = lexicalRanking(idx.entries, question, idx).slice(0, POOL);
+  const semantic = await semanticRanking(idx, question, signal);
+  if (!semantic.length) return lexical.slice(0, TOP_K).map((entry) => entry.passage);
+  const fused = reciprocalRankFusion([lexical.map((e) => e.key), semantic.map((e) => e.key)]);
+  return fused.slice(0, TOP_K).map((key) => idx.byKey.get(key)!.passage);
 }
 
 function withinBudget(hits: readonly Passage[], budget: number): Passage[] {
@@ -209,13 +267,17 @@ function outline(doc: Doc): Passage[] {
   return out;
 }
 
-export async function selectContext(question: string, slug: string | null): Promise<Context> {
+export async function selectContext(
+  question: string,
+  slug: string | null,
+  signal?: AbortSignal,
+): Promise<Context> {
   const doc = slug ? await getDoc(slug) : null;
   const idx = await getIndex();
 
   if (!doc) {
     return {
-      passages: withinBudget(rank(idx.entries, question, idx, TOP_K), RETRIEVED_MAX_CHARS),
+      passages: withinBudget(await globalPassages(question, idx, signal), RETRIEVED_MAX_CHARS),
       currentTitle: null,
     };
   }
@@ -235,4 +297,11 @@ export async function selectContext(question: string, slug: string | null): Prom
   return { passages, currentTitle: doc.title };
 }
 
-export const __test__ = { tokenize, wantsWholeDoc, withinBudget, normalizedWords };
+export const __test__ = {
+  tokenize,
+  wantsWholeDoc,
+  withinBudget,
+  normalizedWords,
+  buildIndexFrom,
+  globalPassages,
+};
