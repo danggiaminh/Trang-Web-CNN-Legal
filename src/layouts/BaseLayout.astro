@@ -107,6 +107,8 @@ const jsonLdToString = (item: JsonLd) => JSON.stringify(item).replaceAll("<", "\
       <main class:list={["site-panel", lockViewport && "min-h-0 flex-1"]}>
         <slot />
       </main>
+      {/* Ngoài <main>: màn rộng .site-panel có clip-path, và clip-path cắt cả phần tử position:fixed nằm bên trong. */}
+      <slot name="assistant" />
       {/* Nằm trong khung chứ không ngoài: mở bảng trợ lý thì khung thành position:fixed, tức một
           lớp xếp chồng riêng, và lớp phủ phải nằm cùng lớp đó mới đứng dưới header và bảng trợ lý. */}
       <div class="site-frame" aria-hidden="true"></div>
