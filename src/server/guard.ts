@@ -102,46 +102,6 @@ export function rateLimitKeys(): number {
   return buckets.size;
 }
 
-// ---------------------------------------------------------------------------
-// Hạn mức riêng của form liên hệ
-//
-// Mỗi lượt gửi là một thư thật vào hộp thư văn phòng và tốn quota MisarMail. Bộ đếm chống dồn
-// dập ở trên vẫn cho 1 lượt/giây, tức hàng nghìn thư mỗi giờ từ một IP, nên form liên hệ có thêm
-// trần theo IP: 3 thư mỗi 10 phút và 10 thư mỗi 24 giờ. Khách thật hiếm khi chạm tới; chạm rồi
-// thì được báo gọi điện thay vì thử lại. Cũng chỉ nằm trong bộ nhớ từng instance như mọi hạn mức
-// khác ở đây.
-// ---------------------------------------------------------------------------
-
-const CONTACT_DAY_MS = 24 * 60 * 60 * 1000;
-const CONTACT_WINDOWS = [
-  { ms: 10 * 60 * 1000, max: 3 },
-  { ms: CONTACT_DAY_MS, max: 10 },
-] as const;
-const MAX_CONTACT_IPS = 5000;
-
-const contactSends = new Map<string, number[]>();
-
-/**
- * Xin một lượt gửi liên hệ cho IP này. Còn lượt thì ghi nhận luôn và trả 0; hết lượt thì trả số
- * giây phải chờ tới khi có lượt mới.
- */
-export function contactSendWait(ip: string, now = Date.now()): number {
-  const recent = (contactSends.get(ip) ?? []).filter((t) => now - t < CONTACT_DAY_MS);
-  let waitMs = 0;
-  for (const { ms, max } of CONTACT_WINDOWS) {
-    const inWindow = recent.filter((t) => now - t < ms);
-    if (inWindow.length >= max) waitMs = Math.max(waitMs, inWindow[inWindow.length - max]! + ms - now);
-  }
-  if (waitMs > 0) return Math.ceil(waitMs / 1000);
-
-  // delete rồi set lại đẩy IP xuống cuối, nên khoá bị bỏ trước là IP lâu không gửi nhất.
-  contactSends.delete(ip);
-  makeRoom(contactSends, MAX_CONTACT_IPS, (times) => now - times.at(-1)! >= CONTACT_DAY_MS);
-  contactSends.set(ip, [...recent, now]);
-  return 0;
-}
-
-// ---------------------------------------------------------------------------
 // Hạn mức tìm kiếm trên mạng
 //
 // Số lượt do trình duyệt giữ (localStorage + sessionStorage, khoá theo dấu vân

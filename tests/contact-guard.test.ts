@@ -95,28 +95,3 @@ test("IP dội liên tục giữa lúc ngập IP lạ không bị bỏ khỏi Ma
   // 400 lần gọi trong 3 giây: chỉ 6 lượt dồn cộng khoảng 1 lượt mỗi giây được qua.
   assert.ok(admitted <= 10, `qua ${admitted} lượt`);
 });
-
-test("hạn mức form liên hệ: 3 thư / 10 phút, kèm số giây phải chờ", () => {
-  const t0 = 50_000_000;
-  const ip = "203.0.113.10";
-  assert.equal(guard.contactSendWait(ip, t0), 0);
-  assert.equal(guard.contactSendWait(ip, t0 + 60_000), 0);
-  assert.equal(guard.contactSendWait(ip, t0 + 120_000), 0);
-  // Lượt thứ 4 phải chờ tới khi lượt đầu ra khỏi cửa sổ 10 phút.
-  assert.equal(guard.contactSendWait(ip, t0 + 180_000), 420);
-  // Lượt bị từ chối không được ghi, nên chờ đủ là gửi được.
-  assert.equal(guard.contactSendWait(ip, t0 + 600_000), 0);
-  assert.equal(guard.contactSendWait(ip, t0 + 600_001), 60);
-  // IP khác độc lập.
-  assert.equal(guard.contactSendWait("203.0.113.11", t0 + 180_000), 0);
-});
-
-test("hạn mức form liên hệ: tối đa 10 thư / 24 giờ dù đã giãn cách", () => {
-  const t0 = 90_000_000;
-  const day = 24 * 60 * 60 * 1000;
-  const ip = "203.0.113.20";
-  for (let k = 0; k < 10; k += 1) assert.equal(guard.contactSendWait(ip, t0 + k * 11 * 60_000), 0, `thư ${k + 1}`);
-  const now = t0 + 10 * 11 * 60_000;
-  assert.equal(guard.contactSendWait(ip, now), Math.ceil((t0 + day - now) / 1000));
-  assert.equal(guard.contactSendWait(ip, t0 + day), 0);
-});

@@ -4,7 +4,6 @@ import { test } from "node:test";
 test("mọi module server và route API nạp được ngoài Vite", async () => {
   for (const path of [
     "../src/server/guard.ts",
-    "../src/server/contact.ts",
     "../src/server/openrouter.ts",
     "../src/server/tavily.ts",
     "../src/server/prompt.ts",
@@ -12,7 +11,6 @@ test("mọi module server và route API nạp được ngoài Vite", async () =>
     "../src/server/retrieval.ts",
     "../src/scripts/ask-markdown.ts",
     "../src/pages/api/v1/chat.ts",
-    "../src/pages/api/v1/contact.ts",
     "../src/pages/api/v1/health.ts",
   ]) {
     const mod = await import(path);

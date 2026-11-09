@@ -12,6 +12,7 @@ export function getStaticPaths() {
 }
 
 const { caseItem } = Astro.props;
+const askSubject = caseItem.title.startsWith("Đại án") ? "đại án" : "vụ án";
 
 const title = `${caseItem.title} | ${site.name}`;
 const canonicalPath = `/vu-an-tieu-bieu/${caseItem.slug}/`;
@@ -105,7 +106,7 @@ const structuredData = [
     </div>
   </div>
 
-  <AskBox subject="vụ án" />
+  <AskBox subject={askSubject} slot="assistant" />
 </BaseLayout>
 
 <style>
