@@ -3,7 +3,6 @@ export const prerender = false;
 import type { APIRoute } from "astro";
 import { allDocs } from "../../../server/knowledge";
 import { hasApiKey } from "../../../server/openrouter";
-import { hasMailKey, lastSendRecord } from "../../../server/contact";
 import { withinRateLimit } from "../../../server/guard";
 
 function clientIp(request: Request, fallback: string | undefined): string {
@@ -40,16 +39,12 @@ export const GET: APIRoute = async ({ request, clientAddress }) => {
     ok = false;
   }
 
-  // Khoá MisarMail chỉ có scope "send" nên không hỏi trước được người gửi; người gửi
-  // chưa xác minh thì POST /v1/send trả 403 ngay và route contact ghi log lỗi đó.
-  // lastSend là lần gửi gần nhất của riêng instance này (null sau khi instance khởi động lại).
   return new Response(
     JSON.stringify({
       ok,
       keyPresent: hasApiKey(),
       docs,
       sections,
-      contact: { keyPresent: hasMailKey(), lastSend: lastSendRecord() },
     }),
     {
       status: ok ? 200 : 500,

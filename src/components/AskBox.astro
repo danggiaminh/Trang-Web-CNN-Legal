@@ -5,10 +5,11 @@ interface Props {
 
 const { subject = "bài viết" } = Astro.props;
 const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
+const suggestions = [`Tóm tắt ${subject} này`, `Phân tích các ý trong ${subject} này`];
 ---
 
 <div
-  class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-4"
+  class="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-4 pb-7"
   data-ask-box
   data-at-top
 >
@@ -102,7 +103,31 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     role="log"
     aria-live="polite"
     data-ask-messages
-  ></div>
+  >
+    <div class="space-y-4 pt-1" data-ask-welcome>
+      <p class="font-sans text-[1.0625rem] font-semibold leading-[1.4] text-text-dark">
+        Xin chào, tôi có thể giúp gì cho bạn?
+      </p>
+      <div class="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          class="rounded-2xl border border-ink-black/60 bg-surface-white px-3 py-3 text-left text-[0.8125rem] font-medium leading-[1.45] text-text-dark transition-colors hover:bg-surface-subtle"
+          data-ask-suggest
+          data-ask-question={suggestions[0]}
+        >
+          {suggestions[0]}
+        </button>
+        <button
+          type="button"
+          class="rounded-2xl border border-ink-black/60 bg-surface-white px-3 py-3 text-left text-[0.8125rem] font-medium leading-[1.45] text-text-dark transition-colors hover:bg-surface-subtle"
+          data-ask-suggest
+          data-ask-question={suggestions[1]}
+        >
+          {suggestions[1]}
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="shrink-0 px-4 pb-4">
     <form
@@ -583,6 +608,7 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
 
     const askQuestion = async (question: string) => {
 
+      document.querySelector("[data-ask-welcome]")?.remove();
       inFlight?.abort();
       const controller = new AbortController();
       inFlight = controller;
@@ -758,6 +784,13 @@ const askPlaceholder = `Hỏi bất cứ điều gì về ${subject} này...`;
     panelInput.addEventListener("input", syncPanel);
     syncBox();
     syncPanel();
+
+    document.querySelectorAll<HTMLButtonElement>("[data-ask-suggest]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const question = btn.dataset.askQuestion;
+        if (question) askQuestion(question);
+      });
+    });
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();

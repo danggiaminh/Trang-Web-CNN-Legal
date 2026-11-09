@@ -6,8 +6,6 @@ import { readFileSync } from "node:fs";
 
 export const SCHEMA_DEFAULTS = {
   TAVILY_DAILY_CAP: 200,
-  CONTACT_TO_EMAIL: "cnnlegal.vn@gmail.com",
-  CONTACT_FROM_EMAIL: "cnnlegal.vn@gmail.com",
   OPENROUTER_MODEL: "deepseek/deepseek-v4.1-flash-1017",
   OPENROUTER_PROVIDER: "deepinfra/fp8/flex",
   OPENROUTER_MAX_TOKENS: 1200,
@@ -15,7 +13,7 @@ export const SCHEMA_DEFAULTS = {
   OPENROUTER_TITLE: "CNN Legal Assistant",
   CHAT_ALLOWED_ORIGINS: "https://cnnlegal.vn,https://www.cnnlegal.vn",
 };
-export const SECRET_KEYS = ["OPENROUTER_API_KEY", "TAVILY_API_KEY", "MISARMAIL_API_KEY"];
+export const SECRET_KEYS = ["OPENROUTER_API_KEY", "TAVILY_API_KEY"];
 const NUMBERS = new Set(["TAVILY_DAILY_CAP", "OPENROUTER_MAX_TOKENS"]);
 
 function readTemplate() {
@@ -36,10 +34,7 @@ const pick = (key) => {
 
 export let OPENROUTER_API_KEY = undefined;
 export let TAVILY_API_KEY = undefined;
-export let MISARMAIL_API_KEY = undefined;
 export let TAVILY_DAILY_CAP = pick("TAVILY_DAILY_CAP");
-export let CONTACT_TO_EMAIL = pick("CONTACT_TO_EMAIL");
-export let CONTACT_FROM_EMAIL = pick("CONTACT_FROM_EMAIL");
 export let OPENROUTER_MODEL = pick("OPENROUTER_MODEL");
 export let OPENROUTER_PROVIDER = pick("OPENROUTER_PROVIDER");
 export let OPENROUTER_MAX_TOKENS = pick("OPENROUTER_MAX_TOKENS");
@@ -54,10 +49,7 @@ export function __setEnv(values) {
     switch (key) {
       case "OPENROUTER_API_KEY": OPENROUTER_API_KEY = value; break;
       case "TAVILY_API_KEY": TAVILY_API_KEY = value; break;
-      case "MISARMAIL_API_KEY": MISARMAIL_API_KEY = value; break;
       case "TAVILY_DAILY_CAP": TAVILY_DAILY_CAP = value; break;
-      case "CONTACT_TO_EMAIL": CONTACT_TO_EMAIL = value; break;
-      case "CONTACT_FROM_EMAIL": CONTACT_FROM_EMAIL = value; break;
       case "OPENROUTER_MODEL": OPENROUTER_MODEL = value; break;
       case "OPENROUTER_PROVIDER": OPENROUTER_PROVIDER = value; break;
       case "OPENROUTER_MAX_TOKENS": OPENROUTER_MAX_TOKENS = value; break;

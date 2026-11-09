@@ -31,21 +31,6 @@ export default defineConfig({
         access: "public",
         default: 200,
       }),
-      MISARMAIL_API_KEY: envField.string({
-        context: "server",
-        access: "secret",
-        optional: true,
-      }),
-      CONTACT_TO_EMAIL: envField.string({
-        context: "server",
-        access: "public",
-        default: "cnnlegal.vn@gmail.com",
-      }),
-      CONTACT_FROM_EMAIL: envField.string({
-        context: "server",
-        access: "public",
-        default: "cnnlegal.vn@gmail.com",
-      }),
       OPENROUTER_MODEL: envField.string({
         context: "server",
         access: "public",
