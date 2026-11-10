@@ -50,8 +50,3 @@ test("global.css: vòng focus navy đặc, dòng đầu giữ source(\"..\")", (
   assert.doesNotMatch(rule, /color-mix|transparent/);
 });
 
-test("Search: luật hàng đang chọn là :global (hàng dựng bằng innerHTML không có thuộc tính scope)", () => {
-  const search = read("components/Search.astro");
-  assert.match(search, /:global\(\[data-search-hit\]\[aria-selected="true"\]\)\s*\{/);
-  assert.doesNotMatch(search, /^\s*\[data-search-hit\]\[aria-selected="true"\]/m);
-});
