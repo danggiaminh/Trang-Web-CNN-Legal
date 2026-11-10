@@ -75,6 +75,16 @@ const suggestions = [`Tóm tắt ${subject} này`, `Phân tích các ý trong ${
         Ctrl+I
       </kbd>
 
+      <button
+        type="button"
+        class="inline-flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-subtle hover:text-text-dark"
+        aria-label="Đóng"
+        data-ask-close
+      >
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke-linecap="round" />
+        </svg>
+      </button>
     </div>
   </header>
 
@@ -191,12 +201,6 @@ const suggestions = [`Tóm tắt ${subject} này`, `Phân tích các ý trong ${
 
   :global(body[data-ask-panel-open]) {
     overflow: hidden;
-  }
-
-  /* Ô tìm kiếm nằm trong header nên chỉ nổi ngang header; mở tìm kiếm (Ctrl+K) lúc bảng đang mở
-     thì hạ bảng xuống dưới header, kẻo bảng che mất ô tìm kiếm đang nhận phím gõ. */
-  :global(body[data-search-open] [data-ask-panel-wrap]) {
-    z-index: 40;
   }
 
   /* Bảng trợ lý rộng 23rem, cách mép phải 0.75rem. Khung trang co lại nhường chỗ: mép phải bảng
@@ -427,6 +431,7 @@ const suggestions = [`Tóm tắt ${subject} này`, `Phân tích các ý trong ${
   const panelSubmit = document.querySelector<HTMLButtonElement>("[data-ask-panel-submit]");
   const messages = document.querySelector<HTMLElement>("[data-ask-messages]");
   const closeBtn = document.querySelector<HTMLButtonElement>("[data-ask-close]");
+  const welcome = document.querySelector<HTMLElement>("[data-ask-welcome]");
   const panelHint = document.querySelector<HTMLElement>("[data-ask-panel-hint]");
   const limitNotice = document.querySelector<HTMLElement>("[data-ask-limit]");
   const limitText = document.querySelector<HTMLElement>("[data-ask-limit-text]");
@@ -608,7 +613,7 @@ const suggestions = [`Tóm tắt ${subject} này`, `Phân tích các ý trong ${
 
     const askQuestion = async (question: string) => {
 
-      document.querySelector("[data-ask-welcome]")?.remove();
+      welcome?.remove();
       inFlight?.abort();
       const controller = new AbortController();
       inFlight = controller;
@@ -838,9 +843,7 @@ const suggestions = [`Tóm tắt ${subject} này`, `Phân tích các ý trong ${
       // Máy tính bảng dựng đứng (có bàn phím rời): CSS đang ẩn trợ lý, mở bảng lúc này chỉ ghim
       // trang cạnh một khoảng trống. Để nguyên phím tắt cho trình duyệt.
       if (tabletPortrait.matches) return;
-      // Ô tìm kiếm là hộp thoại modal: khi nó đang mở (hoặc vừa nhận Esc) phím thuộc về nó,
-      // nên mỗi lần Esc chỉ đóng một lớp và Ctrl+I không mở bảng nằm dưới ô tìm kiếm.
-      if (event.defaultPrevented || document.body.hasAttribute("data-search-open")) return;
+      if (event.defaultPrevented) return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "i") {
         event.preventDefault();
         panel.hasAttribute("data-open") ? closePanel() : openPanel();
